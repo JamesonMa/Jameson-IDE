@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist/renderer",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "module": "ES2022",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src/renderer/**/*", "src/shared/**/*"]
+}

@@ -1,0 +1,81 @@
+{
+  "name": "jameson-ide",
+  "version": "0.1.0",
+  "description": "Jameson IDE — A desktop IDE built with Electron and TypeScript",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build:main": "webpack --config webpack.main.config.js",
+    "build:renderer": "webpack --config webpack.renderer.config.js",
+    "build:preload": "tsc --project tsconfig.preload.json",
+    "build": "npm run clean && npm run build:main && npm run build:preload && npm run build:renderer",
+    "rebuild": "electron-rebuild -f -w node-pty",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && concurrently \"webpack --watch --config webpack.main.config.js\" \"webpack --watch --config webpack.renderer.config.js\" \"tsc --watch --project tsconfig.preload.json\"",
+    "test": "vitest run",
+    "dist": "set NODE_ENV=production&& npm run build && electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.jameson.ide",
+    "productName": "Jameson IDE",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "compilers",
+        "to": "compilers",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true
+    },
+    "npmRebuild": false,
+    "buildDependenciesFromSource": false
+  },
+  "dependencies": {
+    "@types/dompurify": "^3.0.5",
+    "chokidar": "^4.0.3",
+    "dompurify": "^3.4.15",
+    "electron-store": "^8.2.0",
+    "katex": "^0.18.9",
+    "marked": "^18.0.14",
+    "node-pty": "^1.0.0",
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@types/node": "^22.10.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-web-links": "^0.11.0",
+    "@xterm/xterm": "^5.5.0",
+    "concurrently": "^9.1.2",
+    "css-loader": "^7.1.2",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
+    "html-webpack-plugin": "^5.6.3",
+    "jsdom": "^30.1.1",
+    "mini-css-extract-plugin": "^2.9.2",
+    "monaco-editor": "^0.52.0",
+    "monaco-editor-webpack-plugin": "^7.1.0",
+    "rimraf": "^6.0.1",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "vitest": "^5.0.1",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
+  }
+}
