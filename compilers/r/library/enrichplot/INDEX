@@ -1,0 +1,38 @@
+as.data.frame.compareClusterResult
+                        Convert compareClusterResult to data frame
+autofacet               Plotting utility functions for enrichplot
+                        package
+barplot.enrichResult    barplot
+cnetplot.enrichResult   Category-Gene-Network Plot
+color_palette           Create color palette for continuous data
+dotplot                 dotplot
+dotplot2                dotplot2
+emapplot                emapplot
+enrichplot_point_shape
+                        Predefined color palettes
+fortify.compareClusterResult
+                        fortify
+geom_gsea_gene          geom_gsea_gene
+get_enrichplot_color    Color utility functions for enrichplot package
+ggtable                 ggtable
+goplot                  goplot
+gsInfo                  gsInfo
+gseadist                gseadist
+gseaplot                gseaplot
+gseaplot2               gseaplot2
+gsearank                gsearank
+heatplot                heatplot
+hplot                   hplot
+manhattanplot           manhattanplot
+pairwise_termsim        pairwise_termsim
+plotting.clusterProfile
+                        Internal plot function for plotting
+                        compareClusterResult
+pmcplot                 pmcplot
+ridgeplot               ridgeplot
+set_enrichplot_color    Helper function to set color scale for
+                        enrichplot
+ssplot                  ssplot
+treeplot                treeplot
+upsetplot               upsetplot method
+volplot                 volplot

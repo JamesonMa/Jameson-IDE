@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html>
+<head><title>R: High-performance sparse data representation and manipulation in
+R</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" type="text/css" href="R.css">
+</head><body><div class="container">
+<h1> High-performance sparse data representation and manipulation in
+R
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]">
+</h1>
+<hr>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]"></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]"></a>
+</div><h2>Documentation for package &lsquo;SparseArray&rsquo; version 1.12.2</h2>
+
+<ul><li><a href="../DESCRIPTION" type="text/plain; charset=utf-8">DESCRIPTION file</a></li>
+<li><a href="../doc/index.html">User guides, package vignettes and other documentation</a></li>
+<li><a href="../NEWS">Package NEWS</a></li>
+<li><a href="../README.md">Package README</a></li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<p style="text-align: center;">
+<a href="#A">A</a>
+<a href="#B">B</a>
+<a href="#C">C</a>
+<a href="#D">D</a>
+<a href="#E">E</a>
+<a href="#G">G</a>
+<a href="#I">I</a>
+<a href="#L">L</a>
+<a href="#M">M</a>
+<a href="#N">N</a>
+<a href="#P">P</a>
+<a href="#R">R</a>
+<a href="#S">S</a>
+<a href="#T">T</a>
+<a href="#V">V</a>
+<a href="#W">W</a>
+<a href="#misc">misc</a>
+</p>
+
+
+<h2><a id="A">-- A --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">abind-method</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">abind-method</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">anyNA-method</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">anyNA-method</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">aperm-method</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">aperm-method</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">aperm.COO_SparseArray</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">aperm.NaArray</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">aperm.SVT_SparseArray</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">Arith-method</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">Arith-method</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">as.array-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">as.array-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">as.array-method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">as.array.COO_SparseArray</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">as.array.NaArray</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">as.array.SVT_SparseArray</a></td>
+<td>SVT_SparseArray objects</td></tr>
+</table>
+
+<h2><a id="B">-- B --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">bindROWS-method</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">bindROWS-method</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+</table>
+
+<h2><a id="C">-- C --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">cbind-method</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">cbind-method</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">class:COO_SparseArray</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">class:COO_SparseMatrix</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">class:NaArray</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">class:NaMatrix</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">class:NULL_OR_list</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">class:SparseArray</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">class:SparseMatrix</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">class:SVT_SparseArray</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">class:SVT_SparseMatrix</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">coerce-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">coerce-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">coerce-method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colAlls</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colAlls-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colAlls-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colAnyNAs</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colAnyNAs-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colAnyNAs-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colAnys</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colAnys-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colAnys-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMaxs</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colMaxs-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMaxs-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMeans</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colMeans-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMeans-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMeans2</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colMeans2-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMeans2-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMedians</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMedians-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMins</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colMins-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colMins-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colProds</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colProds-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colProds-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colRanges</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colRanges-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colRanges-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colSds</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colSds-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colSds-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">colsum</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">colsum-method</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colSums</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colSums-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colSums-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colSums2</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colSums2-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colSums2-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colVars</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">colVars-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">colVars-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">Compare-method</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">Compare-method</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">Complex-method</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">COO_SparseArray</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">COO_SparseArray-class</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">COO_SparseMatrix</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">COO_SparseMatrix-class</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">crossprod</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">crossprod-method</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+</table>
+
+<h2><a id="D">-- D --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-class.html">dim-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">dim-method</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">dimnames-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">dimnames-method</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">dimnames&lt;--method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">dimnames&lt;--method</a></td>
+<td>SparseArray objects</td></tr>
+</table>
+
+<h2><a id="E">-- E --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-subsetting.html">extract_array-method</a></td>
+<td>Subsetting an NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-subsetting.html">extract_array-method</a></td>
+<td>Subsetting a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-subsetting.html">extract_na_array</a></td>
+<td>Subsetting an NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-subsetting.html">extract_na_array-method</a></td>
+<td>Subsetting an NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-subsetting.html">extract_sparse_array-method</a></td>
+<td>Subsetting a SparseArray object</td></tr>
+</table>
+
+<h2><a id="G">-- G --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="thread-control.html">get_SparseArray_nthread</a></td>
+<td>Number of threads used by SparseArray operations</td></tr>
+</table>
+
+<h2><a id="I">-- I --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">is.infinite</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-misc-methods.html">is.infinite-method</a></td>
+<td>Miscellaneous operations on a NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">is.infinite-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">is.na</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-misc-methods.html">is.na-method</a></td>
+<td>Miscellaneous operations on a NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">is.na-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">is.nan</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-misc-methods.html">is.nan-method</a></td>
+<td>Miscellaneous operations on a NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">is.nan-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">is_nonna</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">is_nonna-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">is_nonna-method</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">is_nonzero</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">is_nonzero-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">is_nonzero-method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">is_nonzero-method</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">is_sparse-method</a></td>
+<td>SparseArray objects</td></tr>
+</table>
+
+<h2><a id="L">-- L --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">Logic-method</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">Logic-method</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+</table>
+
+<h2><a id="M">-- M --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">Math-method</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">Math-method</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">Math2-method</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">Math2-method</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">mean-method</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">mean-method</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">mean.NaArray</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">mean.SparseArray</a></td>
+<td>SparseArray summarization methods</td></tr>
+</table>
+
+<h2><a id="N">-- N --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-class.html">NaArray</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">NaArray-abind</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">NaArray-aperm</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray-Arith</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray-arith</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray-Arith-methods</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray-arith-methods</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">NaArray-class</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">NaArray-combine</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray-Compare</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray-compare</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray-Compare-methods</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray-compare-methods</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray-Logic</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray-logic</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray-Logic-methods</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray-logic-methods</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-Math</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-math</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-Math-methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-math-methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-Math2</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-math2</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-Math2-methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray-math2-methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">NaArray-matrixStats</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-misc-methods.html">NaArray-misc</a></td>
+<td>Miscellaneous operations on a NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-misc-methods.html">NaArray-misc-methods</a></td>
+<td>Miscellaneous operations on a NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-subassignment.html">NaArray-subassignment</a></td>
+<td>NaArray subassignment</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-subsetting.html">NaArray-subsetting</a></td>
+<td>Subsetting an NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">NaArray-summarization</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">NaArray-transposition</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">NaArray_abind</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">NaArray_aperm</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray_Arith</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray_arith</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray_Arith-methods</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">NaArray_arith-methods</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">NaArray_combine</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray_Compare</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray_compare</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray_Compare-methods</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Compare-methods.html">NaArray_compare-methods</a></td>
+<td>'Compare' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray_Logic</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray_logic</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray_Logic-methods</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">NaArray_logic-methods</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_Math</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_math</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_Math2</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_math2</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_Math2_methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_math2_methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_Math_methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">NaArray_math_methods</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">NaArray_matrixStats</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-misc-methods.html">NaArray_misc</a></td>
+<td>Miscellaneous operations on a NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-misc-methods.html">NaArray_misc_methods</a></td>
+<td>Miscellaneous operations on a NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-subassignment.html">NaArray_subassignment</a></td>
+<td>NaArray subassignment</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-subsetting.html">NaArray_subsetting</a></td>
+<td>Subsetting an NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">NaArray_summarization</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">NaArray_transposition</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">NaMatrix</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">NaMatrix-class</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">nchar</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">nchar-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnacount</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">nnacount-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnacount-method</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnavals</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">nnavals-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnavals-method</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnavals&lt;-</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnavals&lt;--method</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnawhich</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">nnawhich-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonna.html">nnawhich-method</a></td>
+<td>is_nonna() and the nna*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">NULL_OR_list</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">NULL_OR_list-class</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzcoo</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzcoo-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzcount</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzcount-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">nzcount-method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzcount-method</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzdata</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzdata-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzvals</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzvals-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">nzvals-method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzvals-method</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzvals&lt;-</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzvals&lt;--method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzvals&lt;--method</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzwhich</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">nzwhich-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">nzwhich-method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">nzwhich-method</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+</table>
+
+<h2><a id="P">-- P --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">pmax</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">pmax-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">pmin</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">pmin-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="randomSparseArray.html">poissonSparseArray</a></td>
+<td>Random SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="randomSparseArray.html">poissonSparseMatrix</a></td>
+<td>Random SparseArray object</td></tr>
+</table>
+
+<h2><a id="R">-- R --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="randomSparseArray.html">randomSparseArray</a></td>
+<td>Random SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="randomSparseArray.html">randomSparseMatrix</a></td>
+<td>Random SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">range-method</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">range-method</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">range.COO_SparseArray</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">range.NaArray</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">range.SVT_SparseArray</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-abind.html">rbind-method</a></td>
+<td>Combine multidimensional NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">rbind-method</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="readSparseCSV.html">readSparseCSV</a></td>
+<td>Read/write a sparse matrix from/to a CSV file</td></tr>
+<tr><td style="width: 25%;"><a href="readSparseCSV.html">readSparseTable</a></td>
+<td>Read/write a sparse matrix from/to a CSV file</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">round-method</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">round-method</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowAlls</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowAlls-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowAnyNAs</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">rowAnyNAs-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowAnyNAs-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowAnys</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowAnys-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMaxs</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">rowMaxs-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMaxs-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMeans</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMeans-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMeans2</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMeans2-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMedians</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMedians-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMins</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">rowMins-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowMins-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowProds</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowProds-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowRanges</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">rowRanges-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowRanges-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowSds</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowSds-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">rowsum</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">rowsum-method</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">rowsum-methods</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">rowsum.dsparseMatrix</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">rowsum.SparseMatrix</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowSums</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">rowSums-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowSums-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowSums2</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-matrixStats.html">rowSums2-method</a></td>
+<td>NaArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowSums2-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="rowsum-methods.html">rowsum_methods</a></td>
+<td>rowsum() methods for sparse matrices</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowVars</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">rowVars-method</a></td>
+<td>SparseArray col/row summarization</td></tr>
+</table>
+
+<h2><a id="S">-- S --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">sd-method</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">sd-method</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="thread-control.html">set_SparseArray_nthread</a></td>
+<td>Number of threads used by SparseArray operations</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">show-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">show-method</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Math-methods.html">signif-method</a></td>
+<td>'Math' and 'Math2' methods for NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">signif-method</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">SparseArray</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">SparseArray-abind</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">SparseArray-aperm</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray-Arith</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray-arith</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray-Arith-methods</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray-arith-methods</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">SparseArray-class</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">SparseArray-combine</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray-Compare</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray-compare</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray-Compare-methods</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray-compare-methods</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray-Complex</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray-complex</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray-Complex-methods</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray-complex-methods</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray-Logic</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray-logic</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray-Logic-methods</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray-logic-methods</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-Math</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-math</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-Math-methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-math-methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-Math2</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-math2</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-Math2-methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray-math2-methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">SparseArray-matrixStats</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">SparseArray-misc</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">SparseArray-misc-methods</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-subassignment.html">SparseArray-subassignment</a></td>
+<td>SparseArray subassignment</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-subsetting.html">SparseArray-subsetting</a></td>
+<td>Subsetting a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">SparseArray-summarization</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">SparseArray-transposition</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">SparseArray_abind</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">SparseArray_aperm</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray_Arith</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray_arith</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray_Arith-methods</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">SparseArray_arith-methods</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-abind.html">SparseArray_combine</a></td>
+<td>Combine multidimensional SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray_Compare</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray_compare</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray_Compare-methods</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Compare-methods.html">SparseArray_compare-methods</a></td>
+<td>'Compare' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray_Complex</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray_complex</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray_Complex_methods</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Complex-methods.html">SparseArray_complex_methods</a></td>
+<td>'Complex' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray_Logic</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray_logic</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray_Logic-methods</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">SparseArray_logic-methods</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_Math</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_math</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_Math2</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_math2</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_Math2_methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_math2_methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_Math_methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Math-methods.html">SparseArray_math_methods</a></td>
+<td>'Math' and 'Math2' methods for SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-matrixStats.html">SparseArray_matrixStats</a></td>
+<td>SparseArray col/row summarization</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">SparseArray_misc</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">SparseArray_misc_methods</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-subassignment.html">SparseArray_subassignment</a></td>
+<td>SparseArray subassignment</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-subsetting.html">SparseArray_subsetting</a></td>
+<td>Subsetting a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">SparseArray_summarization</a></td>
+<td>SparseArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">SparseArray_transposition</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">SparseMatrix</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-class.html">SparseMatrix-class</a></td>
+<td>SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">SparseMatrix-mult</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">SparseMatrix_mult</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+<tr><td style="width: 25%;"><a href="is_nonzero.html">sparsity</a></td>
+<td>is_nonzero() and the nz*() functions</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">SVT_SparseArray</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">SVT_SparseArray-class</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">SVT_SparseMatrix</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">SVT_SparseMatrix-class</a></td>
+<td>SVT_SparseArray objects</td></tr>
+</table>
+
+<h2><a id="T">-- T --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">t-method</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">t-method</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-aperm.html">t.NaMatrix</a></td>
+<td>NaArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-aperm.html">t.SVT_SparseMatrix</a></td>
+<td>SparseArray transposition</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">tcrossprod</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">tcrossprod-method</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+<tr><td style="width: 25%;"><a href="thread-control.html">thread-control</a></td>
+<td>Number of threads used by SparseArray operations</td></tr>
+<tr><td style="width: 25%;"><a href="thread-control.html">thread_control</a></td>
+<td>Number of threads used by SparseArray operations</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">tolower</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">tolower-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">toupper</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-misc-methods.html">toupper-method</a></td>
+<td>Miscellaneous operations on a SparseArray object</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-subsetting.html">tune_Array_dims-method</a></td>
+<td>Subsetting an NaArray object</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">type-method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">type-method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">type-method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="COO_SparseArray-class.html">type&lt;--method</a></td>
+<td>COO_SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-class.html">type&lt;--method</a></td>
+<td>NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SVT_SparseArray-class.html">type&lt;--method</a></td>
+<td>SVT_SparseArray objects</td></tr>
+</table>
+
+<h2><a id="V">-- V --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-summarization.html">var-method</a></td>
+<td>NaArray summarization methods</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-summarization.html">var-method</a></td>
+<td>SparseArray summarization methods</td></tr>
+</table>
+
+<h2><a id="W">-- W --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="readSparseCSV.html">writeSparseCSV</a></td>
+<td>Read/write a sparse matrix from/to a CSV file</td></tr>
+</table>
+
+<h2><a id="misc">-- misc --</a></h2>
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="NaArray-Logic-methods.html">!-method</a></td>
+<td>'Logic' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Logic-methods.html">!-method</a></td>
+<td>'Logic' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">%*%</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+<tr><td style="width: 25%;"><a href="SparseMatrix-mult.html">%*%-method</a></td>
+<td>SparseMatrix multiplication and cross-product</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">+-method</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">+-method</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="NaArray-Arith-methods.html">--method</a></td>
+<td>'Arith' operations on NaArray objects</td></tr>
+<tr><td style="width: 25%;"><a href="SparseArray-Arith-methods.html">--method</a></td>
+<td>'Arith' operations on SparseArray objects</td></tr>
+</table>
+</div></body></html>

@@ -1,0 +1,13 @@
+cnetplot                category-item network plot
+drag_network            Drag the nodes of a network to update the
+                        layout of the network
+geom_cnet_label         geom_cnet_label
+geom_edge               layer to draw edges of a network
+geom_edge_interactive   layer to draw edges of a network interactively
+geom_edge_text          layer to draw edge labels of a network
+geom_edge_text_interactive
+                        layer to draw edge labels of a network
+                        interactively
+layout_circular         Circular layout
+layout_fishbone         Glycan Layout Algorithm (Fishbone/SNFG-like)
+layout_linear           Linear layout

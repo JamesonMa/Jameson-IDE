@@ -1,0 +1,15 @@
+cigar_extent            Calculate the number of positions spanned by a
+                        CIGAR string
+cigar_ops_visibility    Visibility of CIGAR operations
+cigarillo-package       Efficient manipulation of CIGAR strings
+cigars_as_ranges        Turn CIGAR strings into ranges of positions
+explode_cigars          Explode CIGAR strings
+map_ref_ranges_to_query
+                        Map ranges relative to reference space to query
+                        space
+project_positions       Project positions from query to reference space
+                        and vice versa
+project_sequences       Project sequences from one space to the other
+tabulate_cigar_ops      Tabulate CIGAR operations
+trim_cigars             Trim CIGAR strings along the reference or query
+                        space

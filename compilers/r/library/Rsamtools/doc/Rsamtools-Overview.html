@@ -1,0 +1,725 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>An Introduction to Rsamtools</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">An Introduction to Rsamtools</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Many users will find that the <em><a href="https://bioconductor.org/packages/3.23/GenomicAlignments">GenomicAlignments</a></em>
+package provides a more useful representation of <code>BAM</code> files
+in <em>R</em>; the <em><a href="https://bioconductor.org/packages/3.23/GenomicFiles">GenomicFiles</a></em>
+package is also useful for iterating through <code>BAM</code> files.</p>
+<p>The <em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>
+package provides an interface to <code>BAM</code> files.
+<code>BAM</code> files are produced by <em>samtools</em> and other
+software, and represent a flexible format for storing ‘short’ reads
+aligned to reference genomes. <code>BAM</code> files typically contain
+sequence and base qualities, and alignment coordinates and quality
+measures. <code>BAM</code> files are appealing for several reasons. The
+format is flexible enough to represent reads generated and aligned using
+diverse technologies. The files are binary so that file access is
+relatively efficient. <code>BAM</code> files can be indexed, allowing
+ready access to localized chromosomal regions. <code>BAM</code> files
+can be accessed remotely, provided the remote hosting site supports such
+access and a local index is available. This means that specific regions
+of remote files can be accessed without retrieving the entire (large!)
+file. A full description is available in the <code>BAM</code> format
+specification (<a href="http://samtools.sourceforge.net/SAM1.pdf" class="uri">http://samtools.sourceforge.net/SAM1.pdf</a>)</p>
+<p>The main purpose of the <em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>
+is to import <code>BAM</code> files into <em>R</em>.<em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>
+also provides some facility for file access such as record counting,
+index file creation, and filtering to create new files containing
+subsets of the original. An important use case for <em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>
+is as a starting point for creating objects suitable for a diversity of
+work flows, e.g., <em>AlignedRead</em> objects in the <em><a href="https://bioconductor.org/packages/3.23/ShortRead">ShortRead</a></em>
+package (for quality assessment and read manipulation), or
+<em>GAlignments</em> objects in <em><a href="https://bioconductor.org/packages/3.23/GenomicAlignments">GenomicAlignments</a></em>
+package (for RNA-seq and other applications). Those desiring more
+functionality are encouraged to explore <em>samtools</em> and related
+software efforts.</p>
+</div>
+<div id="input" class="section level1">
+<h1>Input</h1>
+<div id="rfunctionscanbam-and-scanbamparam" class="section level2">
+<h2>RfunctionscanBam and <code>ScanBamParam</code></h2>
+<p>The essential capability provided by <em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>
+is <code>BAM</code> input. This is accomplished with the
+<code>scanBam</code> function. <code>scanBam</code> takes as input the
+name of the <code>BAM</code> file to be parsed. In addition, the
+<code>param</code> argument determines which genomic coordinates of the
+<code>BAM</code> file, and what components of each record, will be
+input. <em>R</em>param is an instance of the <em>ScanBamParam</em>
+class. To create a <em>param</em> object, call
+<code>ScanBamParam</code>. Here we create a <code>param</code> object to
+extract reads aligned to three distinct ranges (one on
+<code>seq1</code>, two on <code>seq2</code>). From each of read in those
+ranges, we specify that we would like to extract the reference name
+(<code>rname</code>, e.g., <code>seq1</code> ), strand, alignment
+position, query (i.e., read) width, and query sequence:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>which <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(<span class="fu">c</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>    <span class="st">&quot;seq1:1000-2000&quot;</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>    <span class="st">&quot;seq2:100-1000&quot;</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>    <span class="st">&quot;seq2:1000-2000&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>))</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="do">## equivalent:</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="do">## GRanges(</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="do">##     seqnames = c(&quot;seq1&quot;, &quot;seq2&quot;, &quot;seq2&quot;),</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="do">##     ranges = IRanges(</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="do">##         start = c(1000, 100, 1000),</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="do">##         end = c(2000, 1000, 2000)</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="do">##     )</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="do">## )</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>what <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;rname&quot;</span>, <span class="st">&quot;strand&quot;</span>, <span class="st">&quot;pos&quot;</span>, <span class="st">&quot;qwidth&quot;</span>, <span class="st">&quot;seq&quot;</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">ScanBamParam</span>(<span class="at">which=</span>which, <span class="at">what=</span>what)</span></code></pre></div>
+<p>Additional information can be found on the help page for
+<code>ScanBamParam</code>. Reading the relevant records from the
+<code>BAM</code> file is accomplished with</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>bamFile <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;ex1.bam&quot;</span>, <span class="at">package=</span><span class="st">&quot;Rsamtools&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>bam <span class="ot">&lt;-</span> <span class="fu">scanBam</span>(bamFile, <span class="at">param=</span>param)</span></code></pre></div>
+<p>Like <code>scan</code>, <code>scanBam</code> returns a
+<code>list</code> of values. Each element of the list corresponds to a
+range specified by the <code>which</code> argument to
+<code>ScanBamParam</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">class</span>(bam)</span></code></pre></div>
+<pre><code>## [1] &quot;list&quot;</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">names</span>(bam)</span></code></pre></div>
+<pre><code>## [1] &quot;seq1:1000-2000&quot; &quot;seq2:100-1000&quot;  &quot;seq2:1000-2000&quot;</code></pre>
+<p>Each element is itself a list, containing the elements specified by
+the <code>what</code> and <code>tag</code> arguments to
+<code>ScanBamParam</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">class</span>(bam[[<span class="dv">1</span>]])</span></code></pre></div>
+<pre><code>## [1] &quot;list&quot;</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">names</span>(bam[[<span class="dv">1</span>]])</span></code></pre></div>
+<pre><code>## [1] &quot;rname&quot;  &quot;strand&quot; &quot;pos&quot;    &quot;qwidth&quot; &quot;seq&quot;</code></pre>
+<p>The elements are either basic <em>R</em> or <em>IRanges</em> data
+types</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">sapply</span>(bam[[<span class="dv">1</span>]], class)</span></code></pre></div>
+<pre><code>##          rname         strand            pos         qwidth            seq 
+##       &quot;factor&quot;       &quot;factor&quot;      &quot;integer&quot;      &quot;integer&quot; &quot;DNAStringSet&quot;</code></pre>
+<p>A paradigm for collapsing the list-of-lists into a single list is</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>.unlist <span class="ot">&lt;-</span> <span class="cf">function</span> (x)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>{</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>    <span class="do">## do.call(c, ...) coerces factor to integer, which is undesired</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>    x1 <span class="ot">&lt;-</span> x[[<span class="dv">1</span><span class="dt">L</span>]]</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.factor</span>(x1)) {</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>        <span class="fu">structure</span>(<span class="fu">unlist</span>(x), <span class="at">class =</span> <span class="st">&quot;factor&quot;</span>, <span class="at">levels =</span> <span class="fu">levels</span>(x1))</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>        <span class="fu">do.call</span>(c, x)</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    }</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>}</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>bam <span class="ot">&lt;-</span> <span class="fu">unname</span>(bam) <span class="co"># names not useful in unlisted result</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>elts <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">bamWhat</span>(param), <span class="fu">bamWhat</span>(param))</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>lst <span class="ot">&lt;-</span> <span class="fu">lapply</span>(elts, <span class="cf">function</span>(elt) <span class="fu">.unlist</span>(<span class="fu">lapply</span>(bam, <span class="st">&quot;[[&quot;</span>, elt)))</span></code></pre></div>
+<p>This might be further transformed, e.g., to a <em>DataFrame</em>,
+with</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">do.call</span>(<span class="st">&quot;DataFrame&quot;</span>, lst))</span></code></pre></div>
+<pre><code>## DataFrame with 6 rows and 5 columns
+##      rname   strand       pos    qwidth                     seq
+##   &lt;factor&gt; &lt;factor&gt; &lt;integer&gt; &lt;integer&gt;          &lt;DNAStringSet&gt;
+## 1     seq1        +       970        35 TATTAGGAAA...ACTATGAAGA
+## 2     seq1        +       971        35 ATTAGGAAAT...CTATGAAGAG
+## 3     seq1        +       972        35 TTAGGAAATG...TATGAAGAGA
+## 4     seq1        +       973        35 TAGGAAATGC...ATGAAGAGAC
+## 5     seq1        +       974        35 AGGAAATGCT...TGAAGAGACT
+## 6     seq1        -       975        35 GGAAATGCTT...GAAGAGACTA</code></pre>
+<p>Often, an alternative is to use a <em>ScanBamParam</em> object with
+desired fields specified in <code>what</code> as an argument to
+<code>GenomicAlignments::readGAlignments</code>; the specified fields
+are added as columns to the returned <em>GAlignments</em> .</p>
+</div>
+<div id="using-bam-index-files" class="section level2">
+<h2>Using <code>BAM</code> index files</h2>
+<p>The <code>BAM</code> file in the previous example includes an index,
+represented by a separate file with extension <code>.bai</code>:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">list.files</span>(<span class="fu">dirname</span>(bamFile), <span class="at">pattern=</span><span class="st">&quot;ex1.bam(.bai)?&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;ex1.bam&quot;     &quot;ex1.bam.bai&quot;</code></pre>
+<p>Indexing provides two significant benefits. First, an index allows a
+<code>BAM</code> file to be efficiently accessed by range. A corollary
+is that providing a <code>which</code> argument to
+<code>scanBamPram</code> requires an index. Second, coordinates for
+extracting information from a <code>BAM</code> file can be derived from
+the index, so a portion of a remote <code>BAM</code> file can be
+retrieved with local access only to the index. For instance, provided an
+index file exists on the local computer, it is possible to retrieve a
+small portion of a <code>BAM</code> file residing on the 1000 genomes
+HTTP server. The url <a href="ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/pilot_data/data/NA19240/alignment/NA19240.chrom6.SLX.maq.SRP000032.2009_07.bam" class="uri">ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/pilot_data/data/NA19240/alignment/NA19240.chrom6.SLX.maq.SRP000032.2009_07.bam</a>
+points to the <code>BAM</code> file corresponding to individual NA19240
+chromosome 6 Solexa (Illumina) sequences aligned using MAQ. The remote
+file is very large (about 10 GB), but the corresponding index file is
+small (about 500 KB). With <code>na19240url</code> set to the above
+address, the following retrieves just those reads in the specified
+range</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>which <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(<span class="st">&quot;6:100000-110000&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">ScanBamParam</span>(<span class="at">which=</span>which, <span class="at">what=</span><span class="fu">scanBamWhat</span>())</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>na19240bam <span class="ot">&lt;-</span> <span class="fu">scanBam</span>(na19240url, <span class="at">param=</span>param)</span></code></pre></div>
+<p>Invoking <code>scanBam</code> without an index file, as above, first
+retrieves the index file from the remote location, and then queries the
+remote file using the index; for repeated queries, it is more efficient
+to retrieve the index file first (e.g., with <code>download.file</code>)
+and then use the local index as an argument to <code>scanBam</code>.
+Many <code>BAM</code> files were created in a way that causes
+<code>scanBam</code> to report that the “EOF marker is absent”; this
+message can safely be ignored.</p>
+</div>
+<div id="other-ways-to-work-with-bam-files" class="section level2">
+<h2>Other ways to work with <code>BAM</code> files</h2>
+<p><code>BAM</code> files may be read by functions in packages other
+than <em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>,
+in particular the <code>readGAlignments</code> family of functions in
+<em><a href="https://bioconductor.org/packages/3.23/GenomicAlignments">GenomicAlignments</a></em>.</p>
+<p>Additional ways of interacting with <code>BAM</code> files include
+<code>scanBamHeader</code> (to extract header information) and
+<code>countBam</code> (to count records matching <code>param</code>).
+<code>filterBam</code> filters reads from the source file according to
+the criteria of the <em>ScanBamParam</em> parameter, writing reads
+passing the filter to a new file. The function sorts a previously
+unsorted <code>BAM</code>, while The function <code>indexBam</code>
+creates an index file from a sorted <code>BAM</code> file.
+<code>readPileup</code> reads a <code>pileup</code> file created by ,
+importing SNP, indel, or all variants into a <em>GRanges</em>
+object.</p>
+</div>
+<div id="large-bam-files" class="section level2">
+<h2>Large bam files</h2>
+<p><code>BAM</code> files can be large, containing more information on
+more genomic regions than are of immediate interest or than can fit in
+memory. The first strategy for dealing with this is to select, using the
+<code>what</code> and <code>which</code> arguments to
+<code>scanBamParam</code>, just those portions of the <code>BAM</code>
+file that are essential to the current analysis, e.g., specifying
+<code>what=c(&#39;rname&#39;, &#39;qname&#39;, &#39;pos&#39;)</code> when wishing to calculate
+coverage of ungapped reads.</p>
+<p>When selective input of <code>BAM</code> files is still too
+memory-intensive, the file can be processed in chunks, with each chunk
+distilled to the derived information of interest. Chromosomes will often
+be the natural chunk to process. For instance, here we write a summary
+function that takes a single sequence name (chromosome) as input, reads
+in specific information from the <code>BAM</code> file, and calculates
+coverage over that sequence.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>summaryFunction <span class="ot">&lt;-</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>    <span class="cf">function</span>(seqname, bamFile, ...)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>{</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>    param <span class="ot">&lt;-</span> <span class="fu">ScanBamParam</span>(</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>        <span class="at">what=</span><span class="fu">c</span>(<span class="st">&#39;pos&#39;</span>, <span class="st">&#39;qwidth&#39;</span>),</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>        <span class="at">which=</span><span class="fu">GRanges</span>(seqname, <span class="fu">IRanges</span>(<span class="dv">1</span>, <span class="fl">1e7</span>)),</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>        <span class="at">flag=</span><span class="fu">scanBamFlag</span>(<span class="at">isUnmappedQuery=</span><span class="cn">FALSE</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>    )</span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>    x <span class="ot">&lt;-</span> <span class="fu">scanBam</span>(bamFile, ..., <span class="at">param=</span>param)[[<span class="dv">1</span>]]</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>    <span class="fu">coverage</span>(<span class="fu">IRanges</span>(x[[<span class="st">&quot;pos&quot;</span>]], <span class="at">width=</span>x[[<span class="st">&quot;qwidth&quot;</span>]]))</span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>}</span></code></pre></div>
+<p>This might be used as follows; it is an ideal candidate for
+evaluation in parallel, e.g., using the <em>parallel</em> package and
+<code>srapply</code> function in <em><a href="https://bioconductor.org/packages/3.23/ShortRead">ShortRead</a></em>.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>seqnames <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;seq&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">sep=</span><span class="st">&quot;&quot;</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>cvg <span class="ot">&lt;-</span> <span class="fu">lapply</span>(seqnames, summaryFunction, bamFile)</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="fu">names</span>(cvg) <span class="ot">&lt;-</span> seqnames</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>cvg</span></code></pre></div>
+<pre><code>## $seq1
+## integer-Rle of length 1569 with 1054 runs
+##   Lengths:  2  2  1  3  4  2  3  4  2  4  1 ...  1  2  1  1  1  1  1  1  1  1
+##   Values :  1  2  3  4  5  7  8  9 11 12 13 ... 13 12 10  9  7  6  5  3  2  1
+## 
+## $seq2
+## integer-Rle of length 1567 with 1092 runs
+##   Lengths:  1  3  1  1  1  3  1  4  1  1  6 ...  1  1  1  1  1  2  1  4  4  1
+##   Values :  3  4  5  8 12 14 15 16 17 18 19 ... 15 14 13 10  8  7  6  3  2  1</code></pre>
+<p>The result of the function (a coverage vector, in this case) will
+often be much smaller than the input. The <em><a href="https://bioconductor.org/packages/3.23/GenomicFiles">GenomicFiles</a></em>
+package implements strategies for iterating through <code>BAM</code> and
+other files, including in parallel.</p>
+</div>
+</div>
+<div id="views" class="section level1">
+<h1>Views</h1>
+<p>The functions described in the previous section import data in to
+<em>R</em>. However, sequence data can be very large, and it does not
+always make sense to read the data in immediately. Instead, it can be
+useful to marshal <em>references</em> to the data into a container and
+then act on components of the container. The <em>BamViews</em> class
+provides a mechanism for creating ‘views’ into a set of <code>BAM</code>
+files. The view itself is light-weight, containing references to the
+relevant <code>BAM</code> files and metadata about the view (e.g., the
+phenotypic samples corresponding to each <code>BAM</code> file).</p>
+<p>One way of understanding a instance is as a rectangular data
+structure. The columns represent <code>BAM</code> files (e.g., distinct
+samples). The rows represent ranges (i.e., genomic coordinates). For
+instance, a ChIP-seq experiment might identify a number of peaks of high
+read counts.</p>
+<div id="assembling-a-bamviews-instance" class="section level2">
+<h2>Assembling a <em>BamViews</em> instance</h2>
+<p>To illustrate, suppose we have an interest in caffeine metabolism in
+humans. The ‘rows’ contain coordinates of genomic regions associated
+with genes in a KEGG caffeine metabolism pathway. The ‘columns’
+represent individuals in the 1000 genomes project.</p>
+<p>To create the ‘rows’, we identify possible genes that KEGG associates
+with caffeine metabolism. Using the <em><a href="https://bioconductor.org/packages/3.23/KEGGREST">KEGGREST</a></em>
+package, the steps are</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="do">## uses KEGGREST, dplyr, and tibble packages</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>org <span class="ot">&lt;-</span> <span class="st">&quot;hsa&quot;</span></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>caffeine_pathway <span class="ot">&lt;-</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>    KEGGREST<span class="sc">::</span><span class="fu">keggList</span>(<span class="st">&quot;pathway&quot;</span>, org) </span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>    tibble<span class="sc">::</span><span class="fu">enframe</span>(<span class="at">name =</span> <span class="st">&quot;pathway_id&quot;</span>, <span class="at">value =</span> <span class="st">&quot;pathway&quot;</span>) </span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="fu">startsWith</span>(.data<span class="sc">$</span>pathway, <span class="st">&quot;Caffeine metabolism&quot;</span>))</span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>egid <span class="ot">&lt;-</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>    KEGGREST<span class="sc">::</span><span class="fu">keggLink</span>(org, <span class="st">&quot;pathway&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>    tibble<span class="sc">::</span><span class="fu">enframe</span>(<span class="at">name =</span> <span class="st">&quot;pathway_id&quot;</span>, <span class="at">value =</span> <span class="st">&quot;gene_id&quot;</span>) </span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">left_join</span>(<span class="at">x =</span> caffeine_pathway, <span class="at">by =</span> <span class="st">&quot;pathway_id&quot;</span>) </span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">gene_id =</span> <span class="fu">sub</span>(<span class="st">&quot;hsa:&quot;</span>, <span class="st">&quot;&quot;</span>, gene_id)) </span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>    <span class="fu">pull</span>(gene_id)</span></code></pre></div>
+<p>At the time of writing, genes in the caffeine metabolism pathway
+are</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>egid <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;10&quot;</span>, <span class="st">&quot;1544&quot;</span>, <span class="st">&quot;1548&quot;</span>, <span class="st">&quot;1549&quot;</span>, <span class="st">&quot;7498&quot;</span>, <span class="st">&quot;9&quot;</span>)</span></code></pre></div>
+<p>Then we use the appropriate <em><a href="https://bioconductor.org/packages/3.23/TxDb">TxDb</a></em> package
+to translate Entrez identifiers to obtain ranges of interest (one could
+also use <em><a href="https://bioconductor.org/packages/3.23/biomaRt">biomaRt</a></em>
+to retrieve coordinates for non-model organisms, perhaps making a
+<code>TxDb</code> object as outlined in the <em><a href="https://bioconductor.org/packages/3.23/GenomicFeatures">GenomicFeatures</a></em>
+vignette). We’ll find that the names used for chromosomes in the
+alignments differ from those used at Ensembl, so
+<code>seqlevels&lt;-</code> is used to map between naming schemes and to
+drop unused levels.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">library</span>(TxDb.Hsapiens.UCSC.hg18.knownGene)</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>bamRanges <span class="ot">&lt;-</span> <span class="fu">transcripts</span>(</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>    TxDb.Hsapiens.UCSC.hg18.knownGene,</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>    <span class="at">filter=</span><span class="fu">list</span>(<span class="at">gene_id=</span>egid)</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>)</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a><span class="fu">seqlevels</span>(bamRanges) <span class="ot">&lt;-</span>                 <span class="co"># translate seqlevels</span></span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a>    <span class="fu">sub</span>(<span class="st">&quot;chr&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">seqlevels</span>(bamRanges))</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>lvls <span class="ot">&lt;-</span> <span class="fu">seqlevels</span>(bamRanges)            <span class="co"># drop unused levels</span></span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a><span class="fu">seqlevels</span>(bamRanges) <span class="ot">&lt;-</span> lvls[lvls <span class="sc">%in%</span> <span class="fu">as.character</span>(<span class="fu">seqnames</span>(bamRanges))]</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>bamRanges</span></code></pre></div>
+<pre><code>## GRanges object with 18 ranges and 2 metadata columns:
+##        seqnames            ranges strand |     tx_id     tx_name
+##           &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;character&gt;
+##    [1]        2 31410692-31491115      - |      9095  uc002rnv.1
+##    [2]        8 18111895-18125100      + |     26333  uc003wyq.1
+##    [3]        8 18111895-18125100      + |     26334  uc003wyr.1
+##    [4]        8 18111895-18125100      + |     26335  uc003wys.1
+##    [5]        8 18113074-18125100      + |     26336  uc003wyt.1
+##    ...      ...               ...    ... .       ...         ...
+##   [14]       19 46042667-46048192      - |     57448  uc010ehe.1
+##   [15]       19 46043701-46048191      - |     57449  uc010ehf.1
+##   [16]       19 46073184-46080497      - |     57450  uc002opm.1
+##   [17]       19 46073184-46080497      - |     57451  uc002opn.1
+##   [18]       19 46073184-46226008      - |     57452  uc002opo.1
+##   -------
+##   seqinfo: 4 sequences from hg18 genome</code></pre>
+<p>The <code>bamRanges</code> ‘knows’ the genome for which the ranges
+are defined</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">unique</span>(<span class="fu">genome</span>(bamRanges))</span></code></pre></div>
+<pre><code>## [1] &quot;hg18&quot;</code></pre>
+<p>Here we retrieve a vector of <code>BAM</code> file URLs
+(<code>slxMaq09</code>) from the package.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a>slxMaq09 <span class="ot">&lt;-</span> <span class="fu">local</span>({</span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a>    fl <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;slxMaq09_urls.txt&quot;</span>, <span class="at">package=</span><span class="st">&quot;Rsamtools&quot;</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>    <span class="fu">readLines</span>(fl)</span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a>})</span></code></pre></div>
+<p>We now assemble the <em>BamViews</em> instance from these objects; we
+also provide information to annotated the <code>BAM</code> files (with
+the <code>bamSamples</code> function argument, which is a
+<em>DataFrame</em> instance with each row corresponding to a
+<code>BAM</code> file) and the instance as a whole (with
+<code>bamExperiment</code>, a simple named <em>list</em> containing
+information structured as the user sees fit).</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>bamExperiment <span class="ot">&lt;-</span></span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">description=</span><span class="st">&quot;Caffeine metabolism views on 1000 genomes samples&quot;</span>,</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>         <span class="at">created=</span><span class="fu">date</span>())</span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>bv <span class="ot">&lt;-</span> <span class="fu">BamViews</span>(</span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a>    slxMaq09, <span class="at">bamRanges=</span>bamRanges, <span class="at">bamExperiment=</span>bamExperiment</span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>)</span>
+<span id="cb29-7"><a href="#cb29-7" tabindex="-1"></a><span class="fu">metadata</span>(<span class="fu">bamSamples</span>(bv)) <span class="ot">&lt;-</span></span>
+<span id="cb29-8"><a href="#cb29-8" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">description=</span><span class="st">&quot;Solexa/MAQ samples, August 2009&quot;</span>,</span>
+<span id="cb29-9"><a href="#cb29-9" tabindex="-1"></a>         <span class="at">created=</span><span class="st">&quot;Thu Mar 25 14:08:42 2010&quot;</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" tabindex="-1"></a>bv</span></code></pre></div>
+<pre><code>## BamViews dim: 18 ranges x 24 samples 
+## names: NA06986.SLX.maq.SRP000031.2009_08.bam NA06994.SLX.maq.SRP000031.2009_08.bam ... NA12828.SLX.maq.SRP000031.2009_08.bam NA12878.SLX.maq.SRP000031.2009_08.bam 
+## detail: use bamPaths(), bamSamples(), bamRanges(), ...</code></pre>
+</div>
+<div id="using-bamviews-instances" class="section level2">
+<h2>Using <em>BamViews</em> instances</h2>
+<p>The <em>BamViews</em> object can be queried for its component parts,
+e.g.,</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">bamExperiment</span>(bv)</span></code></pre></div>
+<pre><code>## $description
+## [1] &quot;Caffeine metabolism views on 1000 genomes samples&quot;
+## 
+## $created
+## [1] &quot;Wed Apr 29 11:28:49 2026&quot;</code></pre>
+<p>More usefully, methods in <em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>
+are designed to work with <em>BamViews</em> objects, retrieving data
+from all files in the view. These operations can take substantial time
+and require reliable network access.</p>
+<p>To illustrate, the following code (not evaluated when this vignette
+was created) downloads the index files associated with the
+<code>bv</code> object</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>bamIndexDir <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a>indexFiles <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">bamPaths</span>(bv), <span class="st">&quot;bai&quot;</span>, <span class="at">sep=</span><span class="st">&quot;.&quot;</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a><span class="fu">dir.create</span>(bamIndexDir)</span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a>bv <span class="ot">&lt;-</span> <span class="fu">BamViews</span>(</span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a>    slxMaq09,</span>
+<span id="cb33-6"><a href="#cb33-6" tabindex="-1"></a>    <span class="fu">file.path</span>(bamIndexDir, <span class="fu">basename</span>(indexFiles)), <span class="co"># index file location</span></span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1"></a>    <span class="at">bamRanges=</span>bamRanges,</span>
+<span id="cb33-8"><a href="#cb33-8" tabindex="-1"></a>    <span class="at">bamExperiment=</span>bamExperiment</span>
+<span id="cb33-9"><a href="#cb33-9" tabindex="-1"></a>)</span>
+<span id="cb33-10"><a href="#cb33-10" tabindex="-1"></a></span>
+<span id="cb33-11"><a href="#cb33-11" tabindex="-1"></a>idxFiles <span class="ot">&lt;-</span> <span class="fu">mapply</span>(</span>
+<span id="cb33-12"><a href="#cb33-12" tabindex="-1"></a>    download.file, indexFiles,</span>
+<span id="cb33-13"><a href="#cb33-13" tabindex="-1"></a>    <span class="fu">bamIndicies</span>(bv),</span>
+<span id="cb33-14"><a href="#cb33-14" tabindex="-1"></a>    <span class="at">MoreArgs=</span><span class="fu">list</span>(<span class="at">method=</span><span class="st">&quot;curl&quot;</span>)</span>
+<span id="cb33-15"><a href="#cb33-15" tabindex="-1"></a>)</span></code></pre></div>
+<p>and then queries the 1000 genomes project for reads overlapping our
+transcripts.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">library</span>(GenomicAlignments)</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>olaps <span class="ot">&lt;-</span> <span class="fu">readGAlignments</span>(bv)</span></code></pre></div>
+<p>The resulting object is about 11 MB in size. To avoid having to
+download this data each time the vignette is run, we instead load it
+from disk</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="fu">library</span>(GenomicAlignments)</span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;olaps.Rda&quot;</span>, <span class="at">package=</span><span class="st">&quot;Rsamtools&quot;</span>))</span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1"></a>olaps</span></code></pre></div>
+<pre><code>## List of length 24
+## names(24): NA06986.SLX.maq.SRP000031.2009_08.bam ...</code></pre>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a><span class="fu">head</span>(olaps[[<span class="dv">1</span>]])</span></code></pre></div>
+<pre><code>## GAlignments object with 6 alignments and 0 metadata columns:
+##       seqnames strand       cigar    qwidth     start       end     width
+##          &lt;Rle&gt;  &lt;Rle&gt; &lt;character&gt; &lt;integer&gt; &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]        2      +         51M        51  31410650  31410700        51
+##   [2]        2      +         51M        51  31410658  31410708        51
+##   [3]        2      -         51M        51  31410663  31410713        51
+##   [4]        2      +         51M        51  31410666  31410716        51
+##   [5]        2      -         51M        51  31410676  31410726        51
+##   [6]        2      +         51M        51  31410676  31410726        51
+##           njunc
+##       &lt;integer&gt;
+##   [1]         0
+##   [2]         0
+##   [3]         0
+##   [4]         0
+##   [5]         0
+##   [6]         0
+##   -------
+##   seqinfo: 114 sequences from an unspecified genome</code></pre>
+<p>There are 33964 reads in NA06986.SLX.maq.SRP000031.2009_08.bam
+overlapping at least one of our transcripts. It is easy to explore this
+object, for instance discovering the range of read widths in each
+individual.</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">t</span>(<span class="fu">sapply</span>(olaps, <span class="cf">function</span>(elt) <span class="fu">range</span>(<span class="fu">qwidth</span>(elt)))))</span></code></pre></div>
+<pre><code>##                                       [,1] [,2]
+## NA06986.SLX.maq.SRP000031.2009_08.bam   51   51
+## NA06994.SLX.maq.SRP000031.2009_08.bam   36   51
+## NA07051.SLX.maq.SRP000031.2009_08.bam   51   51
+## NA07346.SLX.maq.SRP000031.2009_08.bam   48   76
+## NA07347.SLX.maq.SRP000031.2009_08.bam   51   51
+## NA10847.SLX.maq.SRP000031.2009_08.bam   36   51</code></pre>
+<p>Suppose we were particularly interested in the first transcript,
+which has a transcript id uc002rnv.1. Here we extract reads overlapping
+this transcript from each of our samples. As a consequence of the
+protocol used, reads aligning to either strand could be derived from
+this transcript. For this reason, we set the strand of our range of
+interest to <code>*</code>. We use the <code>endoapply</code> function,
+which is like <code>lapply</code> but returns an object of the same
+class (in this case, SimpleList) as its first argument.</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a>rng <span class="ot">&lt;-</span> <span class="fu">bamRanges</span>(bv)[<span class="dv">1</span>]</span>
+<span id="cb41-2"><a href="#cb41-2" tabindex="-1"></a><span class="fu">strand</span>(rng) <span class="ot">&lt;-</span> <span class="st">&quot;*&quot;</span></span>
+<span id="cb41-3"><a href="#cb41-3" tabindex="-1"></a>olap1 <span class="ot">&lt;-</span> <span class="fu">endoapply</span>(olaps, subsetByOverlaps, rng)</span>
+<span id="cb41-4"><a href="#cb41-4" tabindex="-1"></a>olap1 <span class="ot">&lt;-</span> <span class="fu">lapply</span>(olap1, <span class="st">&quot;seqlevels&lt;-&quot;</span>, <span class="at">value=</span><span class="fu">as.character</span>(<span class="fu">seqnames</span>(rng)))</span>
+<span id="cb41-5"><a href="#cb41-5" tabindex="-1"></a><span class="fu">head</span>(olap1[[<span class="dv">24</span>]])</span></code></pre></div>
+<pre><code>## GAlignments object with 6 alignments and 0 metadata columns:
+##       seqnames strand       cigar    qwidth     start       end     width
+##          &lt;Rle&gt;  &lt;Rle&gt; &lt;character&gt; &lt;integer&gt; &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]        2      +         36M        36  31410660  31410695        36
+##   [2]        2      -         36M        36  31410670  31410705        36
+##   [3]        2      +         36M        36  31410683  31410718        36
+##   [4]        2      -         36M        36  31410687  31410722        36
+##   [5]        2      -         36M        36  31410694  31410729        36
+##   [6]        2      -         36M        36  31410701  31410736        36
+##           njunc
+##       &lt;integer&gt;
+##   [1]         0
+##   [2]         0
+##   [3]         0
+##   [4]         0
+##   [5]         0
+##   [6]         0
+##   -------
+##   seqinfo: 1 sequence from an unspecified genome</code></pre>
+<p>To carry the example a little further, we calculate coverage of each
+sample:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a>minw <span class="ot">&lt;-</span> <span class="fu">min</span>(<span class="fu">sapply</span>(olap1, <span class="cf">function</span>(elt) <span class="fu">min</span>(<span class="fu">start</span>(elt))))</span>
+<span id="cb43-2"><a href="#cb43-2" tabindex="-1"></a>maxw <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">sapply</span>(olap1, <span class="cf">function</span>(elt) <span class="fu">max</span>(<span class="fu">end</span>(elt))))</span>
+<span id="cb43-3"><a href="#cb43-3" tabindex="-1"></a>cvg <span class="ot">&lt;-</span> <span class="fu">endoapply</span>(</span>
+<span id="cb43-4"><a href="#cb43-4" tabindex="-1"></a>    olap1, coverage,</span>
+<span id="cb43-5"><a href="#cb43-5" tabindex="-1"></a>    <span class="at">shift=</span><span class="sc">-</span><span class="fu">start</span>(<span class="fu">ranges</span>(bamRanges[<span class="dv">1</span>])),</span>
+<span id="cb43-6"><a href="#cb43-6" tabindex="-1"></a>    <span class="at">width=</span><span class="fu">width</span>(<span class="fu">ranges</span>(bamRanges[<span class="dv">1</span>]))</span>
+<span id="cb43-7"><a href="#cb43-7" tabindex="-1"></a>)</span>
+<span id="cb43-8"><a href="#cb43-8" tabindex="-1"></a>cvg[[<span class="dv">1</span>]]</span></code></pre></div>
+<pre><code>## RleList of length 1
+## $`2`
+## integer-Rle of length 80424 with 13290 runs
+##   Lengths:  8  8  5  2  1  3  7  7 10  2  3 ...  4  3  1 11  8  7 17  4  4  9
+##   Values :  6  5  4  3  4  3  5  3  4  5  6 ...  4  5  4  5  4  5  4  3  2  1</code></pre>
+<p>Since the example includes a single region of uniform width across
+all samples, we can easily create a coverage matrix with rows
+representing nucleotide and columns sample and, e.g., document
+variability between samples and nucleotides</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">unlist</span>(<span class="fu">lapply</span>(cvg, lapply, as.vector)), <span class="at">ncol=</span><span class="fu">length</span>(cvg))</span>
+<span id="cb45-2"><a href="#cb45-2" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">rowSums</span>(m))</span></code></pre></div>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   10.00   74.00   82.00   81.63   91.00  133.00</code></pre>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">colSums</span>(m))</span></code></pre></div>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  133924  173925  248333  273528  350823  567727</code></pre>
+</div>
+</div>
+<div id="directions" class="section level1">
+<h1>Directions</h1>
+<p>This vignette has summarized facilities in the <em><a href="https://bioconductor.org/packages/3.23/Rsamtools">Rsamtools</a></em>
+package. Important additional packages include <em><a href="https://bioconductor.org/packages/3.23/GenomicRanges">GenomicRanges</a></em>
+(for representing and manipulating gapped alignments), <em><a href="https://bioconductor.org/packages/3.23/ShortRead">ShortRead</a></em>
+for I/O and quality assessment of ungapped short read alignments, <em><a href="https://bioconductor.org/packages/3.23/Biostrings">Biostrings</a></em>
+and <em><a href="https://bioconductor.org/packages/3.23/BSgenome">BSgenome</a></em>
+for DNA sequence and whole-genome manipulation, <em><a href="https://bioconductor.org/packages/3.23/IRanges">IRanges</a></em>
+for range-based manipulation, and <em><a href="https://bioconductor.org/packages/3.23/rtracklayer">rtracklayer</a></em>
+for I/O related to the UCSC genome browser. Users might also find the
+interface to the integrative genome browser (IGV) in <em><a href="https://bioconductor.org/packages/3.23/SRAdb">SRAdb</a></em>
+useful for visualizing <code>BAM</code> files.</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a><span class="fu">packageDescription</span>(<span class="st">&quot;Rsamtools&quot;</span>)</span></code></pre></div>
+<pre><code>## Package: Rsamtools
+## Type: Package
+## Title: Binary alignment (BAM), FASTA, variant call (BCF), and tabix
+##         file import
+## Description: This package provides an interface to the &#39;samtools&#39;,
+##         &#39;bcftools&#39;, and &#39;tabix&#39; utilities for manipulating SAM
+##         (Sequence Alignment / Map), FASTA, binary variant call (BCF)
+##         and compressed indexed tab-delimited (tabix) files.
+## biocViews: DataImport, Sequencing, Coverage, Alignment, QualityControl
+## URL: https://bioconductor.org/packages/Rsamtools
+## Video:
+##         https://www.youtube.com/watch?v=Rfon-DQYbWA&amp;list=UUqaMSQd_h-2EDGsU6WDiX0Q
+## BugReports: https://github.com/Bioconductor/Rsamtools/issues
+## Version: 2.28.0
+## License: Artistic-2.0 | file LICENSE
+## Encoding: UTF-8
+## Authors@R: c( person(&quot;Martin&quot;, &quot;Morgan&quot;, role = &quot;aut&quot;), person(&quot;Hervé&quot;,
+##         &quot;Pagès&quot;, role = &quot;aut&quot;), person(&quot;Valerie&quot;, &quot;Obenchain&quot;, role =
+##         &quot;aut&quot;), person(&quot;Nathaniel&quot;, &quot;Hayden&quot;, role = &quot;aut&quot;),
+##         person(&quot;Busayo&quot;, &quot;Samuel&quot;, role = &quot;ctb&quot;, comment = &quot;Converted
+##         Rsamtools vignette from Sweave to RMarkdown / HTML.&quot;),
+##         person(&quot;Bioconductor Package Maintainer&quot;, email =
+##         &quot;maintainer@bioconductor.org&quot;, role = &quot;cre&quot;))
+## Depends: R (&gt;= 3.5.0), methods, Seqinfo, GenomicRanges (&gt;= 1.61.1),
+##         Biostrings (&gt;= 2.77.2)
+## Imports: utils, BiocGenerics (&gt;= 0.25.1), S4Vectors (&gt;= 0.17.25),
+##         IRanges (&gt;= 2.13.12), XVector (&gt;= 0.19.7), bitops,
+##         BiocParallel, stats
+## Suggests: GenomicAlignments, ShortRead (&gt;= 1.19.10), GenomicFeatures,
+##         VariantAnnotation, TxDb.Dmelanogaster.UCSC.dm3.ensGene,
+##         TxDb.Hsapiens.UCSC.hg18.knownGene, RNAseqData.HNRNPC.bam.chr14,
+##         BSgenome.Hsapiens.UCSC.hg19, RUnit, BiocStyle, knitr
+## LinkingTo: Rhtslib (&gt;= 3.3.1), S4Vectors, IRanges, XVector, Biostrings
+## LazyLoad: yes
+## SystemRequirements: GNU make
+## VignetteBuilder: knitr
+## Config/pak/sysreqs: make libbz2-dev liblzma-dev xz-utils zlib1g-dev
+## Repository: https://bioc-release.r-universe.dev
+## Date/Publication: 2026-04-28 12:34:32 UTC
+## RemoteUrl: https://github.com/bioc/Rsamtools
+## RemoteRef: RELEASE_3_23
+## RemoteSha: 31add2895a57afb8e120f057f0f068ca69544f87
+## Author: Martin Morgan [aut], Hervé Pagès [aut], Valerie Obenchain
+##         [aut], Nathaniel Hayden [aut], Busayo Samuel [ctb] (Converted
+##         Rsamtools vignette from Sweave to RMarkdown / HTML.),
+##         Bioconductor Package Maintainer [cre]
+## Maintainer: Bioconductor Package Maintainer
+##         &lt;maintainer@bioconductor.org&gt;
+## Built: R 4.6.0; x86_64-pc-linux-gnu; 2026-04-29 11:28:08 UTC; unix
+## 
+## -- File: /tmp/RtmposgdYQ/Rinst13873c1bd999/Rsamtools/Meta/package.rds</code></pre>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] GenomicAlignments_1.46.0               
+##  [2] SummarizedExperiment_1.40.0            
+##  [3] MatrixGenerics_1.22.0                  
+##  [4] matrixStats_1.5.0                      
+##  [5] TxDb.Hsapiens.UCSC.hg18.knownGene_3.2.2
+##  [6] GenomicFeatures_1.62.0                 
+##  [7] AnnotationDbi_1.72.0                   
+##  [8] Biobase_2.72.0                         
+##  [9] Rsamtools_2.28.0                       
+## [10] Biostrings_2.78.0                      
+## [11] XVector_0.52.0                         
+## [12] GenomicRanges_1.64.0                   
+## [13] IRanges_2.44.0                         
+## [14] S4Vectors_0.50.0                       
+## [15] Seqinfo_1.0.0                          
+## [16] BiocGenerics_0.56.0                    
+## [17] generics_0.1.4                         
+## [18] BiocStyle_2.38.0                       
+## 
+## loaded via a namespace (and not attached):
+##  [1] KEGGREST_1.50.0     rjson_0.2.23        xfun_0.57          
+##  [4] bslib_0.10.0        lattice_0.22-9      vctrs_0.7.3        
+##  [7] tools_4.6.0         bitops_1.0-9        curl_7.1.0         
+## [10] parallel_4.6.0      RSQLite_2.4.6       blob_1.3.0         
+## [13] pkgconfig_2.0.3     Matrix_1.7-5        cigarillo_1.0.0    
+## [16] lifecycle_1.0.5     compiler_4.6.0      codetools_0.2-20   
+## [19] htmltools_0.5.9     sys_3.4.3           buildtools_1.0.0   
+## [22] sass_0.4.10         RCurl_1.98-1.18     yaml_2.3.12        
+## [25] crayon_1.5.3        jquerylib_0.1.4     BiocParallel_1.44.0
+## [28] cachem_1.1.0        DelayedArray_0.36.1 abind_1.4-8        
+## [31] digest_0.6.39       restfulr_0.0.16     maketools_1.3.2    
+## [34] fastmap_1.2.0       grid_4.6.0          cli_3.6.6          
+## [37] SparseArray_1.10.10 S4Arrays_1.10.1     XML_3.99-0.23      
+## [40] bit64_4.8.0         rmarkdown_2.31      httr_1.4.8         
+## [43] bit_4.6.0           png_0.1-9           memoise_2.0.1      
+## [46] evaluate_1.0.5      knitr_1.51          BiocIO_1.22.0      
+## [49] rtracklayer_1.70.1  rlang_1.2.0         DBI_1.3.0          
+## [52] BiocManager_1.30.27 jsonlite_2.0.0      R6_2.6.1</code></pre>
+</div>
+<div id="appendix-appendix" class="section level1 unnumbered">
+<h1 class="unnumbered">(APPENDIX) Appendix</h1>
+</div>
+<div id="assembling-a-bamviews-instance-1" class="section level1">
+<h1>Assembling a <em>BamViews</em> instance</h1>
+<div id="genomic-ranges-of-interest" class="section level2">
+<h2>Genomic ranges of interest</h2>
+</div>
+<div id="bam-files" class="section level2">
+<h2>BAM files</h2>
+<p><em>Note</em>: The following operations were performed at the time
+the vignette was written; location of on-line resources, in particular
+the organization of the 1000 genomes <code>BAM</code> files, may have
+changed.</p>
+<p>We are interested in collecting the URLs of a number of
+<code>BAM</code> files from the 1000 genomes project. Our first goal is
+to identify files that might make for an interesting comparison. First,
+let’s visit the 1000 genomes FTP site and discover available files.
+We’ll use the <em><a href="https://CRAN.R-project.org/package=RCurl">RCurl</a></em> package
+to retrieve the names of all files in an appropriate directory</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" tabindex="-1"></a><span class="fu">library</span>(RCurl)</span>
+<span id="cb53-2"><a href="#cb53-2" tabindex="-1"></a>ftpBase <span class="ot">&lt;-</span></span>
+<span id="cb53-3"><a href="#cb53-3" tabindex="-1"></a>    <span class="st">&quot;ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/pilot_data/data/&quot;</span></span>
+<span id="cb53-4"><a href="#cb53-4" tabindex="-1"></a>indivDirs <span class="ot">&lt;-</span></span>
+<span id="cb53-5"><a href="#cb53-5" tabindex="-1"></a>    <span class="fu">strsplit</span>(<span class="fu">getURL</span>(ftpBase, <span class="at">ftplistonly=</span><span class="cn">TRUE</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)[[<span class="dv">1</span>]]</span>
+<span id="cb53-6"><a href="#cb53-6" tabindex="-1"></a>alnDirs <span class="ot">&lt;-</span></span>
+<span id="cb53-7"><a href="#cb53-7" tabindex="-1"></a>    <span class="fu">paste</span>(ftpBase, indivDirs, <span class="st">&quot;/alignment/&quot;</span>, <span class="at">sep=</span><span class="st">&quot;&quot;</span>)</span>
+<span id="cb53-8"><a href="#cb53-8" tabindex="-1"></a>urls0 <span class="ot">&lt;-</span></span>
+<span id="cb53-9"><a href="#cb53-9" tabindex="-1"></a>    <span class="fu">strsplit</span>(<span class="fu">getURL</span>(alnDirs, <span class="at">dirlistonly=</span><span class="cn">TRUE</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div>
+<p>From these, we exclude directories without any files in them, select
+only the <code>BAM</code> index (extension <code>.bai</code>) files, and
+choose those files that exactly six <code>&#39;.&#39;</code> characters in their
+name.</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a>urls <span class="ot">&lt;-</span> urls[<span class="fu">sapply</span>(urls0, length) <span class="sc">!=</span> <span class="dv">0</span>]</span>
+<span id="cb54-2"><a href="#cb54-2" tabindex="-1"></a>fls0 <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">unname</span>(urls0))</span>
+<span id="cb54-3"><a href="#cb54-3" tabindex="-1"></a>fls1 <span class="ot">&lt;-</span> fls0[<span class="fu">grepl</span>(<span class="st">&quot;bai$&quot;</span>, fls0)]</span>
+<span id="cb54-4"><a href="#cb54-4" tabindex="-1"></a>fls <span class="ot">&lt;-</span> fls1[<span class="fu">sapply</span>(<span class="fu">strsplit</span>(fls1, <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.&quot;</span>), length)<span class="sc">==</span><span class="dv">7</span>]</span></code></pre></div>
+<p>After a little exploration, we focus on those files obtained form
+Solexa sequencing, aligned using <code>MAQ</code>, and archived in
+August, 2009; we remove the <code>.bai</code> extension, so that the URL
+refers to the underlying file rather than index. There are 24 files.</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" tabindex="-1"></a>urls1 <span class="ot">&lt;-</span> <span class="fu">Filter</span>(</span>
+<span id="cb55-2"><a href="#cb55-2" tabindex="-1"></a>    <span class="cf">function</span>(x) <span class="fu">length</span>(x) <span class="sc">!=</span> <span class="dv">0</span>,</span>
+<span id="cb55-3"><a href="#cb55-3" tabindex="-1"></a>    <span class="fu">lapply</span>(urls, <span class="cf">function</span>(x) x[<span class="fu">grepl</span>(<span class="st">&quot;SLX.maq.*2009_08.*bai$&quot;</span>, x)])</span>
+<span id="cb55-4"><a href="#cb55-4" tabindex="-1"></a>)</span>
+<span id="cb55-5"><a href="#cb55-5" tabindex="-1"></a>slxMaq09.bai <span class="ot">&lt;-</span></span>
+<span id="cb55-6"><a href="#cb55-6" tabindex="-1"></a>   <span class="fu">mapply</span>(paste, <span class="fu">names</span>(urls1), urls1, <span class="at">sep=</span><span class="st">&quot;&quot;</span>, <span class="at">USE.NAMES=</span><span class="cn">FALSE</span>)</span>
+<span id="cb55-7"><a href="#cb55-7" tabindex="-1"></a>slxMaq09 <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;.bai$&quot;</span>, <span class="st">&quot;&quot;</span>, slxMaq09.bai)</span></code></pre></div>
+<p>As a final step to prepare for using a file, we create local copies
+of the <em>index</em> files. The index files are relatively small (about
+190 Mb total).</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a>bamIndexDir <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
+<span id="cb56-2"><a href="#cb56-2" tabindex="-1"></a><span class="fu">dir.create</span>(bamIndexDir)</span>
+<span id="cb56-3"><a href="#cb56-3" tabindex="-1"></a>idxFiles <span class="ot">&lt;-</span> <span class="fu">mapply</span>(</span>
+<span id="cb56-4"><a href="#cb56-4" tabindex="-1"></a>    download.file, slxMaq09.bai,</span>
+<span id="cb56-5"><a href="#cb56-5" tabindex="-1"></a>    <span class="fu">file.path</span>(bamIndexDir, <span class="fu">basename</span>(slxMaq09.bai)),</span>
+<span id="cb56-6"><a href="#cb56-6" tabindex="-1"></a>    <span class="at">MoreArgs=</span><span class="fu">list</span>(<span class="at">method=</span><span class="st">&quot;curl&quot;</span>)</span>
+<span id="cb56-7"><a href="#cb56-7" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#input" id="toc-input">Input</a>
+<ul>
+<li><a href="#rfunctionscanbam-and-scanbamparam" id="toc-rfunctionscanbam-and-scanbamparam">RfunctionscanBam and
+<code>ScanBamParam</code></a></li>
+<li><a href="#using-bam-index-files" id="toc-using-bam-index-files">Using <code>BAM</code> index
+files</a></li>
+<li><a href="#other-ways-to-work-with-bam-files" id="toc-other-ways-to-work-with-bam-files">Other ways to work with
+<code>BAM</code> files</a></li>
+<li><a href="#large-bam-files" id="toc-large-bam-files">Large bam
+files</a></li>
+</ul></li>
+<li><a href="#views" id="toc-views">Views</a>
+<ul>
+<li><a href="#assembling-a-bamviews-instance" id="toc-assembling-a-bamviews-instance">Assembling a <em>BamViews</em>
+instance</a></li>
+<li><a href="#using-bamviews-instances" id="toc-using-bamviews-instances">Using <em>BamViews</em>
+instances</a></li>
+</ul></li>
+<li><a href="#directions" id="toc-directions">Directions</a></li>
+<li><a href="#appendix-appendix" id="toc-appendix-appendix">(APPENDIX)
+Appendix</a></li>
+<li><a href="#assembling-a-bamviews-instance-1" id="toc-assembling-a-bamviews-instance-1">Assembling a <em>BamViews</em>
+instance</a>
+<ul>
+<li><a href="#genomic-ranges-of-interest" id="toc-genomic-ranges-of-interest">Genomic ranges of interest</a></li>
+<li><a href="#bam-files" id="toc-bam-files">BAM files</a></li>
+</ul></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

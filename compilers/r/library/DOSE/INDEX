@@ -1,0 +1,18 @@
+DataSet                 Datasets
+clusterSim              clusterSim
+computeIC               compute information content
+doseSim                 doseSim
+dose_params             Shared parameters for DOSE functions
+enrichDGN               Enrichment analysis based on the DisGeNET
+                        (<http://www.disgenet.org/>)
+enrichDGNv              enrichDGN
+enrichDO                DO Enrichment Analysis
+enrichNCG               enrichNCG
+gene2DO                 convert Gene ID to DO Terms
+geneSim                 geneSim
+gseDGN                  DisGeNET Gene Set Enrichment Analysis
+gseDO                   DO Gene Set Enrichment Analysis
+gseNCG                  NCG Gene Set Enrichment Analysis
+mclusterSim             mclusterSim
+simplot                 simplot
+theme_dose              theme_dose

@@ -1,0 +1,348 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content="Nitesh TuragaMartin Morgan">
+      
+      <title>Introduction to BatchtoolsParam</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">Introduction to BatchtoolsParam</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The <code>BatchtoolsParam</code> class is an interface to the <em><a href="https://CRAN.R-project.org/package=batchtools">batchtools</a></em>
+package from within <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>,
+for computing on a high performance cluster such as SGE, TORQUE, LSF,
+SLURM, OpenLava.</p>
+</div>
+<div id="quick-start" class="section level1">
+<h1>Quick start</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span></code></pre></div>
+<p>This example demonstrates the easiest way to launch a 100000 jobs
+using batchtools. The first step involves creating a
+<code>BatchtoolsParam</code> class. You can compute using ‘bplapply’ and
+then the result is stored.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="do">## Pi approximation</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>piApprox <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>    nums <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">runif</span>(<span class="dv">2</span> <span class="sc">*</span> n), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    d <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(nums[, <span class="dv">1</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> nums[, <span class="dv">2</span>]<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="dv">4</span> <span class="sc">*</span> <span class="fu">mean</span>(d <span class="sc">&lt;=</span> <span class="dv">1</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>}</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="fu">piApprox</span>(<span class="dv">1000</span>)</span></code></pre></div>
+<pre><code>## [1] 3.128</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="do">## Apply piApprox over</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">BatchtoolsParam</span>()</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="fu">rep</span>(<span class="fl">10e5</span>, <span class="dv">10</span>), piApprox, <span class="at">BPPARAM=</span>param)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">mean</span>(<span class="fu">unlist</span>(result))</span></code></pre></div>
+<pre><code>## [1] 3.142014</code></pre>
+</div>
+<div id="batchtoolsparam-interface" class="section level1">
+<h1><em>BatchtoolsParam</em> interface</h1>
+<p>The <code>BatchtoolsParam</code> interface allows intuitive usage of
+your high performance cluster with <code>BiocParallel</code>.</p>
+<p>The <code>BatchtoolsParam</code> class allows the user to specify
+many arguments to customize their jobs. Applicable to clusters with
+formal schedulers.</p>
+<ul>
+<li><p><strong>workers</strong> - The number of workers used by the
+job.</p></li>
+<li><p><strong>cluster</strong> - We currently support, SGE, SLURM, LSF,
+TORQUE and OpenLava. The ‘cluster’ argument is supported only if the R
+environment knows how to find the job scheduler. Each cluster type uses
+a template to pass the job to the scheduler. If the template is not
+given we use the default templates as given in the ‘batchtools’ package.
+The cluster can be accessed by ‘bpbackend(param)’.</p></li>
+<li><p><strong>registryargs</strong> - The ‘registryargs’ argument takes
+a list of arguments to create a new job registry for you
+<code>BatchtoolsParam</code>. The job registry is a data.table which
+stores all the required information to process your jobs. The arguments
+we support for registryargs are:</p>
+<ul>
+<li><p><strong>file.dir</strong> - Path where all files of the registry
+are saved. Note that some templates do not handle relative paths well.
+If nothing is given, a temporary directory will be used in your current
+working directory.</p></li>
+<li><p><strong>work.dir</strong> - Working directory for R process for
+running jobs.</p></li>
+<li><p><strong>packages</strong> - Packages that will be loaded on each
+node.</p></li>
+<li><p><strong>namespaces</strong> - Namespaces that will be loaded on
+each node.</p></li>
+<li><p><strong>source</strong> - Files that are sourced before executing
+a job.</p></li>
+<li><p><strong>load</strong> - Files that are loaded before executing a
+job.</p></li>
+</ul></li>
+</ul>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>registryargs <span class="ot">&lt;-</span> <span class="fu">batchtoolsRegistryargs</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    <span class="at">file.dir =</span> <span class="st">&quot;mytempreg&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="at">work.dir =</span> <span class="fu">getwd</span>(),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="at">packages =</span> <span class="fu">character</span>(<span class="dv">0</span><span class="dt">L</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">namespaces =</span> <span class="fu">character</span>(<span class="dv">0</span><span class="dt">L</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="at">source =</span> <span class="fu">character</span>(<span class="dv">0</span><span class="dt">L</span>),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="at">load =</span> <span class="fu">character</span>(<span class="dv">0</span><span class="dt">L</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">BatchtoolsParam</span>(<span class="at">registryargs =</span> registryargs)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>param</span></code></pre></div>
+<pre><code>## class: BatchtoolsParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: NA; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: multicore
+##   template: NA
+##   registryargs:
+##     file.dir: mytempreg
+##     work.dir: /tmp/RtmpRn07JF/Rbuild137f6fe9ba15/BiocParallel/vignettes
+##     packages: character(0)
+##     namespaces: character(0)
+##     source: character(0)
+##     load: character(0)
+##     make.default: FALSE
+##   saveregistry: FALSE
+##   resources:</code></pre>
+<ul>
+<li><p><strong>resources</strong> - A named list of key-value pairs to
+be substituted into the template file; see
+<code>?batchtools::submitJobs</code>.</p></li>
+<li><p><strong>template</strong> - The template argument is unique to
+the <code>BatchtoolsParam</code> class. It is required by the job
+scheduler. It defines how the jobs are submitted to the job scheduler.
+If the template is not given and the cluster is chosen, a default
+template is selected from the batchtools package.</p></li>
+<li><p><strong>log</strong> - The log option is logical, TRUE/FALSE. If
+it is set to TRUE, then the logs which are in the registry are copied to
+directory given by the user using the <code>logdir</code>
+argument.</p></li>
+<li><p><strong>logdir</strong> - Path to the logs. It is given only if
+<code>log=TRUE</code>.</p></li>
+<li><p><strong>resultdir</strong> - Path to the directory is given when
+the job has files to be saved in a directory.</p></li>
+</ul>
+</div>
+<div id="defining-templates" class="section level1">
+<h1>Defining templates</h1>
+<p>The job submission template controls how the job is processed by the
+job scheduler on the cluster. Obviously, the format of the template will
+differ depending on the type of job scheduler. Let’s look at the default
+SLURM template as an example:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fname <span class="ot">&lt;-</span> <span class="fu">batchtoolsTemplate</span>(<span class="st">&quot;slurm&quot;</span>)</span></code></pre></div>
+<pre><code>## using default &#39;slurm&#39; template in batchtools.</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(fname), <span class="at">sep=</span><span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div>
+<pre><code>## #!/bin/bash
+## 
+## ## Job Resource Interface Definition
+## ##
+## ## ntasks [integer(1)]:       Number of required tasks,
+## ##                            Set larger than 1 if you want to further parallelize
+## ##                            with MPI within your job.
+## ## ncpus [integer(1)]:        Number of required cpus per task,
+## ##                            Set larger than 1 if you want to further parallelize
+## ##                            with multicore/parallel within each task.
+## ## walltime [integer(1)]:     Walltime for this job, in seconds.
+## ##                            Must be at least 60 seconds for Slurm to work properly.
+## ## memory   [integer(1)]:     Memory in megabytes for each cpu.
+## ##                            Must be at least 100 (when I tried lower values my
+## ##                            jobs did not start at all).
+## ##
+## ## Default resources can be set in your .batchtools.conf.R by defining the variable
+## ## &#39;default.resources&#39; as a named list.
+## 
+## &lt;%
+## # relative paths are not handled well by Slurm
+## log.file = fs::path_expand(log.file)
+## -%&gt;
+## 
+## 
+## #SBATCH --job-name=&lt;%= job.name %&gt;
+## #SBATCH --output=&lt;%= log.file %&gt;
+## #SBATCH --error=&lt;%= log.file %&gt;
+## #SBATCH --time=&lt;%= ceiling(resources$walltime / 60) %&gt;
+## #SBATCH --ntasks=1
+## #SBATCH --cpus-per-task=&lt;%= resources$ncpus %&gt;
+## #SBATCH --mem-per-cpu=&lt;%= resources$memory %&gt;
+## &lt;%= if (!is.null(resources$partition)) sprintf(paste0(&quot;#SBATCH --partition=&#39;&quot;, resources$partition, &quot;&#39;&quot;)) %&gt;
+## &lt;%= if (array.jobs) sprintf(&quot;#SBATCH --array=1-%i&quot;, nrow(jobs)) else &quot;&quot; %&gt;
+## 
+## ## Initialize work environment like
+## ## source /etc/profile
+## ## module add ...
+## 
+## ## Export value of DEBUGME environemnt var to slave
+## export DEBUGME=&lt;%= Sys.getenv(&quot;DEBUGME&quot;) %&gt;
+## 
+## &lt;%= sprintf(&quot;export OMP_NUM_THREADS=%i&quot;, resources$omp.threads) -%&gt;
+## &lt;%= sprintf(&quot;export OPENBLAS_NUM_THREADS=%i&quot;, resources$blas.threads) -%&gt;
+## &lt;%= sprintf(&quot;export MKL_NUM_THREADS=%i&quot;, resources$blas.threads) -%&gt;
+## 
+## ## Run R:
+## ## we merge R output with stdout from SLURM, which gets then logged via --output option
+## Rscript -e &#39;batchtools::doJobCollection(&quot;&lt;%= uri %&gt;&quot;)&#39;</code></pre>
+<p>The <code>&lt;%= =&gt;</code> blocks are automatically replaced by
+the values of the elements in the <code>resources</code> argument in the
+<code>BatchtoolsParam</code> constructor. Failing to specify critical
+parameters properly (e.g., wall time or memory limits too low) will
+cause jobs to crash, usually rather cryptically. We suggest setting
+parameters explicitly to provide robustness to changes to system
+defaults. Note that the <code>&lt;%= =&gt;</code> blocks themselves do
+not usually need to be modified in the template.</p>
+<p>The part of the template that is most likely to require explicit
+customization is the last line containing the call to
+<code>Rscript</code>. A more customized call may be necessary if the R
+installation is not standard, e.g., if multiple versions of R have been
+installed on a cluster. For example, one might use instead:</p>
+<pre><code>echo &#39;batchtools::doJobCollection(&quot;&lt;%= uri %&gt;&quot;)&#39; |
+    ArbitraryRcommand --no-save --no-echo</code></pre>
+<p>If such customization is necessary, we suggest making a local copy of
+the template, modifying it as required, and then constructing a
+<code>BiocParallelParam</code> object with the modified template using
+the <code>template</code> argument. However, we find that the default
+templates accessible with <code>batchtoolsTemplate</code> are
+satisfactory in most cases.</p>
+</div>
+<div id="use-cases" class="section level1">
+<h1>Use cases</h1>
+<p>As an example for a BatchtoolParam job being run on an SGE cluster,
+we use the same <code>piApprox</code> function as defined earlier. The
+example runs the function on 5 workers and submits 100 jobs to the SGE
+cluster.</p>
+<p>Example of SGE with minimal code:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="do">## Pi approximation</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>piApprox <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    nums <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">runif</span>(<span class="dv">2</span> <span class="sc">*</span> n), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    d <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(nums[, <span class="dv">1</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> nums[, <span class="dv">2</span>]<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="dv">4</span> <span class="sc">*</span> <span class="fu">mean</span>(d <span class="sc">&lt;=</span> <span class="dv">1</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>}</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>template <span class="ot">&lt;-</span> <span class="fu">system.file</span>(</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>    <span class="at">package =</span> <span class="st">&quot;BiocParallel&quot;</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    <span class="st">&quot;unitTests&quot;</span>, <span class="st">&quot;test_script&quot;</span>, <span class="st">&quot;test-sge-template.tmpl&quot;</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>)</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">BatchtoolsParam</span>(<span class="at">workers=</span><span class="dv">5</span>, <span class="at">cluster=</span><span class="st">&quot;sge&quot;</span>, <span class="at">template=</span>template)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="do">## Run parallel job</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="fu">rep</span>(<span class="fl">10e5</span>, <span class="dv">100</span>), piApprox, <span class="at">BPPARAM=</span>param)</span></code></pre></div>
+<p>Example of SGE demonstrating some of <code>BatchtoolsParam</code>
+methods.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="do">## Pi approximation</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>piApprox <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>    nums <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">runif</span>(<span class="dv">2</span> <span class="sc">*</span> n), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>    d <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(nums[, <span class="dv">1</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> nums[, <span class="dv">2</span>]<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>    <span class="dv">4</span> <span class="sc">*</span> <span class="fu">mean</span>(d <span class="sc">&lt;=</span> <span class="dv">1</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>}</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>template <span class="ot">&lt;-</span> <span class="fu">system.file</span>(</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>    <span class="at">package =</span> <span class="st">&quot;BiocParallel&quot;</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>    <span class="st">&quot;unitTests&quot;</span>, <span class="st">&quot;test_script&quot;</span>, <span class="st">&quot;test-sge-template.tmpl&quot;</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>)</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">BatchtoolsParam</span>(<span class="at">workers=</span><span class="dv">5</span>, <span class="at">cluster=</span><span class="st">&quot;sge&quot;</span>, <span class="at">template=</span>template)</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="do">## start param</span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="fu">bpstart</span>(param)</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="do">## Display param</span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>param</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="do">## To show the registered backend</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="fu">bpbackend</span>(param)</span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="do">## Register the param</span></span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="fu">register</span>(param)</span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a></span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a><span class="do">## Check the registered param</span></span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a><span class="fu">registered</span>()</span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a></span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a><span class="do">## Run parallel job</span></span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="fu">rep</span>(<span class="fl">10e5</span>, <span class="dv">100</span>), piApprox)</span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a></span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a><span class="fu">bpstop</span>(param)</span></code></pre></div>
+</div>
+<div id="session-info" class="section level1">
+<h1>Session info</h1>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] BiocParallel_1.46.0 BiocStyle_2.40.0   
+## 
+## loaded via a namespace (and not attached):
+##  [1] base64url_1.4       jsonlite_2.0.0      compiler_4.6.0     
+##  [4] BiocManager_1.30.27 crayon_1.5.3        parallel_4.6.0     
+##  [7] jquerylib_0.1.4     progress_1.2.3      yaml_2.3.12        
+## [10] fastmap_1.2.0       R6_2.6.1            batchtools_0.9.18  
+## [13] knitr_1.51          backports_1.5.1     checkmate_2.3.4    
+## [16] maketools_1.3.2     bslib_0.10.0        rlang_1.2.0        
+## [19] cachem_1.1.0        stringi_1.8.7       xfun_0.57          
+## [22] fs_2.1.0            sass_0.4.10         sys_3.4.3          
+## [25] cli_3.6.6           withr_3.0.2         digest_0.6.39      
+## [28] rappdirs_0.3.4      hms_1.1.4           lifecycle_1.0.5    
+## [31] prettyunits_1.2.0   vctrs_0.7.3         evaluate_1.0.5     
+## [34] data.table_1.18.2.1 codetools_0.2-20    buildtools_1.0.0   
+## [37] rmarkdown_2.31      tools_4.6.0         pkgconfig_2.0.3    
+## [40] htmltools_0.5.9     brew_1.0-10</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#quick-start" id="toc-quick-start">Quick start</a></li>
+<li><a href="#batchtoolsparam-interface" id="toc-batchtoolsparam-interface"><em>BatchtoolsParam</em>
+interface</a></li>
+<li><a href="#defining-templates" id="toc-defining-templates">Defining
+templates</a></li>
+<li><a href="#use-cases" id="toc-use-cases">Use cases</a></li>
+<li><a href="#session-info" id="toc-session-info">Session info</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

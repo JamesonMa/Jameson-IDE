@@ -1,0 +1,941 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>1. Introduction to BiocParallel</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">1. Introduction to <em>BiocParallel</em></h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Numerous approaches are available for parallel computing in R. The
+CRAN Task View for high performance and parallel computing provides
+useful high-level summaries and <a href="https://cran.r-project.org/web/views/HighPerformanceComputing.html">package
+categorization</a>. Most Task View packages cite or identify one or more
+of <a href="https://cran.r-project.org/package=snow"><em>snow</em></a> ,
+<a href="https://cran.r-project.org/package=Rmpi"><em>Rmpi</em></a>, <a href="https://cran.r-project.org/package=multicore"><em>multicore</em></a>
+or <a href="https://cran.r-project.org/package=foreach"><em>foreach</em></a>
+as relevant parallelization infrastructure. Direct support in <em>R</em>
+for <em>parallel</em> computing started with release 2.14.0 with
+inclusion of the <a href="https://cran.r-project.org/package=parallel">parallel</a> package
+which contains modified versions of <a href="https://cran.r-project.org/package=multicore"><em>multicore</em></a>
+and <a href="https://cran.r-project.org/package=snow"><em>snow</em></a>.</p>
+<p>A basic objective of <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+is to reduce the complexity faced when developing and using software
+that performs parallel computations. With the introduction of the
+<code>BiocParallelParam</code> object, <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+aims to provide a unified interface to existing parallel infrastructure
+where code can be easily executed in different environments. The
+<code>BiocParallelParam</code> specifies the environment of choice as
+well as computing resources and is invoked by ‘registration’ or passed
+as an argument to the <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+functions.</p>
+<p><a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+offers the following conveniences over the ‘roll your own’ approach to
+parallel programming.</p>
+<ul>
+<li><p>unified interface: <code>BiocParallelParam</code> instances
+define the method of parallel evaluation (multi-core, snow cluster,
+etc.) and computing resources (number of workers, error handling,
+cleanup, etc.).</p></li>
+<li><p>parallel iteration over lists, files and vectorized operations:
+<code>bplapply</code>, <code>bpmapply</code> and <code>bpvec</code>
+provide parallel list iteration and vectorized operations.
+<code>bpiterate</code> iterates through files distributing chunks to
+parallel workers.</p></li>
+<li><p>cluster scheduling: When the parallel environment is managed by a
+cluster scheduler through <a href="https://cran.r-project.org/package=batchtools">*batchtools</a>,
+job management and result retrieval are considerably
+simplified.</p></li>
+<li><p>support of <code>foreach</code> : The <a href="https://cran.r-project.org/package=foreach"><em>foreach</em></a>
+and <a href="https://cran.r-project.org/package=iterators"><em>iterators</em></a>
+packages are fully supported. Registration of the parallel back end uses
+<code>BiocParallelParam</code> instances.</p></li>
+</ul>
+</div>
+<div id="quick-start" class="section level1">
+<h1>Quick start</h1>
+<p>The <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+package is available at bioconductor.org and can be downloaded via
+<code>BiocManager</code>:</p>
+<pre><code>if (!requireNamespace(&quot;BiocManager&quot;, quietly = TRUE))
+    install.packages(&quot;BiocManager&quot;)
+BiocManager::install(&quot;BiocParallel&quot;)</code></pre>
+<p>Load <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span></code></pre></div>
+<p>The test function simply returns the square root of “x”.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>FUN <span class="ot">&lt;-</span> <span class="cf">function</span>(x) { <span class="fu">round</span>(<span class="fu">sqrt</span>(x), <span class="dv">4</span>) }</span></code></pre></div>
+<p>Functions in <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+use the registered back-ends for parallel evaluation. The default is the
+top entry of the registry list.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">registered</span>()</span></code></pre></div>
+<pre><code>## $MulticoreParam
+## class: MulticoreParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: FORK
+## 
+## $SnowParam
+## class: SnowParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: SOCK
+## 
+## $SerialParam
+## class: SerialParam
+##   bpisup: FALSE; bpnworkers: 1; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: FALSE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: FALSE
+##   bplogdir: NA
+##   bpresultdir: NA</code></pre>
+<p>Configure your R session to always use a particular back-end
+configure by setting options named after the back ends in an
+<code>.RProfile</code> file, e.g.,</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">options</span>(<span class="at">MulticoreParam=</span><span class="fu">MulticoreParam</span>(<span class="at">workers=</span><span class="dv">4</span>))</span></code></pre></div>
+<p>When a <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+function is invoked with no <code>BPPARAM</code> argument the default
+back-end is used.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, FUN)</span></code></pre></div>
+<p>Environment specific back-ends can be defined for any of the registry
+entries. This example uses a 2-worker SOCK cluster.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="at">workers =</span> <span class="dv">2</span>, <span class="at">type =</span> <span class="st">&quot;SOCK&quot;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, FUN, <span class="at">BPPARAM =</span> param)</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 1.4142
+## 
+## [[3]]
+## [1] 1.7321
+## 
+## [[4]]
+## [1] 2</code></pre>
+</div>
+<div id="the-biocparallel-interface" class="section level1">
+<h1>The <em>BiocParallel</em> Interface</h1>
+<div id="classes" class="section level2">
+<h2>Classes</h2>
+<div id="biocparallelparam" class="section level3">
+<h3><code>BiocParallelParam</code></h3>
+<p><code>BiocParallelParam</code> instances configure different parallel
+evaluation environments. Creating or <code>register()</code> ing a
+‘<code>Param</code>’ allows the same code to be used in different
+parallel environments without a code re-write. Params listed are
+supported on all of Unix, Mac and Windows except
+<code>MulticoreParam</code> which is Unix and Mac only.</p>
+<ul>
+<li><p><code>SerialParam</code>:</p>
+<p>Supported on all platforms.</p>
+<p>Evaluate <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>-enabled
+code with parallel evaluation disabled. This approach is useful when
+writing new scripts and trying to debug code.</p></li>
+<li><p><code>MulticoreParam</code>:</p>
+<p>Supported on Unix and Mac. On Windows, <code>MulticoreParam</code>
+dispatches to <code>SerialParam</code>.</p>
+<p>Evaluate <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>-enabled
+code using multiple cores on a single computer. When available, this is
+the most efficient and least troublesome way to parallelize code.
+Windows does not support multi-core evaluation (the
+<code>MulticoreParam</code> object can be used, but evaluation is
+serial). On other operating systems, the default number of workers
+equals the value of the global option <code>mc.cores</code>
+(e.g.,<code>getOption(&quot;mc.cores&quot;)</code> ) or, if that is not set, the
+number of cores returned by <code>arallel::detectCores() - 2</code> ;
+when number of cores cannot be determined, the default is 1.</p>
+<p><code>MulticoreParam</code> uses ‘forked’ processes with
+‘copy-on-change’ semantics – memory is only copied when it is changed.
+This makes it very efficient to invoke compared to other back-ends.</p>
+<p>There are several important caveats to using
+<code>MulticoreParam</code>. Forked processes are not available on
+Windows. Some environments, e.g., <em>RStudio</em>, do not work well
+with forked processes, assuming that code evaluation is single-threaded.
+Some external resources, e.g., access to files or data bases, maintain
+state in a way that assumes the resource is accessed only by a single
+thread. A subtle cost is that <em>R</em>’s garbage collector runs
+periodically, and ‘marks’ memory as in use. This effectively triggers a
+copy of the marked memory. <em>R</em>’s generational garbage collector
+is triggered at difficult-to-predict times; the effect in a long-running
+forked process is that the memory is eventually copied. See <a href="https://support.bioconductor.org/p/70196/#70509">this post</a> for
+additional details.</p>
+<p><code>MulticoreParam</code> is based on facilities originally
+implemented in the <a href="https://cran.r-project.org/package=multicore"><em>multicore</em></a>
+package and subsequently the <a href="https://cran.r-project.org/package=parallel"><em>parallel</em></a>
+package in base.</p></li>
+<li><p><code>SnowParam</code>:</p>
+<p>Supported on all platforms.</p>
+<p>Evaluate <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>-enabled
+code across several distinct instances, on one or several computers.
+This is a straightforward approach for executing parallel code on one or
+several computers, and is based on facilities originally implemented in
+the <a href="https://cran.r-project.org/package=snow"><em>snow</em></a>
+package. Different types of <a href="https://cran.r-project.org/package=snow"><em>snow</em></a>
+‘back-ends’ are supported, including socket and MPI clusters.</p></li>
+<li><p><code>BatchtoolsParam</code>:</p>
+<p>Applicable to clusters with formal schedulers.</p>
+<p>Evaluate <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>-enabled
+code by submitting to a cluster scheduler like SGE.</p></li>
+<li><p><code>DoparParam</code>:</p>
+<p>Supported on all platforms.</p>
+<p>Register a parallel back-end supported by the <a href="https://cran.r-project.org/package=foreach"><em>foreach</em></a>
+package for use with <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>.</p></li>
+</ul>
+<p>The simplest illustration of creating <code>BiocParallelParam</code>
+is</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>serialParam <span class="ot">&lt;-</span> <span class="fu">SerialParam</span>()</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>serialParam</span></code></pre></div>
+<pre><code>## class: SerialParam
+##   bpisup: FALSE; bpnworkers: 1; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: FALSE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: FALSE
+##   bplogdir: NA
+##   bpresultdir: NA</code></pre>
+<p>Most parameters have additional arguments influencing behavior, e.g.,
+specifying the number of ‘cores’ to use when creating a
+<code>MulticoreParam</code> instance</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>multicoreParam <span class="ot">&lt;-</span> <span class="fu">MulticoreParam</span>(<span class="at">workers =</span> <span class="dv">8</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>multicoreParam</span></code></pre></div>
+<pre><code>## class: MulticoreParam
+##   bpisup: FALSE; bpnworkers: 8; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: FORK</code></pre>
+<p>Arguments are described on the corresponding help page, e.g.,
+<code>?MulticoreParam.</code>.</p>
+</div>
+<div id="registering-biocparallelparam-instances" class="section level3">
+<h3><code>register()</code>ing <code>BiocParallelParam</code>
+instances</h3>
+<p>The list of registered <code>BiocParallelParam</code> instances
+represents the user’s preferences for different types of back-ends.
+Individual algorithms may specify a preferred back-end, and different
+back-ends maybe chosen when parallel evaluation is nested.</p>
+<p>The registry behaves like a ‘stack’ in that the last entry registered
+is added to the top of the list and becomes the “next used” (i.e., the
+default).</p>
+<p><code>registered</code> invoked with no arguments lists all
+back-ends.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">registered</span>()</span></code></pre></div>
+<pre><code>## $MulticoreParam
+## class: MulticoreParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: FORK
+## 
+## $SnowParam
+## class: SnowParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: SOCK
+## 
+## $SerialParam
+## class: SerialParam
+##   bpisup: FALSE; bpnworkers: 1; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: FALSE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: FALSE
+##   bplogdir: NA
+##   bpresultdir: NA</code></pre>
+<p><code>bpparam</code> returns the default from the top of the
+list.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">bpparam</span>()</span></code></pre></div>
+<pre><code>## class: MulticoreParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: FORK</code></pre>
+<p>Add a specialized instance with <code>register</code>. When
+<code>default</code> is TRUE, the new instance becomes the default.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>default <span class="ot">&lt;-</span> <span class="fu">registered</span>()</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">register</span>(<span class="fu">BatchtoolsParam</span>(<span class="at">workers =</span> <span class="dv">10</span>), <span class="at">default =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p><code>BatchtoolsParam</code> has been moved to the top of the list
+and is now the default.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">names</span>(<span class="fu">registered</span>())</span></code></pre></div>
+<pre><code>## [1] &quot;BatchtoolsParam&quot; &quot;MulticoreParam&quot;  &quot;SnowParam&quot;       &quot;SerialParam&quot;</code></pre>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">bpparam</span>()</span></code></pre></div>
+<pre><code>## class: BatchtoolsParam
+##   bpisup: FALSE; bpnworkers: 10; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: NA; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: multicore
+##   template: NA
+##   registryargs:
+##     file.dir: /tmp/RtmpRn07JF/Rbuild137f6fe9ba15/BiocParallel/vignettes/file171560a0cf4e
+##     work.dir: getwd()
+##     packages: character(0)
+##     namespaces: character(0)
+##     source: character(0)
+##     load: character(0)
+##     make.default: FALSE
+##   saveregistry: FALSE
+##   resources:</code></pre>
+<p>Restore the original registry</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="cf">for</span> (param <span class="cf">in</span> <span class="fu">rev</span>(default))</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>    <span class="fu">register</span>(param)</span></code></pre></div>
+</div>
+</div>
+<div id="functions" class="section level2">
+<h2>Functions</h2>
+<div id="parallel-looping-vectorized-and-aggregate-operations" class="section level3">
+<h3>Parallel looping, vectorized and aggregate operations</h3>
+<p>These are used in common functions, implemented as much as possible
+for all back-ends. The functions (see the help pages, e.g.,
+<code>?bplapply</code> for a full definition) include</p>
+<p><code>bplapply(X, FUN, ...)</code>:</p>
+<p>Apply in parallel a function <code>FUN</code> to each element of
+<code>X</code>. <code>bplapply</code> invokes <code>FUN length(X)</code>
+times, each time with a single element of <code>X</code>.</p>
+<p><code>bpmapply(FUN, ...)</code>:</p>
+<p>Apply in parallel a function to the first, second, etc., elements of
+each argument in ….</p>
+<p><code>bpiterate(ITER, FUN, ...)</code>:</p>
+<p>Apply in parallel a function to the output of function
+<code>ITER</code>. Data chunks are returned by <code>ITER</code> and
+distributed to parallel workers along with <code>FUN</code>. Intended
+for iteration though an undefined number of data chunks (i.e., records
+in a file).</p>
+<p><code>bpvec(X, FUN, ...)</code>:</p>
+<p>Apply in parallel a function <code>FUN</code> to subsets of
+<code>X</code>.<code>bpvec</code> invokes function as many times as
+there are cores or cluster nodes, with receiving a subset (typically
+more than 1 element, in contrast to <code>bplapply</code>) of
+<code>X</code>.</p>
+<p><code>bpaggregate(x, data, FUN, ...)</code>:</p>
+<p>Use the formula in <code>X</code> to aggregate <code>data</code>
+using <code>FUN</code>.</p>
+</div>
+<div id="parallel-evaluation-environment" class="section level3">
+<h3>Parallel evaluation environment</h3>
+<p>These functions query and control the state of the parallel
+evaluation environment.</p>
+<p><code>bpisup(x)</code>: Query a <code>BiocParallelParam</code>
+back-end <code>X</code> for its status.</p>
+<p><code>bpworkers</code>; <code>bpnworkers</code>: Query a
+<code>BiocParallelParam</code> back-end for the number of workers
+available for parallel evaluation.</p>
+<p><code>bptasks</code>: Divides a job (e.g., single call to *lapply
+function) into tasks. Applicable to <code>MulticoreParam</code>
+only;<code>DoparParam</code> and <code>BatchtoolsParam</code> have their
+own approach to dividing a job among workers.</p>
+<p><code>bpstart(x)</code>: Start a parallel back end specified by
+<code>BiocParallelParam x,</code>, if possible.</p>
+<p><code>bpstop(x)</code>: Stop a parallel back end specified by
+<code>BiocParallelParam x</code>.</p>
+</div>
+<div id="error-handling-and-logging" class="section level3">
+<h3>Error handling and logging</h3>
+<p>Logging and advanced error recovery is available in
+<code>BiocParallel</code> 1.1.25 and later. For a more details see the
+vignette titled “Error Handling and Logging”:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">browseVignettes</span>(<span class="st">&quot;BiocParallel&quot;</span>)</span></code></pre></div>
+</div>
+<div id="locks-and-counters" class="section level3">
+<h3>Locks and counters</h3>
+<p>Inter-process (i.e., single machine) locks and counters are supported
+using <code>ipclock()</code>, <code>ipcyield()</code>, and friends. Use
+these to synchronize computation, e.g., allowing only a single process
+to write to a file at a time.</p>
+</div>
+</div>
+</div>
+<div id="use-cases" class="section level1">
+<h1>Use cases</h1>
+<p>Sample data are BAM files from a transcription profiling experiment
+available in the <em>RNAseqData.HNRNPC.bam.chr14</em> package.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">library</span>(RNAseqData.HNRNPC.bam.chr14)</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>fls <span class="ot">&lt;-</span> RNAseqData.HNRNPC.bam.chr14_BAMFILES</span></code></pre></div>
+<div id="single-machine" class="section level2">
+<h2>Single machine</h2>
+<p>Common approaches on a single machine are to use multiple cores in
+forked processes, or to use clusters of independent processes.</p>
+<p>For purely -based computations on non-Windows computers, there are
+substantial benefits, such as shared memory, to be had using forked
+processes. However, this approach is not portable across platforms, and
+fails when code uses functionality, e.g., file or data base access, that
+assumes only a single thread is accessing the resource. While use of
+forked processes with <code>MulticoreParam</code> is an attractive
+solution for scripts using pure functionality, robust and complex code
+often requires use of independent processes and
+<code>SnowParam</code>.</p>
+<div id="forked-processes-with-multicoreparam" class="section level3">
+<h3>Forked processes with <code>MulticoreParam</code></h3>
+<p>This example counts overlaps between BAM files and a defined set of
+ranges. First create a GRanges with regions of interest (in practice
+this could be large).</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">library</span>(GenomicAlignments) <span class="do">## for GenomicRanges and readGAlignments()</span></span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>gr <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(<span class="st">&quot;chr14&quot;</span>, <span class="fu">IRanges</span>((<span class="dv">1000</span><span class="sc">:</span><span class="dv">3999</span>)<span class="sc">*</span><span class="dv">5000</span>, <span class="at">width=</span><span class="dv">1000</span>))</span></code></pre></div>
+<p>A <code>ScanBamParam</code> defines regions to extract from the
+files.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">ScanBamParam</span>(<span class="at">which=</span><span class="fu">range</span>(gr))</span></code></pre></div>
+<p><code>FUN</code> counts overlaps between the ranges in ‘gr’ and the
+files.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a>FUN <span class="ot">&lt;-</span> <span class="cf">function</span>(fl, param) {</span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a>    gal <span class="ot">&lt;-</span> <span class="fu">readGAlignments</span>(fl, <span class="at">param =</span> param)</span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>    <span class="fu">sum</span>(<span class="fu">countOverlaps</span>(gr, gal))</span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a>}</span></code></pre></div>
+<p>All parameters necessary for running a job in a multi-core
+environment are specified in the <code>MulticoreParam</code>
+instance.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">MulticoreParam</span>()</span></code></pre></div>
+<pre><code>## class: MulticoreParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: FALSE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: FORK</code></pre>
+<p>The <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+functions, such as <code>bplapply</code>, use information in the
+<code>MulticoreParam</code> to set up the appropriate back-end and pass
+relevant arguments to low-level functions.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a>&gt; bplapply(fls[1:3], FUN, BPPARAM = MulticoreParam(), param = param)</span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a>$ERR127306</span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a>[1] 1185</span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a>$ERR127307</span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a>[1] 1123</span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a></span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a>$ERR127308</span>
+<span id="cb31-9"><a href="#cb31-9" tabindex="-1"></a>[1] 1241</span></code></pre></div>
+<p>Shared memory environments eliminate the need to pass large data
+between workers or load common packages. Note that in this code the
+GRanges data was not passed to all workers in <code>bplapply</code> and
+FUN did not need to load [<em>GenomicAlignments</em><a href="http://bioconductor.org/packages/GenomicAlignments"></a>for access
+to the <code>readGAlign ments</code> function.</p>
+<p>Problems with forked processes occur when code implementating
+functionality used by the workers is not written in anticipation of use
+by forked processes. One example is the database connection underlying
+Bioconductor’s <code>org.*</code> packages. This pseudo-code</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">library</span>(org.Hs.eg.db)</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>FUN <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>...</span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a><span class="fu">mapIds</span>(org.Hs.eg.db, ...)</span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a>...</span>
+<span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a>}</span>
+<span id="cb32-7"><a href="#cb32-7" tabindex="-1"></a><span class="fu">bplapply</span>(X, FUN, ..., <span class="at">BPPARAM =</span> <span class="fu">MulticoreParam</span>())</span></code></pre></div>
+<p>is likely to fail, because <code>library(org.Hs.eg.db)</code> opens a
+database connection that is accessed by multiple processes. A solution
+is to ensure that the database is opened independently in each
+process</p>
+<pre><code>FUN &lt;- function(x, ...) {
+library(org.Hs.eg.db)
+...
+mapIds(org.Hs.eg.db, ...)
+...
+}
+bplapply(X, FUN, ..., BPPARAM = MulticoreParam())</code></pre>
+</div>
+<div id="clusters-of-independent-processes-with-snowparam" class="section level3">
+<h3>Clusters of independent processes with <code>SnowParam</code></h3>
+<p>Both Windows and non-Windows machines can use the cluster approach to
+spawn processes. <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+back-end choices for clusters on a single machine are <em>SnowParam</em>
+for configuring a Snow cluster or the <em>DoparParam</em> for use with
+the <em>foreach</em> package.</p>
+<p>To re-run the counting example, FUN needs to modified such that ‘gr’
+is passed as a formal argument and required libraries are loaded on each
+worker. (In general, this is not necessary for functions defined in a
+package name space, see <a href="#sec:developers">Section 6</a>.)</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a>FUN <span class="ot">&lt;-</span> <span class="cf">function</span>(fl, param, gr) {</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>    <span class="fu">suppressPackageStartupMessages</span>({</span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a>        <span class="fu">library</span>(GenomicAlignments)</span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a>    })</span>
+<span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a>    gal <span class="ot">&lt;-</span> <span class="fu">readGAlignments</span>(fl, <span class="at">param =</span> param)</span>
+<span id="cb34-6"><a href="#cb34-6" tabindex="-1"></a>    <span class="fu">sum</span>(<span class="fu">countOverlaps</span>(gr, gal))</span>
+<span id="cb34-7"><a href="#cb34-7" tabindex="-1"></a>}</span></code></pre></div>
+<p>Define a 2-worker SOCK Snow cluster.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a>snow <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="at">workers =</span> <span class="dv">2</span>, <span class="at">type =</span> <span class="st">&quot;SOCK&quot;</span>)</span></code></pre></div>
+<p>A call to <code>bplapply</code> with the <em>SnowParam</em> creates
+the cluster and distributes the work.</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="fu">bplapply</span>(fls[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>], FUN, <span class="at">BPPARAM =</span> snow, <span class="at">param =</span> param, <span class="at">gr =</span> gr)</span></code></pre></div>
+<pre><code>## $ERR127306
+## [1] 1185
+## 
+## $ERR127307
+## [1] 1123
+## 
+## $ERR127308
+## [1] 1241</code></pre>
+<p>The FUN written for the cluster adds some overhead due to the passing
+of the GRanges and the loading of <a href="http://bioconductor.org/packages/GenomicAlignments"><em>GenomicAlignments</em></a>
+on each worker. This approach, however, has the advantage that it works
+on most platforms and does not require a coding change when switching
+between windows and non-windows machines.</p>
+<p>If several <code>bplapply()</code> statements are likely to require
+the same resource, it often makes sense to create a cluster once using
+<code>bpstart()</code>. The workers are re-used by each call to
+<code>bplapply()</code>, so they do not have to re-load packages,
+etc.</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="fu">register</span>(<span class="fu">SnowParam</span>()) <span class="co"># default evaluation</span></span>
+<span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a><span class="fu">bpstart</span>() <span class="co"># start the cluster</span></span>
+<span id="cb38-3"><a href="#cb38-3" tabindex="-1"></a>...</span>
+<span id="cb38-4"><a href="#cb38-4" tabindex="-1"></a><span class="fu">bplapply</span>(X, FUN1, ...)</span>
+<span id="cb38-5"><a href="#cb38-5" tabindex="-1"></a>...</span>
+<span id="cb38-6"><a href="#cb38-6" tabindex="-1"></a><span class="fu">bplapply</span>(X, FUN2, ...) <span class="co"># re-use workers</span></span>
+<span id="cb38-7"><a href="#cb38-7" tabindex="-1"></a>...</span>
+<span id="cb38-8"><a href="#cb38-8" tabindex="-1"></a><span class="fu">bpstop</span>()</span></code></pre></div>
+</div>
+</div>
+<div id="ad-hoc-cluster-of-multiple-machines" class="section level2">
+<h2><em>Ad hoc</em> cluster of multiple machines</h2>
+<p>We use the term <em>ad hoc</em> cluster to define a group of machines
+that can communicate with each other and to which the user has
+password-less log-in access. This example uses a group of compute
+machines (&quot;the rhinos&quot;) on the FHCRC network.</p>
+<div id="ad-hoc-sockets" class="section level3">
+<h3><em>Ad hoc</em> Sockets</h3>
+<p>On Linux and Mac OS X, a socket cluster is created across machines by
+supplying machine names as the`workers``argument to a
+<em>BiocParallelParam</em> instance instead of a number. Each name
+represents an <em>R</em> process; repeat names indicate multiple workers
+on the same machine.</p>
+<p>Create a with <em>SnowParam</em> 2 cpus from ‘rhino01’ and 1 from
+‘rhino02’.</p>
+<pre><code>hosts &lt;- c(&quot;rhino01&quot;, &quot;rhino01&quot;, &quot;rhino02&quot;)
+param &lt;- SnowParam(workers = hosts, type = &quot;SOCK&quot;)</code></pre>
+<p>Execute FUN 4 times across the workers.</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a>&gt; FUN &lt;- function(i) system(&quot;hostname&quot;, intern=TRUE)</span>
+<span id="cb40-2"><a href="#cb40-2" tabindex="-1"></a>&gt; bplapply(1:4, FUN, BPPARAM = param)</span>
+<span id="cb40-3"><a href="#cb40-3" tabindex="-1"></a>[[1]]</span>
+<span id="cb40-4"><a href="#cb40-4" tabindex="-1"></a>[1] &quot;rhino01&quot;</span>
+<span id="cb40-5"><a href="#cb40-5" tabindex="-1"></a></span>
+<span id="cb40-6"><a href="#cb40-6" tabindex="-1"></a>[[2]]</span>
+<span id="cb40-7"><a href="#cb40-7" tabindex="-1"></a>[1] &quot;rhino01&quot;</span>
+<span id="cb40-8"><a href="#cb40-8" tabindex="-1"></a></span>
+<span id="cb40-9"><a href="#cb40-9" tabindex="-1"></a>[[3]]</span>
+<span id="cb40-10"><a href="#cb40-10" tabindex="-1"></a>[1] &quot;rhino02&quot;</span>
+<span id="cb40-11"><a href="#cb40-11" tabindex="-1"></a></span>
+<span id="cb40-12"><a href="#cb40-12" tabindex="-1"></a>[[4]]</span>
+<span id="cb40-13"><a href="#cb40-13" tabindex="-1"></a>[1] &quot;rhino01&quot;</span></code></pre></div>
+<p>When creating a cluster across Windows machines must be IP addresses
+(e.g., &quot;140.107.218.57&quot;) instead of machine names.</p>
+<p>### MPI</p>
+<p>An MPI cluster across machines is created with <em>mpirun</em> or
+<em>mpiexec</em> from the command line or a script. A list of machine
+names provided as the -hostfile argument defines the mpi universe.</p>
+<p>The hostfile requests 2 processors on 3 different machines.</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a>rhino01 slots=2</span>
+<span id="cb41-2"><a href="#cb41-2" tabindex="-1"></a>rhino02 slots=2</span>
+<span id="cb41-3"><a href="#cb41-3" tabindex="-1"></a>rhino03 slots=2</span></code></pre></div>
+<p>From the command line, start a single interactive process on the
+current machine.</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb42-1"><a href="#cb42-1" tabindex="-1"></a>mpiexec --np 1 --hostfile hostfile R --vanilla</span></code></pre></div>
+<p>Load <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+and create an MPI Snow cluster. The number <code>workers</code> of in
+should match the number of slots requested in the hostfile. Using a
+smaller number of workers uses a subset of the slots.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a>&gt; library(BiocParallel)</span>
+<span id="cb43-2"><a href="#cb43-2" tabindex="-1"></a>&gt; param &lt;- SnowParam(workers = 6, type = &quot;MPI&quot;)</span></code></pre></div>
+<p>Execute FUN 6 times across the workers.</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a>&gt; FUN &lt;- function(i) system(&quot;hostname&quot;, intern=TRUE)</span>
+<span id="cb44-2"><a href="#cb44-2" tabindex="-1"></a>&gt; bplapply(1:6, FUN, BPPARAM = param)</span>
+<span id="cb44-3"><a href="#cb44-3" tabindex="-1"></a>bplapply(1:6, FUN, BPPARAM = param)</span>
+<span id="cb44-4"><a href="#cb44-4" tabindex="-1"></a>[[1]]</span>
+<span id="cb44-5"><a href="#cb44-5" tabindex="-1"></a>[1] &quot;rhino01&quot;</span>
+<span id="cb44-6"><a href="#cb44-6" tabindex="-1"></a></span>
+<span id="cb44-7"><a href="#cb44-7" tabindex="-1"></a>[[2]]</span>
+<span id="cb44-8"><a href="#cb44-8" tabindex="-1"></a>[1] &quot;rhino02&quot;</span>
+<span id="cb44-9"><a href="#cb44-9" tabindex="-1"></a></span>
+<span id="cb44-10"><a href="#cb44-10" tabindex="-1"></a>[[3]]</span>
+<span id="cb44-11"><a href="#cb44-11" tabindex="-1"></a>[1] &quot;rhino02&quot;</span>
+<span id="cb44-12"><a href="#cb44-12" tabindex="-1"></a></span>
+<span id="cb44-13"><a href="#cb44-13" tabindex="-1"></a>[[4]]</span>
+<span id="cb44-14"><a href="#cb44-14" tabindex="-1"></a>[1] &quot;rhino03&quot;</span>
+<span id="cb44-15"><a href="#cb44-15" tabindex="-1"></a></span>
+<span id="cb44-16"><a href="#cb44-16" tabindex="-1"></a>[[5]]</span>
+<span id="cb44-17"><a href="#cb44-17" tabindex="-1"></a>[1] &quot;rhino03&quot;</span>
+<span id="cb44-18"><a href="#cb44-18" tabindex="-1"></a></span>
+<span id="cb44-19"><a href="#cb44-19" tabindex="-1"></a>[[6]]</span>
+<span id="cb44-20"><a href="#cb44-20" tabindex="-1"></a>[1] &quot;rhino01&quot;</span></code></pre></div>
+<p>Batch jobs can be launched with mpiexec and R CMD BATCH. Code to be
+executed is in ‘Rcode.R’.</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a>mpiexec --hostfile hostfile R CMD BATCH Rcode.R</span></code></pre></div>
+</div>
+</div>
+<div id="clusters-with-schedulers" class="section level2">
+<h2>Clusters with schedulers</h2>
+<p>Computer clusters are far from standardized, so the following may
+require significant adaptation; it is written from experience here at
+FHCRC, where we have a large cluster managed via SLURM. Nodes on the
+cluster have shared disks and common system images, minimizing
+complexity about making data resources available to individual nodes.
+There are two simple models for use of the cluster, Cluster-centric and
+R-centric.</p>
+<div id="cluster-centric" class="section level3">
+<h3>Cluster-centric</h3>
+<p>The idea is to use cluster management software to allocate resources,
+and then arrange for an script to be evaluated in the context of
+allocated resources. NOTE: Depending on your cluster configuration it
+may be necessary to add a line to the template file instructing workers
+to use the version of R on the master / head node. Otherwise the default
+R on the worker nodes will be used.</p>
+<p>For SLURM, we might request space for 4 tasks (with
+<code>salloc</code> or <code>sbatch</code>), arrange to start the MPI
+environment (with <code>orterun</code>) and on a single node in that
+universe run an script <code>BiocParallel-MPI.R</code>. The command
+is</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb46-1"><a href="#cb46-1" tabindex="-1"></a>$ salloc -N 4 orterun -n 1 R -f BiocParallel-MPI.R</span></code></pre></div>
+<p>The <em>R</em> script might do the following, using MPI for parallel
+evaluation. Start by loading necessary packages and defining
+<code>FUN</code> work to be done</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span>
+<span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a><span class="fu">library</span>(Rmpi)</span>
+<span id="cb47-3"><a href="#cb47-3" tabindex="-1"></a>FUN <span class="ot">&lt;-</span> <span class="cf">function</span>(i) <span class="fu">system</span>(<span class="st">&quot;hostname&quot;</span>, <span class="at">intern=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Create a <em>SnowParam</em> instance with the number of nodes equal
+to the size of the MPI universe minus 1 (let one node dispatch jobs to
+workers), and register this instance as the default</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="fu">mpi.universe.size</span>() <span class="sc">-</span> <span class="dv">1</span>, <span class="st">&quot;MPI&quot;</span>)</span>
+<span id="cb48-2"><a href="#cb48-2" tabindex="-1"></a><span class="fu">register</span>(param)</span></code></pre></div>
+<p>Evaluate the work in parallel, process the results, clean up, and
+quit</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a>xx <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, FUN)</span>
+<span id="cb49-2"><a href="#cb49-2" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">unlist</span>(xx))</span>
+<span id="cb49-3"><a href="#cb49-3" tabindex="-1"></a><span class="fu">mpi.quit</span>()</span></code></pre></div>
+<p>The entire session is as follows:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb50-1"><a href="#cb50-1" tabindex="-1"></a>$ salloc -N 4 orterun -n 1 R --vanilla -f BiocParallel-MPI.R</span>
+<span id="cb50-2"><a href="#cb50-2" tabindex="-1"></a>salloc: Job is in held state, pending scheduler release</span>
+<span id="cb50-3"><a href="#cb50-3" tabindex="-1"></a>salloc: Pending job allocation 6762292</span>
+<span id="cb50-4"><a href="#cb50-4" tabindex="-1"></a>salloc: job 6762292 queued and waiting for resources</span>
+<span id="cb50-5"><a href="#cb50-5" tabindex="-1"></a>salloc: job 6762292 has been allocated resources</span>
+<span id="cb50-6"><a href="#cb50-6" tabindex="-1"></a>salloc: Granted job allocation 6762292</span>
+<span id="cb50-7"><a href="#cb50-7" tabindex="-1"></a>## ...</span>
+<span id="cb50-8"><a href="#cb50-8" tabindex="-1"></a>&gt; FUN &lt;- function(i) system(&quot;hostname&quot;, intern=TRUE)</span>
+<span id="cb50-9"><a href="#cb50-9" tabindex="-1"></a>&gt;</span>
+<span id="cb50-10"><a href="#cb50-10" tabindex="-1"></a>&gt; library(BiocParallel)</span>
+<span id="cb50-11"><a href="#cb50-11" tabindex="-1"></a>&gt; library(Rmpi)</span>
+<span id="cb50-12"><a href="#cb50-12" tabindex="-1"></a>&gt; param &lt;- SnowParam(mpi.universe.size() - 1, &quot;MPI&quot;)</span>
+<span id="cb50-13"><a href="#cb50-13" tabindex="-1"></a>&gt; register(param)</span>
+<span id="cb50-14"><a href="#cb50-14" tabindex="-1"></a>&gt; xx &lt;- bplapply(1:100, FUN)</span>
+<span id="cb50-15"><a href="#cb50-15" tabindex="-1"></a>&gt; table(unlist(xx))</span>
+<span id="cb50-16"><a href="#cb50-16" tabindex="-1"></a>gizmof13 gizmof71 gizmof86 gizmof88</span>
+<span id="cb50-17"><a href="#cb50-17" tabindex="-1"></a>25 25 25 25</span>
+<span id="cb50-18"><a href="#cb50-18" tabindex="-1"></a>&gt;</span>
+<span id="cb50-19"><a href="#cb50-19" tabindex="-1"></a>&gt; mpi.quit()</span>
+<span id="cb50-20"><a href="#cb50-20" tabindex="-1"></a>salloc: Relinquishing job allocation 6762292</span>
+<span id="cb50-21"><a href="#cb50-21" tabindex="-1"></a>salloc: Job allocation 6762292 has been revoked.</span></code></pre></div>
+<p>One advantage of this approach is that the responsibility for
+managing the cluster lies firmly with the cluster management software –
+if one wants more nodes, or needs special resources, then adjust
+parameters to <code>salloc</code> (or <code>sbatch</code>).</p>
+<p>Notice that workers are spawned within the <code>bplapply</code>
+function; it might often make sense to more explicitly manage workers
+with <code>bpstart</code> and <code>bpstop</code>, e.g.,</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">bpstart</span>(<span class="fu">SnowParam</span>(<span class="fu">mpi.universe.size</span>() <span class="sc">-</span> <span class="dv">1</span>, <span class="st">&quot;MPI&quot;</span>))</span>
+<span id="cb51-2"><a href="#cb51-2" tabindex="-1"></a><span class="fu">register</span>(param)</span>
+<span id="cb51-3"><a href="#cb51-3" tabindex="-1"></a>xx <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, FUN)</span>
+<span id="cb51-4"><a href="#cb51-4" tabindex="-1"></a><span class="fu">bpstop</span>(param)</span>
+<span id="cb51-5"><a href="#cb51-5" tabindex="-1"></a><span class="fu">mpi.quit</span>()</span></code></pre></div>
+</div>
+<div id="r-centric" class="section level3">
+<h3>R-centric</h3>
+<p>A more <em>R</em>-centric approach might start an <em>R</em> script
+on the head node, and use <em>batchtools</em> to submit jobs from within
+<em>R</em> the session. One way of doing this is to create a file
+containing a template for the job submission step, e.g., for SLURM; a
+starting point might be found at</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" tabindex="-1"></a>tmpl <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="at">package=</span><span class="st">&quot;batchtools&quot;</span>, <span class="st">&quot;templates&quot;</span>, <span class="st">&quot;slurm-simple.tmpl&quot;</span>)</span>
+<span id="cb52-2"><a href="#cb52-2" tabindex="-1"></a><span class="fu">noquote</span>(<span class="fu">readLines</span>(tmpl))</span></code></pre></div>
+<pre><code>##  [1] #!/bin/bash                                                                                                 
+##  [2]                                                                                                             
+##  [3] ## Job Resource Interface Definition                                                                        
+##  [4] ##                                                                                                          
+##  [5] ## ntasks [integer(1)]:       Number of required tasks,                                                     
+##  [6] ##                            Set larger than 1 if you want to further parallelize                          
+##  [7] ##                            with MPI within your job.                                                     
+##  [8] ## ncpus [integer(1)]:        Number of required cpus per task,                                             
+##  [9] ##                            Set larger than 1 if you want to further parallelize                          
+## [10] ##                            with multicore/parallel within each task.                                     
+## [11] ## walltime [integer(1)]:     Walltime for this job, in seconds.                                            
+## [12] ##                            Must be at least 60 seconds for Slurm to work properly.                       
+## [13] ## memory   [integer(1)]:     Memory in megabytes for each cpu.                                             
+## [14] ##                            Must be at least 100 (when I tried lower values my                            
+## [15] ##                            jobs did not start at all).                                                   
+## [16] ##                                                                                                          
+## [17] ## Default resources can be set in your .batchtools.conf.R by defining the variable                         
+## [18] ## &#39;default.resources&#39; as a named list.                                                                     
+## [19]                                                                                                             
+## [20] &lt;%                                                                                                          
+## [21] # relative paths are not handled well by Slurm                                                              
+## [22] log.file = fs::path_expand(log.file)                                                                        
+## [23] -%&gt;                                                                                                         
+## [24]                                                                                                             
+## [25]                                                                                                             
+## [26] #SBATCH --job-name=&lt;%= job.name %&gt;                                                                          
+## [27] #SBATCH --output=&lt;%= log.file %&gt;                                                                            
+## [28] #SBATCH --error=&lt;%= log.file %&gt;                                                                             
+## [29] #SBATCH --time=&lt;%= ceiling(resources$walltime / 60) %&gt;                                                      
+## [30] #SBATCH --ntasks=1                                                                                          
+## [31] #SBATCH --cpus-per-task=&lt;%= resources$ncpus %&gt;                                                              
+## [32] #SBATCH --mem-per-cpu=&lt;%= resources$memory %&gt;                                                               
+## [33] &lt;%= if (!is.null(resources$partition)) sprintf(paste0(&quot;#SBATCH --partition=&#39;&quot;, resources$partition, &quot;&#39;&quot;)) %&gt;
+## [34] &lt;%= if (array.jobs) sprintf(&quot;#SBATCH --array=1-%i&quot;, nrow(jobs)) else &quot;&quot; %&gt;                                  
+## [35]                                                                                                             
+## [36] ## Initialize work environment like                                                                         
+## [37] ## source /etc/profile                                                                                      
+## [38] ## module add ...                                                                                           
+## [39]                                                                                                             
+## [40] ## Export value of DEBUGME environemnt var to slave                                                         
+## [41] export DEBUGME=&lt;%= Sys.getenv(&quot;DEBUGME&quot;) %&gt;                                                                 
+## [42]                                                                                                             
+## [43] &lt;%= sprintf(&quot;export OMP_NUM_THREADS=%i&quot;, resources$omp.threads) -%&gt;                                         
+## [44] &lt;%= sprintf(&quot;export OPENBLAS_NUM_THREADS=%i&quot;, resources$blas.threads) -%&gt;                                   
+## [45] &lt;%= sprintf(&quot;export MKL_NUM_THREADS=%i&quot;, resources$blas.threads) -%&gt;                                        
+## [46]                                                                                                             
+## [47] ## Run R:                                                                                                   
+## [48] ## we merge R output with stdout from SLURM, which gets then logged via --output option                     
+## [49] Rscript -e &#39;batchtools::doJobCollection(&quot;&lt;%= uri %&gt;&quot;)&#39;</code></pre>
+<p>The <em>R</em> script, run interactively or from the command line,
+might then look like</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a><span class="do">## define work to be done</span></span>
+<span id="cb54-2"><a href="#cb54-2" tabindex="-1"></a>FUN <span class="ot">&lt;-</span> <span class="cf">function</span>(i) <span class="fu">system</span>(<span class="st">&quot;hostname&quot;</span>, <span class="at">intern=</span><span class="cn">TRUE</span>)</span>
+<span id="cb54-3"><a href="#cb54-3" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span>
+<span id="cb54-4"><a href="#cb54-4" tabindex="-1"></a></span>
+<span id="cb54-5"><a href="#cb54-5" tabindex="-1"></a><span class="do">## register SLURM cluster instructions from the template file</span></span>
+<span id="cb54-6"><a href="#cb54-6" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">BatchtoolsParam</span>(<span class="at">workers=</span><span class="dv">5</span>, <span class="at">cluster=</span><span class="st">&quot;slurm&quot;</span>, <span class="at">template=</span>tmpl)</span>
+<span id="cb54-7"><a href="#cb54-7" tabindex="-1"></a><span class="fu">register</span>(param)</span>
+<span id="cb54-8"><a href="#cb54-8" tabindex="-1"></a></span>
+<span id="cb54-9"><a href="#cb54-9" tabindex="-1"></a><span class="do">## do work</span></span>
+<span id="cb54-10"><a href="#cb54-10" tabindex="-1"></a>xx <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, FUN)</span>
+<span id="cb54-11"><a href="#cb54-11" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">unlist</span>(xx))</span></code></pre></div>
+<p>The code runs on the head node until <code>bplapply</code> , where
+the script interacts with the SLURM scheduler to request a SLURM
+allocation, run jobs, and retrieve results. The argument <code>4</code>
+to <code>BatchtoolsParam</code> specifies the number of workers to
+request from the scheduler; <code>bplapply</code> divides the 100 jobs
+among the 4 workers. If <code>BatchtoolsParam</code> had been created
+without specifying any workers, then 100 jobs implied by the argument to
+<code>bplapply</code> would be associated with 100 tasks submitted to
+the scheduler.</p>
+<p>Because cluster tasks are running in independent <code>R</code>
+instances, and often on physically separate machines, a convenient ‘best
+practice’ is to write <code>FUN</code> in a ‘functional programming’
+manner, such that all data required for the function is passed in as
+arguments or (for large data) loaded implicitly or explicitly (e.g., via
+an <em>R</em> library) from disk.</p>
+</div>
+</div>
+</div>
+<div id="analyzing-genomic-data-in-bioconductor" class="section level1">
+<h1>Analyzing genomic data in <em>Bioconductor</em></h1>
+<p>General strategies exist for handling large genomic data that are
+well suited to <em>R</em> programs. A manuscript titled <em>Scalable
+Genomics with R and BioConductor</em> (<a href="http://arxiv.org/abs/1409.2864" class="uri">http://arxiv.org/abs/1409.2864</a>) by Michael Lawrence and
+Martin Morgan, reviews several of these approaches and demonstrate
+implementation with <em>Bioconductor </em> packages. Problem areas
+include scalable processing, summarization and visualization. The
+techniques presented include restricting queries, compressing data,
+iterating, and parallel computing.</p>
+<p>Ideas are presented in an approachable fashion within a framework of
+common use cases. This is a benificial read for anyone anyone tackling
+genomics problems in <em>R</em>.</p>
+</div>
+<div id="sec:developers" class="section level1">
+<h1>For developers</h1>
+<p>Developers wishing to use <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+in their own packages should include <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+in the <code>DESCRIPTION</code> file</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb55-1"><a href="#cb55-1" tabindex="-1"></a>Imports: BiocParallel</span></code></pre></div>
+<p>and import the functions they wish to use in the
+<code>NAMESPACE</code> file, e.g.,</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a>importFrom(BiocParallel, bplapply)</span></code></pre></div>
+<p>Then invoke the desired function in the code, e.g.,</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" tabindex="-1"></a><span class="fu">system.time</span>(x <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="cf">function</span>(i) { <span class="fu">Sys.sleep</span>(i); i }))</span></code></pre></div>
+<pre><code>##    user  system elapsed 
+##   0.014   0.023   3.040</code></pre>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" tabindex="-1"></a><span class="fu">unlist</span>(x)</span></code></pre></div>
+<pre><code>## [1] 1 2 3</code></pre>
+<p>This will use the back-end returned by <code>bpparam()</code> , by
+default a <code>MulticoreParam()</code> on Linux / macOS, on Windows, or
+the user’s preferred back-end if they have used
+<code>register()</code>.</p>
+<p>The <code>MulticoreParam</code> back-end does not require any special
+configuration or set-up and is therefore the safest option for
+developers. Unfortunately, <code>MulticoreParam</code> provides only
+serial evaluation on Windows.</p>
+<p>Developers should document that their function uses <a href="https://bioconductor.org/packages/BiocParallel"><em>BiocParallel</em></a>
+functions on the main page, and should perhaps include in their function
+signature an argument <code>BPPARAM=bpparam()</code>. Developers should
+NOT use ‘register()’ in package code – this sets a preference that
+influences use of ‘bplapply()’ and friends in all packages, not just
+their package.</p>
+<p>Developers wishing to invoke back-ends other than
+<code>MulticoreParam</code> , or to write code that works across
+Windows, macOS and Linux, no longer need to take special care to ensure
+that required packages, data, and functions are available and loaded on
+the remote nodes. By default, will export global variables to the
+workers due to the default. Nonetheless, a good practice during
+development is to use independent processes (via ) rather than relying
+on forked (via ) processes. For instance, clusters include the costs of
+setting up the computational environment (loading required packages, for
+instance) that may discourage use of parallelization when
+parallelization provides only marginal performance gains from the
+computation <em>per se</em>. Likewise, may be more sensitive to
+inappropriate calls to shared libraries, revealing errors that are only
+transient under.</p>
+<p>In <code>bplapply()</code>, the environment of <code>FUN</code>
+(other than the global environment) is serialized to the workers. A
+consequence is that, when <code>FUN</code> is inside a package name
+space, other functions available in the name space are available to
+<code>FUN</code> on the workers.</p>
+</div>
+<div id="sec:administrators" class="section level1">
+<h1>For server administrators</h1>
+<p>If the package is installed on a server used by multiple users, then
+the default value of cores used can sometimes lead to many more tasks
+being run than the server has cores if two or more users run a
+parallel-enabled function simultaneously. A more conservative number of
+cores than all of them minus 2 may be desirable, so that one user does
+not take all of the cores unless they explicitly specify so. This can be
+implemented with environment variables. Setting or for all system users
+to the number of cores divided by the typical number of concurrent users
+is a reasonable approach to avoiding this scenario.</p>
+</div>
+<div id="sessioninfo" class="section level1">
+<h1>sessionInfo</h1>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] GenomicAlignments_1.48.0           Rsamtools_2.28.0                  
+##  [3] Biostrings_2.80.0                  XVector_0.52.0                    
+##  [5] SummarizedExperiment_1.42.0        Biobase_2.72.0                    
+##  [7] MatrixGenerics_1.24.0              matrixStats_1.5.0                 
+##  [9] GenomicRanges_1.64.0               Seqinfo_1.2.0                     
+## [11] IRanges_2.46.0                     S4Vectors_0.50.0                  
+## [13] BiocGenerics_0.58.0                generics_0.1.4                    
+## [15] RNAseqData.HNRNPC.bam.chr14_0.48.0 BiocParallel_1.46.0               
+## [17] BiocStyle_2.40.0                  
+## 
+## loaded via a namespace (and not attached):
+##  [1] rappdirs_0.3.4      sass_0.4.10         bitops_1.0-9       
+##  [4] SparseArray_1.12.0  lattice_0.22-9      stringi_1.8.7      
+##  [7] hms_1.1.4           digest_0.6.39       grid_4.6.0         
+## [10] evaluate_1.0.5      fastmap_1.2.0       Matrix_1.7-5       
+## [13] jsonlite_2.0.0      progress_1.2.3      cigarillo_1.2.0    
+## [16] backports_1.5.1     BiocManager_1.30.27 brew_1.0-10        
+## [19] codetools_0.2-20    jquerylib_0.1.4     abind_1.4-8        
+## [22] cli_3.6.6           rlang_1.2.0         crayon_1.5.3       
+## [25] DelayedArray_0.38.0 withr_3.0.2         cachem_1.1.0       
+## [28] yaml_2.3.12         S4Arrays_1.12.0     tools_4.6.0        
+## [31] parallel_4.6.0      checkmate_2.3.4     base64url_1.4      
+## [34] buildtools_1.0.0    vctrs_0.7.3         R6_2.6.1           
+## [37] lifecycle_1.0.5     fs_2.1.0            pkgconfig_2.0.3    
+## [40] bslib_0.10.0        data.table_1.18.2.1 xfun_0.57          
+## [43] batchtools_0.9.18   sys_3.4.3           knitr_1.51         
+## [46] htmltools_0.5.9     snow_0.4-4          rmarkdown_2.31     
+## [49] maketools_1.3.2     compiler_4.6.0      prettyunits_1.2.0</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#quick-start" id="toc-quick-start">Quick start</a></li>
+<li><a href="#the-biocparallel-interface" id="toc-the-biocparallel-interface">The <em>BiocParallel</em>
+Interface</a>
+<ul>
+<li><a href="#classes" id="toc-classes">Classes</a></li>
+<li><a href="#functions" id="toc-functions">Functions</a></li>
+</ul></li>
+<li><a href="#use-cases" id="toc-use-cases">Use cases</a>
+<ul>
+<li><a href="#single-machine" id="toc-single-machine">Single
+machine</a></li>
+<li><a href="#ad-hoc-cluster-of-multiple-machines" id="toc-ad-hoc-cluster-of-multiple-machines"><em>Ad hoc</em> cluster of
+multiple machines</a></li>
+<li><a href="#clusters-with-schedulers" id="toc-clusters-with-schedulers">Clusters with schedulers</a></li>
+</ul></li>
+<li><a href="#analyzing-genomic-data-in-bioconductor" id="toc-analyzing-genomic-data-in-bioconductor">Analyzing genomic data
+in <em>Bioconductor</em></a></li>
+<li><a href="#sec:developers" id="toc-sec:developers">For
+developers</a></li>
+<li><a href="#sec:administrators" id="toc-sec:administrators">For server
+administrators</a></li>
+<li><a href="#sessioninfo" id="toc-sessioninfo">sessionInfo</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

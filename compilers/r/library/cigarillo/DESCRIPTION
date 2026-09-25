@@ -1,0 +1,59 @@
+Package: cigarillo
+Title: Efficient manipulation of CIGAR strings
+Description: CIGAR stands for Concise Idiosyncratic Gapped Alignment
+        Report. CIGAR strings are found in the BAM files produced by
+        most aligners and in the AIRR-formatted output produced by
+        IgBLAST. The cigarillo package provides functions to parse and
+        inspect CIGAR strings, trim them, turn them into ranges of
+        positions relative to the "query space" or "reference space",
+        and project positions or sequences from one space to the other.
+        Note that these operations are low-level operations that the
+        user rarely needs to perform directly. More typically, they are
+        performed behind the scene by higher-level functionality
+        implemented in other packages like Bioconductor packages
+        GenomicAlignments and igblastr.
+biocViews: Infrastructure, Alignment, SequenceMatching, Sequencing
+URL: https://bioconductor.org/packages/cigarillo
+BugReports: https://github.com/Bioconductor/cigarillo/issues
+Version: 1.2.0
+License: Artistic-2.0
+Encoding: UTF-8
+Authors@R: c(
+	person("Hervé", "Pagès", role=c("aut", "cre"),
+		email="hpages.on.github@gmail.com",
+		comment=c(ORCID="0009-0002-8272-4522")),
+	person("Valerie", "Obenchain", role="aut"),
+	person("Michael", "Lawrence", role="aut",
+		email="lawremi@gmail.com"),
+	person("Patrick", "Aboyoun", role="ctb"),
+	person("Fedor", "Bezrukov", role="ctb"),
+	person("Martin", "Morgan", role="ctb"))
+Depends: methods, BiocGenerics, S4Vectors (>= 0.47.2), IRanges,
+        Biostrings
+Imports: stats
+LinkingTo: S4Vectors, IRanges
+Suggests: Rsamtools, GenomicAlignments, RNAseqData.HNRNPC.bam.chr14,
+        BSgenome.Hsapiens.UCSC.hg19, testthat, knitr, rmarkdown,
+        BiocStyle
+VignetteBuilder: knitr
+Collate: utils.R cigar_ops_visibility.R explode_cigars.R
+        tabulate_cigar_ops.R cigar_extent.R trim_cigars.R
+        cigars_as_ranges.R project_positions.R project_sequences.R
+        map_ref_ranges_to_query.R
+Config/pak/sysreqs: zlib1g-dev
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 13:05:53 UTC
+RemoteUrl: https://github.com/bioc/cigarillo
+RemoteRef: RELEASE_3_23
+RemoteSha: 2fdb706c3a207b09e4b3d2c954b077e040fc0a83
+NeedsCompilation: yes
+Packaged: 2026-04-29 11:25:40 UTC; root
+Author: Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>),
+  Valerie Obenchain [aut],
+  Michael Lawrence [aut],
+  Patrick Aboyoun [ctb],
+  Fedor Bezrukov [ctb],
+  Martin Morgan [ctb]
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-04-29 11:32:32 UTC; windows
+Archs: x64

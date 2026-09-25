@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Guangchuang Yu School of Basic Medical Sciences, Southern Medical University">
+<meta name="dcterms.date" content="2026-04-08">
+
+<title>Introduction to enrichit</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+width: 0.8em;
+margin: 0 0.8em 0.2em -1em;  vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+</style>
+</head>
+
+<body>
+
+
+<header id="title-block-header">
+<h1 class="title">Introduction to enrichit</h1>
+<p class="author">Guangchuang Yu<br>
+School of Basic Medical Sciences, Southern Medical University</p>
+
+<p class="date">2026-04-08</p>
+</header>
+
+
+<h1 id="introduction">Introduction</h1>
+<p>Functional enrichment analysis is a staple in bioinformatics for interpreting lists of genes identified from omics experiments. <code>enrichit</code> provides fast, C++-based implementations of two of the most widely used methods:</p>
+<ol type="1">
+<li><strong>Over-Representation Analysis (ORA)</strong></li>
+<li><strong>Gene Set Enrichment Analysis (GSEA)</strong></li>
+</ol>
+<p>The package is designed to be efficient and easy to integrate into existing workflows, with a focus on performance and standardized output formats.</p>
+<h1 id="installation">Installation</h1>
+<p>You can install <code>enrichit</code> from GitHub:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;YuLab-SMU/enrichit&quot;</span>)</span></code></pre></div>
+</div>
+<h1 id="over-representation-analysis-ora">Over-Representation Analysis (ORA)</h1>
+<p>ORA determines whether a set of genes of interest (e.g., differentially expressed genes) is enriched in a known gene set (e.g., a biological pathway) more than would be expected by chance.</p>
+<h2 id="method">Method</h2>
+<p><code>enrichit</code> implements ORA using the <strong>hypergeometric distribution</strong> (one-sided Fisher’s exact test). The p-value is calculated as the probability of observing at least <span class="math inline"><em>k</em></span> genes from the specific gene set in the selected list of <span class="math inline"><em>n</em></span> genes, given a background population (universe) of <span class="math inline"><em>N</em></span> genes containing <span class="math inline"><em>M</em></span> genes from that set.</p>
+<p><span class="math display">$$
+p = 1 - \sum_{i=0}^{k-1} \frac{\binom{M}{i} \binom{N-M}{n-i}}{\binom{N}{n}}
+$$</span></p>
+<h2 id="example">Example</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(enrichit)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate a universe of 1000 genes</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>universe <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Gene&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Define gene sets</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>gene_sets <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">PathwayA =</span> <span class="fu">paste0</span>(<span class="st">&quot;Gene&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>),       <span class="co"># Genes 1-50</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">PathwayB =</span> <span class="fu">paste0</span>(<span class="st">&quot;Gene&quot;</span>, <span class="dv">800</span><span class="sc">:</span><span class="dv">850</span>)     <span class="co"># Genes 800-850</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Select &#39;significant&#39; genes (e.g., top 20 genes)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># PathwayA should be enriched</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>sig_genes <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Gene&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Run ORA</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>ora_result <span class="ot">&lt;-</span> <span class="fu">ora</span>(</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene =</span> sig_genes,</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_sets =</span> gene_sets,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">universe =</span> universe</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(ora_result)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        ID SetSize Count DESize UniverseSize       pvalue
+1 PathwayA      50    20     20         1000 1.388265e-28
+2 PathwayB      51     0     20         1000 1.000000e+00
+                                                                                                                              geneID
+1 Gene8/Gene17/Gene2/Gene12/Gene6/Gene14/Gene20/Gene18/Gene9/Gene13/Gene16/Gene1/Gene7/Gene19/Gene3/Gene4/Gene5/Gene15/Gene11/Gene10
+2                                                                                                                                   
+  GeneRatio BgRatio RichFactor FoldEnrichment
+1     20/20 50/1000        0.4             20
+2      0/20 51/1000        0.0              0</code></pre>
+</div>
+</div>
+<h1 id="gene-set-enrichment-analysis-gsea">Gene Set Enrichment Analysis (GSEA)</h1>
+<p>GSEA evaluates whether a defined set of genes shows statistically significant, concordant differences between two biological states. Unlike ORA, GSEA uses the entire ranked list of genes, avoiding the need for arbitrary thresholds to select “significant” genes.</p>
+<h2 id="method-1">Method</h2>
+<p><code>enrichit</code> offers a fast C++ implementation of GSEA. It calculates an <strong>Enrichment Score (ES)</strong> that reflects the degree to which a gene set is over-represented at the top or bottom of a ranked list of genes.</p>
+<p>The package supports different methods for p-value calculation:</p>
+<ol type="1">
+<li><strong>Multilevel (<code>method = &quot;multilevel&quot;</code>)</strong>: This is the default and recommended method. It uses an adaptive multi-level splitting Monte Carlo approach to estimate low p-values efficiently with high accuracy, similar to the <code>fgsea</code> package.</li>
+<li><strong>Simple Permutation (<code>method = &quot;permute&quot;</code>)</strong>: Standard permutation of gene labels.</li>
+<li><strong>Sample Permutation (<code>method = &quot;sample&quot;</code>)</strong>: Random sampling of gene sets (faster but less rigorous for some null hypotheses).</li>
+</ol>
+<h2 id="example-1">Example</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate synthetic ranked gene list</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>geneList <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">rnorm</span>(<span class="dv">1000</span>), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(geneList) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Gene&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Define gene sets</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># PathwayTop is enriched at the top (positive ES)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># PathwayBottom is enriched at the bottom (negative ES)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>gene_sets <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">PathwayTop =</span> <span class="fu">names</span>(geneList)[<span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>],</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">PathwayBottom =</span> <span class="fu">names</span>(geneList)[<span class="dv">951</span><span class="sc">:</span><span class="dv">1000</span>],</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">PathwayRandom =</span> <span class="fu">sample</span>(<span class="fu">names</span>(geneList), <span class="dv">50</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Run GSEA using the multilevel method</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>gsea_result <span class="ot">&lt;-</span> <span class="fu">gsea</span>(</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">geneList =</span> geneList,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_sets =</span> gene_sets,</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;multilevel&quot;</span>,</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">nPerm =</span> <span class="dv">1000</span>,    <span class="co"># Base permutations</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">minGSSize =</span> <span class="dv">10</span>,</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">maxGSSize =</span> <span class="dv">500</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in gsea(geneList = geneList, gene_sets = gene_sets, method =
+&quot;multilevel&quot;, : For some pathways, in reality P-values are less than 1e-10. You
+can set the eps argument to zero for better estimation.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(gsea_result)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             ID enrichmentScore        NES       pvalue setSize    log2err rank
+1    PathwayTop       1.0000000  3.9449035 0.0000000001      50        NaN   50
+2 PathwayBottom      -1.0000000 -3.7744199 0.0000000001      50        NaN   51
+3 PathwayRandom      -0.2638292 -0.9958021 0.4639175258      50 0.07511816  126
+                     leading_edge
+1 tags=100%, list=5%, signal=100%
+2 tags=100%, list=5%, signal=100%
+3  tags=22%, list=13%, signal=20%
+                                                                                                                                                                                                                                                                                                                                                                                                   core_enrichment
+1                                                             Gene1/Gene2/Gene3/Gene4/Gene5/Gene6/Gene7/Gene8/Gene9/Gene10/Gene11/Gene12/Gene13/Gene14/Gene15/Gene16/Gene17/Gene18/Gene19/Gene20/Gene21/Gene22/Gene23/Gene24/Gene25/Gene26/Gene27/Gene28/Gene29/Gene30/Gene31/Gene32/Gene33/Gene34/Gene35/Gene36/Gene37/Gene38/Gene39/Gene40/Gene41/Gene42/Gene43/Gene44/Gene45/Gene46/Gene47/Gene48/Gene49/Gene50
+2 Gene951/Gene952/Gene953/Gene954/Gene955/Gene956/Gene957/Gene958/Gene959/Gene960/Gene961/Gene962/Gene963/Gene964/Gene965/Gene966/Gene967/Gene968/Gene969/Gene970/Gene971/Gene972/Gene973/Gene974/Gene975/Gene976/Gene977/Gene978/Gene979/Gene980/Gene981/Gene982/Gene983/Gene984/Gene985/Gene986/Gene987/Gene988/Gene989/Gene990/Gene991/Gene992/Gene993/Gene994/Gene995/Gene996/Gene997/Gene998/Gene999/Gene1000
+3                                                                                                                                                                                                                                                                                                                          Gene876/Gene898/Gene918/Gene923/Gene943/Gene956/Gene958/Gene963/Gene967/Gene975/Gene985</code></pre>
+</div>
+</div>
+<h1 id="working-with-gson">Working with GSON</h1>
+<p><code>enrichit</code> works seamlessly with <code>GSON</code> objects, which are used to store gene set information along with metadata. The <code>GSON</code> class is defined in the <a href="https://CRAN.R-project.org/package=gson">gson</a> package. It provides a structured way to handle gene sets, including gene identifiers, gene set names, and other associated information.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming you have a GSON object &#39;g&#39;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># result &lt;- gsea_gson(geneList = geneList, gson = g)</span></span></code></pre></div>
+</div>
+<h1 id="session-info">Session Info</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.5.2 (2025-10-31 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26200)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=C                               
+[2] LC_CTYPE=Chinese (Simplified)_China.utf8   
+[3] LC_MONETARY=Chinese (Simplified)_China.utf8
+[4] LC_NUMERIC=C                               
+[5] LC_TIME=Chinese (Simplified)_China.utf8    
+
+time zone: Asia/Shanghai
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] enrichit_0.1.3.001
+
+loaded via a namespace (and not attached):
+ [1] digest_0.6.39     fastmap_1.2.0     xfun_0.56         yulab.utils_0.2.4
+ [5] rappdirs_0.3.4    knitr_1.51        htmltools_0.5.9   rmarkdown_2.31   
+ [9] cli_3.6.5         compiler_4.5.2    tools_4.5.2       evaluate_1.0.5   
+[13] Rcpp_1.1.1        yaml_2.3.12       otel_0.2.0        rlang_1.2.0      
+[17] jsonlite_2.0.0    fs_2.0.1         </code></pre>
+</div>
+</div>
+
+
+
+
+
+</body></html>

@@ -1,0 +1,12 @@
+tidydr-package	tidydr-package
+aes	reexports
+autoplot	reexports
+available_methods	available_methods
+dr	dr
+dr_extract	dr-extract
+element_line2	element_line2
+nk	nk
+reexports	reexports
+theme_dr	theme_dr
+theme_noaxis	theme_noaxis
+tidydr	tidydr-package

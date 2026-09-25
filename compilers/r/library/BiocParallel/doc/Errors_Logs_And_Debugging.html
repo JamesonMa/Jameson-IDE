@@ -1,0 +1,973 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content="Valerie ObenchainMartin Morgan">
+      
+      <title>Errors, Logs and Debugging in BiocParallel</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">Errors, Logs and Debugging in
+BiocParallel</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>This vignette is part of the <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+package and focuses on error handling and logging. A section at the end
+demonstrates how the two can be used together as part of an effective
+debugging routine.</p>
+<p><em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+provides a unified interface to the parallel infrastructure in several
+packages including <em><a href="https://CRAN.R-project.org/package=snow">snow</a></em>,
+<code>parallel</code>, <em><a href="https://CRAN.R-project.org/package=batchtools">batchtools</a></em>
+and <em><a href="https://CRAN.R-project.org/package=foreach">foreach</a></em>. When
+implementing error handling in <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+the primary goals were to enable the return of partial results when an
+error is thrown (vs just the error) and to establish logging on the
+workers. In cases where error handling existed, such as <em><a href="https://CRAN.R-project.org/package=batchtools">batchtools</a></em>
+and <em><a href="https://CRAN.R-project.org/package=foreach">foreach</a></em>,
+those behaviors were preserved. Clusters created with <em><a href="https://CRAN.R-project.org/package=snow">snow</a></em> and
+<code>parallel</code> now have flexible error handling and logging
+available through <code>SnowParam</code> and <code>MulticoreParam</code>
+objects.</p>
+<p>In this document the term “job” is used to describe a single call to
+a bp*apply function (e.g., the <code>X</code> in <code>bplapply</code>).
+A “job” consists of one or more “tasks”, where each “task” is run
+separately on a worker.</p>
+<p>The <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+package is available at bioconductor.org and can be downloaded via
+<code>BiocManager::install</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">&quot;BiocParallel&quot;</span>)</span></code></pre></div>
+<p>Load the package:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span></code></pre></div>
+</div>
+<div id="error-handling" class="section level1">
+<h1>Error Handling</h1>
+<div id="messages-and-warnings" class="section level2">
+<h2>Messages and warnings</h2>
+<p><em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+captures messages and warnings in each job, returning the output to the
+manager and reporting these to the user after the completion of the
+entire operation. Thus</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="cf">function</span>(i) { <span class="fu">message</span>(i); <span class="fu">Sys.sleep</span>(<span class="dv">3</span>) })</span></code></pre></div>
+<p>reports messages only after the entire <code>bplapply()</code> is
+complete.</p>
+<p>It may be desired to output messages immediatly. Do this using
+<code>sink()</code>, as in the following example:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="cf">function</span>(i) {</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>    <span class="fu">sink</span>(<span class="cn">NULL</span>, <span class="at">type =</span> <span class="st">&quot;message&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="fu">message</span>(i)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="fu">Sys.sleep</span>(<span class="dv">3</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>})</span></code></pre></div>
+<p>This could be confusing when multiple workers write messages at the
+same time – the messages will be interleaved in an arbitrary way – or
+when the workers are not all running on the same computer (e.g., with
+<code>SnowParam()</code>) so should not be used in package code.</p>
+</div>
+<div id="catching-errors" class="section level2">
+<h2>Catching errors</h2>
+<p>By default, <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+attempts all computations and returns any warnings and errors along with
+successful results. The <code>stop.on.error</code> field controls if the
+job is terminated as soon as one task throws an error. This is useful
+when debugging or when running large jobs (many tasks) and you want to
+be notified of an error before all runs complete.</p>
+<p><code>stop.on.error</code> is <code>TRUE</code> by default.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>()</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>param</span></code></pre></div>
+<pre><code>## class: SnowParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: SOCK</code></pre>
+<p>The field can be set when constructing the param or modified with the
+<code>bpstopOnError</code> accessor.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">2</span>, <span class="at">stop.on.error =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>param</span></code></pre></div>
+<pre><code>## class: SnowParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: TRUE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: SOCK</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">bpstopOnError</span>(param) <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span></code></pre></div>
+<p>In this example <code>X</code> is length 6. By default, the elements
+of <code>X</code> are divided as evenly as possible over the number of
+workers and run in chunks. The number of tasks is set equal to the
+length of <code>X</code> which forces each element of <code>X</code> to
+be executed separately (6 tasks).</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="st">&quot;2&quot;</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">3</span>, <span class="at">tasks =</span> <span class="fu">length</span>(X), <span class="at">stop.on.error =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Tasks 1, 2, and 3 are assigned to the three workers, and are
+evaluated. Task 2 fails, stopping further computation. All successfully
+completed tasks are returned and can be accessed by
+<code>bpresult</code>. Usually, this means that the results of tasks 1,
+2, and 3 will be returned.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>    <span class="fu">bplapply</span>(X, sqrt, <span class="at">BPPARAM =</span> param)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>}, <span class="at">error=</span>identity)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>result</span></code></pre></div>
+<pre><code>## &lt;bplist_error: BiocParallel errors
+##   1 remote errors, element index: 2
+##   1 unevaluated and other errors
+##   first remote error:
+## Error in FUN(...): non-numeric argument to mathematical function
+## &gt;
+## results and errors available as &#39;bpresult(x)&#39;</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">bpresult</span>(result)</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1
+## 
+## [[2]]
+## &lt;remote_error in FUN(...): non-numeric argument to mathematical function&gt;
+## traceback() available as &#39;attr(x, &quot;traceback&quot;)&#39;
+## 
+## [[3]]
+## [1] 1.732051
+## 
+## [[4]]
+## [1] 2
+## 
+## [[5]]
+## [1] 2.236068
+## 
+## [[6]]
+## &lt;unevaluated_error: not evaluated due to previous error&gt;
+## 
+## attr(,&quot;REDOENV&quot;)
+## &lt;environment: 0x564df2215bc8&gt;</code></pre>
+<p>Using <code>stop.on.error=FALSE</code>, all tasks are evaluated.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="st">&quot;1&quot;</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">3</span>, <span class="at">tasks =</span> <span class="fu">length</span>(X), <span class="at">stop.on.error =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>    <span class="fu">bplapply</span>(X, sqrt, <span class="at">BPPARAM =</span> param)</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>}, <span class="at">error=</span>identity)</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>result</span></code></pre></div>
+<pre><code>## &lt;bplist_error: BiocParallel errors
+##   1 remote errors, element index: 1
+##   0 unevaluated and other errors
+##   first remote error:
+## Error in FUN(...): non-numeric argument to mathematical function
+## &gt;
+## results and errors available as &#39;bpresult(x)&#39;</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">bpresult</span>(result)</span></code></pre></div>
+<pre><code>## [[1]]
+## &lt;remote_error in FUN(...): non-numeric argument to mathematical function&gt;
+## traceback() available as &#39;attr(x, &quot;traceback&quot;)&#39;
+## 
+## [[2]]
+## [1] 1.414214
+## 
+## [[3]]
+## [1] 1.732051
+## 
+## [[4]]
+## [1] 2
+## 
+## [[5]]
+## [1] 2.236068
+## 
+## [[6]]
+## [1] 2.44949
+## 
+## attr(,&quot;REDOENV&quot;)
+## &lt;environment: 0x564df2af1038&gt;</code></pre>
+<p><code>bptry()</code> is a convenient way of trying to evaluate a
+<code>bpapply</code>-like expression, returning the evaluated results
+without signalling an error.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">bptry</span>({</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>    <span class="fu">bplapply</span>(X, sqrt, <span class="at">BPPARAM=</span>param)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>})</span></code></pre></div>
+<pre><code>## [[1]]
+## &lt;remote_error in FUN(...): non-numeric argument to mathematical function&gt;
+## traceback() available as &#39;attr(x, &quot;traceback&quot;)&#39;
+## 
+## [[2]]
+## [1] 1.414214
+## 
+## [[3]]
+## [1] 1.732051
+## 
+## [[4]]
+## [1] 2
+## 
+## [[5]]
+## [1] 2.236068
+## 
+## [[6]]
+## [1] 2.44949
+## 
+## attr(,&quot;REDOENV&quot;)
+## &lt;environment: 0x564df0b8a5c0&gt;</code></pre>
+<p>In the next example the elements of <code>X</code> are grouped
+instead of run separately. The default value for <code>tasks</code> is 0
+which means ‘X’ is split as evenly as possible across the number of
+workers. There are 3 workers so the first task consists of list(1, 2),
+the second is list(“3”, 4) and the third is list(5, 6).</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="st">&quot;3&quot;</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">3</span>, <span class="at">stop.on.error =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>The output shows an error in when evaluating the third element, but
+also that the fourth element, in the same chunk as 3, was not evaluated.
+All elements are evaluated because they were assigned to workers before
+the first error occurred.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">bptry</span>(<span class="fu">bplapply</span>(X, sqrt, <span class="at">BPPARAM =</span> param))</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 1.414214
+## 
+## [[3]]
+## &lt;remote_error in FUN(...): non-numeric argument to mathematical function&gt;
+## traceback() available as &#39;attr(x, &quot;traceback&quot;)&#39;
+## 
+## [[4]]
+## &lt;unevaluated_error: not evaluated due to previous error&gt;
+## 
+## [[5]]
+## [1] 2.236068
+## 
+## [[6]]
+## [1] 2.44949
+## 
+## attr(,&quot;REDOENV&quot;)
+## &lt;environment: 0x564df3654dc8&gt;</code></pre>
+<p>Side Note: Results are collected from workers as they finish which is
+not necessarily the same order in which they were loaded. Depending on
+how tasks are divided it is possible that the task with the error
+completes after all others so essentially all workers complete before
+the job is stopped. In this situation the output includes all results
+along with the error message and it may appear that
+<code>stop.on.error=TRUE</code> did not stop the job soon enough. This
+is just a heads up that the usefulness of
+<code>stop.on.error=TRUE</code> may vary with run time and distribution
+of tasks over workers.</p>
+</div>
+<div id="identify-failures-with-bpok" class="section level2">
+<h2>Identify failures with <code>bpok()</code></h2>
+<p>The <code>bpok()</code> function is a quick way to determine which
+(if any) tasks failed. In this example we use <code>bptry()</code> to
+retrieve the partially evaluated expression, including the failed
+elements.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">2</span>, <span class="at">stop.on.error=</span><span class="cn">FALSE</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">bptry</span>(<span class="fu">bplapply</span>(<span class="fu">list</span>(<span class="dv">1</span>, <span class="st">&quot;2&quot;</span>, <span class="dv">3</span>), sqrt, <span class="at">BPPARAM=</span>param))</span></code></pre></div>
+<p><code>bpok</code> returns TRUE if the task was successful.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">bpok</span>(result)</span></code></pre></div>
+<pre><code>## [1]  TRUE FALSE  TRUE</code></pre>
+<p>Once errors are identified with <code>bpok</code> the traceback can
+be retrieved with the <code>attr</code> function. This is possible
+because errors are returned as <code>condition</code> objects with the
+traceback as an attribute.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="fu">attr</span>(result[[<span class="fu">which</span>(<span class="sc">!</span><span class="fu">bpok</span>(result))]], <span class="st">&quot;traceback&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;3: handle_error(e)&quot;                                                             
+## [2] &quot;2: h(simpleError(msg, call))&quot;                                                   
+## [3] &quot;1: .handleSimpleError(function (e) &quot;                                            
+## [4] &quot;   {&quot;                                                                           
+## [5] &quot;       annotated_condition &lt;- handle_error(e)&quot;                                  
+## [6] &quot;       stop(annotated_condition)&quot;                                               
+## [7] &quot;   }, \&quot;non-numeric argument to mathematical function\&quot;, base::quote(FUN(...)))&quot;</code></pre>
+<p>Note that the traceback has been modified from the full traceback
+provided by <em>R</em> to include only the calls from the time the
+<code>bplapply</code> <code>FUN</code> is evaluated.</p>
+</div>
+<div id="rerun-failed-tasks-with-bpredo" class="section level2">
+<h2>Rerun failed tasks with <code>BPREDO</code></h2>
+<p>Tasks can fail due to hardware problems or bugs in the input data.
+The <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+functions support a <code>BPREDO</code> (re-do) argument for recomputing
+only the tasks that failed. A list of partial results and errors is
+supplied to <code>BPREDO</code> in a second call to the function. The
+failed elements are identified, recomputed and inserted into the
+original results.</p>
+<p>The bug in this example is the second element of ‘X’ which is a
+character when it should be numeric.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="st">&quot;2&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">2</span>, <span class="at">stop.on.error=</span><span class="cn">FALSE</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">bptry</span>(<span class="fu">bplapply</span>(X, sqrt, <span class="at">BPPARAM=</span>param))</span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>result</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1
+## 
+## [[2]]
+## &lt;remote_error in FUN(...): non-numeric argument to mathematical function&gt;
+## traceback() available as &#39;attr(x, &quot;traceback&quot;)&#39;
+## 
+## [[3]]
+## [1] 1.732051
+## 
+## attr(,&quot;REDOENV&quot;)
+## &lt;environment: 0x564df39fb128&gt;</code></pre>
+<p>First fix the input data.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a>X.redo <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span></code></pre></div>
+<p>Repeat the call to <code>bplapply</code> this time supplying the
+partial results as <code>BPREDO</code>. Only the failed calculations are
+computed, in the present case requiring only one worker.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">bplapply</span>(X.redo, sqrt, <span class="at">BPREDO=</span>result, <span class="at">BPPARAM=</span>param)</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 1.414214
+## 
+## [[3]]
+## [1] 1.732051</code></pre>
+</div>
+</div>
+<div id="logging" class="section level1">
+<h1>Logging</h1>
+<p>NOTE: Logging as described in this section is supported for
+SnowParam, MulticoreParam and SerialParam.</p>
+<div id="parameters" class="section level2">
+<h2>Parameters</h2>
+<p>Logging in <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+is controlled by 3 fields in the <code>BiocParallelParam</code>:</p>
+<pre><code>  log:       TRUE or FALSE
+  logdir:    location to write log file
+  threshold: one of &quot;TRACE&quot;, &quot;DEBUG&quot;, &quot;INFO&quot;, &quot;WARN&quot;, &quot;ERROR&quot;, &quot;FATAL&quot;</code></pre>
+<p>When <code>log = TRUE</code> the <em><a href="https://CRAN.R-project.org/package=futile.logger">futile.logger</a></em>
+package is loaded on each worker. <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+uses a custom script on the workers to collect log messages as well as
+additional statistics such as gc, runtime and node information. Output
+to stderr and stdout is also captured.</p>
+<p>By default <code>log</code> is FALSE and <code>threshold</code> is
+<em>INFO</em>.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="at">stop.on.error=</span><span class="cn">FALSE</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a>param</span></code></pre></div>
+<pre><code>## class: SnowParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: FALSE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: SOCK</code></pre>
+<p>Turn logging on and set the threshold to <em>TRACE</em>.</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a><span class="fu">bplog</span>(param) <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a><span class="fu">bpthreshold</span>(param) <span class="ot">&lt;-</span> <span class="st">&quot;TRACE&quot;</span></span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a>param</span></code></pre></div>
+<pre><code>## class: SnowParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: TRUE; bpthreshold: TRACE; bpstopOnError: FALSE
+##   bpRNGseed: ; bptimeout: NA; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: SOCK</code></pre>
+</div>
+<div id="setting-a-threshold" class="section level2">
+<h2>Setting a threshold</h2>
+<p>All thresholds defined in <em><a href="https://CRAN.R-project.org/package=futile.logger">futile.logger</a></em>
+are supported: <em>FATAL</em>, <em>ERROR</em>, <em>WARN</em>,
+<em>INFO</em>, <em>DEBUG</em> and <em>TRACE</em>. All messages greater
+than or equal to the severity of the threshold are shown. For example, a
+threshold of <em>INFO</em> will print all messages tagged as
+<em>FATAL</em>, <em>ERROR</em>, <em>WARN</em> and <em>INFO</em>.</p>
+<p>Because the default threshold is <em>INFO</em> it catches the
+<em>ERROR</em>-level message thrown when attempting the square root of a
+character (“2”).</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="fu">tryCatch</span>({</span>
+<span id="cb39-2"><a href="#cb39-2" tabindex="-1"></a>    <span class="fu">bplapply</span>(<span class="fu">list</span>(<span class="dv">1</span>, <span class="st">&quot;2&quot;</span>, <span class="dv">3</span>), sqrt, <span class="at">BPPARAM =</span> param)</span>
+<span id="cb39-3"><a href="#cb39-3" tabindex="-1"></a>}, <span class="at">error=</span><span class="cf">function</span>(e) <span class="fu">invisible</span>(e))</span></code></pre></div>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 2
+## Node: 1
+## Timestamp: 2026-04-29 14:58:47.191623
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.034   0.011   0.045 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  989917 52.9    1730174 92.5  1730174 92.5
+## Vcells 1820222 13.9    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## INFO [2026-04-29 14:58:47] loading futile.logger package
+## 
+## stderr and stdout:</code></pre>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 1
+## Node: 2
+## Timestamp: 2026-04-29 14:58:47.272884
+## Success: FALSE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.041   0.005   0.046 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  990534 53.0    1730174 92.5  1730174 92.5
+## Vcells 1821649 13.9    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## INFO [2026-04-29 14:58:47] loading futile.logger package
+## ERROR [2026-04-29 14:58:47] Error in FUN(...): non-numeric argument to mathematical function
+## 
+## stderr and stdout:</code></pre>
+<p>All user-supplied messages written in the <em><a href="https://CRAN.R-project.org/package=futile.logger">futile.logger</a></em>
+syntax are also captured. This function performs argument checking and
+includes a couple of <em>WARN</em> and <em>DEBUG</em>-level
+messages.</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" tabindex="-1"></a>FUN <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
+<span id="cb42-2"><a href="#cb42-2" tabindex="-1"></a>  futile.logger<span class="sc">::</span><span class="fu">flog.debug</span>(<span class="fu">paste</span>(<span class="st">&quot;value of &#39;i&#39;:&quot;</span>, i))</span>
+<span id="cb42-3"><a href="#cb42-3" tabindex="-1"></a></span>
+<span id="cb42-4"><a href="#cb42-4" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">length</span>(i)) {</span>
+<span id="cb42-5"><a href="#cb42-5" tabindex="-1"></a>      futile.logger<span class="sc">::</span><span class="fu">flog.warn</span>(<span class="st">&quot;&#39;i&#39; has length 0&quot;</span>)</span>
+<span id="cb42-6"><a href="#cb42-6" tabindex="-1"></a>      <span class="cn">NA</span></span>
+<span id="cb42-7"><a href="#cb42-7" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is</span>(i, <span class="st">&quot;numeric&quot;</span>)) {</span>
+<span id="cb42-8"><a href="#cb42-8" tabindex="-1"></a>      futile.logger<span class="sc">::</span><span class="fu">flog.debug</span>(<span class="st">&quot;coercing &#39;i&#39; to numeric&quot;</span>)</span>
+<span id="cb42-9"><a href="#cb42-9" tabindex="-1"></a>      <span class="fu">as.numeric</span>(i)</span>
+<span id="cb42-10"><a href="#cb42-10" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb42-11"><a href="#cb42-11" tabindex="-1"></a>      i</span>
+<span id="cb42-12"><a href="#cb42-12" tabindex="-1"></a>  }</span>
+<span id="cb42-13"><a href="#cb42-13" tabindex="-1"></a>}</span></code></pre></div>
+<p>Turn logging on and set the threshold to <em>WARN</em>.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">2</span>, <span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">threshold =</span> <span class="st">&quot;WARN&quot;</span>, <span class="at">stop.on.error=</span><span class="cn">FALSE</span>)</span>
+<span id="cb43-2"><a href="#cb43-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="fu">list</span>(<span class="dv">1</span>, <span class="st">&quot;2&quot;</span>, <span class="fu">integer</span>()), FUN, <span class="at">BPPARAM =</span> param)</span></code></pre></div>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 1
+## Node: 2
+## Timestamp: 2026-04-29 14:58:48.339792
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.031   0.013   0.044 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  997364 53.3    1730174 92.5  1730174 92.5
+## Vcells 1837107 14.1    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## 
+## 
+## stderr and stdout:</code></pre>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 2
+## Node: 1
+## Timestamp: 2026-04-29 14:58:48.42062
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.033   0.011   0.044 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  997387 53.3    1730174 92.5  1730174 92.5
+## Vcells 1837166 14.1    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## WARN [2026-04-29 14:58:48] &#39;i&#39; has length 0
+## 
+## stderr and stdout:</code></pre>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" tabindex="-1"></a><span class="fu">simplify2array</span>(result)</span></code></pre></div>
+<pre><code>## [1]  1  2 NA</code></pre>
+<p>Changing the threshold to <em>DEBUG</em> catches both <em>WARN</em>
+and <em>DEBUG</em> messages.</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">2</span>, <span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">threshold =</span> <span class="st">&quot;DEBUG&quot;</span>, <span class="at">stop.on.error=</span><span class="cn">FALSE</span>)</span>
+<span id="cb48-2"><a href="#cb48-2" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="fu">list</span>(<span class="dv">1</span>, <span class="st">&quot;2&quot;</span>, <span class="fu">integer</span>()), FUN, <span class="at">BPPARAM =</span> param)</span></code></pre></div>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 2
+## Node: 1
+## Timestamp: 2026-04-29 14:58:49.471804
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.030   0.014   0.044 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  997294 53.3    1730174 92.5  1730174 92.5
+## Vcells 1837204 14.1    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## INFO [2026-04-29 14:58:49] loading futile.logger package
+## DEBUG [2026-04-29 14:58:49] value of &#39;i&#39;:
+## WARN [2026-04-29 14:58:49] &#39;i&#39; has length 0
+## 
+## stderr and stdout:</code></pre>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 1
+## Node: 2
+## Timestamp: 2026-04-29 14:58:49.55117
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.036   0.009   0.044 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  997319 53.3    1730174 92.5  1730174 92.5
+## Vcells 1837285 14.1    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## INFO [2026-04-29 14:58:49] loading futile.logger package
+## DEBUG [2026-04-29 14:58:49] value of &#39;i&#39;: 1
+## DEBUG [2026-04-29 14:58:49] value of &#39;i&#39;: 2
+## DEBUG [2026-04-29 14:58:49] coercing &#39;i&#39; to numeric
+## 
+## stderr and stdout:</code></pre>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a><span class="fu">simplify2array</span>(result)</span></code></pre></div>
+<pre><code>## [1]  1  2 NA</code></pre>
+</div>
+<div id="log-files" class="section level2">
+<h2>Log files</h2>
+<p>When <code>log == TRUE</code>, log messages are written to the
+console by default. If <code>logdir</code> is given the output is
+written out to files, one per task. File names are prefixed with the
+name in <code>bpjobname(BPPARAM)</code>; default is ‘BPJOB’.</p>
+<pre><code>param &lt;- SnowParam(2, log = TRUE, threshold = &quot;DEBUG&quot;, logdir = tempdir())
+res &lt;- bplapply(list(1, &quot;2&quot;, integer()), FUN, BPPARAM = param)
+## loading futile.logger on workers
+list.files(bplogdir(param))
+## [1] &quot;BPJOB.task1.log&quot; &quot;BPJOB.task2.log&quot;</code></pre>
+<p>Read in BPJOB.task2.log:</p>
+<pre><code>readLines(paste0(bplogdir(param), &quot;/BPJOB.task2.log&quot;))
+
+##  [1] &quot;############### LOG OUTPUT ###############&quot;
+##  [2] &quot;Task: 2&quot;
+##  [3] &quot;Node: 2&quot;
+##  [4] &quot;Timestamp: 2015-07-08 09:03:59&quot;
+##  [5] &quot;Success: TRUE&quot;
+##  [6] &quot;Task duration: &quot;
+##  [7] &quot;   user  system elapsed &quot;
+##  [8] &quot;  0.009   0.000   0.011 &quot;
+##  [9] &quot;Memory use (gc): &quot;
+## [10] &quot;         used (Mb) gc trigger (Mb) max used (Mb)&quot;
+## [11] &quot;Ncells 325664 17.4     592000 31.7   393522 21.1&quot;
+## [12] &quot;Vcells 436181  3.4    1023718  7.9   530425  4.1&quot;
+## [13] &quot;Log messages:&quot;
+## [14] &quot;DEBUG [2015-07-08 09:03:59] value of &#39;i&#39;: 2&quot;
+## [15] &quot;INFO [2015-07-08 09:03:59] coercing to numeric&quot;
+## [16] &quot;DEBUG [2015-07-08 09:03:59] value of &#39;i&#39;: &quot;
+## [17] &quot;WARN [2015-07-08 09:03:59] &#39;i&#39; is missing&quot;
+## [18] &quot;&quot;
+## [19] &quot;stderr and stdout:&quot;
+## [20] &quot;character(0)&quot;</code></pre>
+</div>
+</div>
+<div id="worker-timeout" class="section level1">
+<h1>Worker timeout</h1>
+<p>NOTE: <code>timeout</code> is supported for SnowParam and
+MulticoreParam.</p>
+<p>For long running jobs or untested code it can be useful to set a time
+limit. The <code>timeout</code> field is the time, in seconds, allowed
+for each worker to complete a task; default is <code>Inf</code>. If the
+task takes longer than <code>timeout</code> a timeout error is
+returned.</p>
+<p>Time can be changed during param construction with the
+<code>timeout</code> arg,</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="at">timeout =</span> <span class="dv">20</span>, <span class="at">stop.on.error=</span><span class="cn">FALSE</span>)</span>
+<span id="cb55-2"><a href="#cb55-2" tabindex="-1"></a>param</span></code></pre></div>
+<pre><code>## class: SnowParam
+##   bpisup: FALSE; bpnworkers: 2; bptasks: 0; bpjobname: BPJOB
+##   bplog: FALSE; bpthreshold: INFO; bpstopOnError: FALSE
+##   bpRNGseed: ; bptimeout: 20; bpprogressbar: FALSE
+##   bpexportglobals: TRUE; bpexportvariables: TRUE; bpforceGC: FALSE
+##   bpfallback: TRUE
+##   bplogdir: NA
+##   bpresultdir: NA
+##   cluster type: SOCK</code></pre>
+<p>or with the <code>bptimeout</code> setter:</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="at">timeout =</span> <span class="dv">2</span>, <span class="at">stop.on.error=</span><span class="cn">FALSE</span>)</span>
+<span id="cb57-2"><a href="#cb57-2" tabindex="-1"></a>fun <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
+<span id="cb57-3"><a href="#cb57-3" tabindex="-1"></a>  <span class="fu">Sys.sleep</span>(i)</span>
+<span id="cb57-4"><a href="#cb57-4" tabindex="-1"></a>  i</span>
+<span id="cb57-5"><a href="#cb57-5" tabindex="-1"></a>}</span>
+<span id="cb57-6"><a href="#cb57-6" tabindex="-1"></a><span class="fu">bptry</span>(<span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, fun, <span class="at">BPPARAM =</span> param))</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 2
+## 
+## [[3]]
+## [1] 3</code></pre>
+</div>
+<div id="debugging" class="section level1">
+<h1>Debugging</h1>
+<p>Effective debugging strategies vary by problem and often involve a
+combination of error handling and logging techniques. In general, when
+debugging R-generated errors the traceback is often the best place to
+start followed by adding debug messages to the worker function. When
+trouble shooting unexpected behavior (i.e., not a formal error or
+warning) adding debug messages or switching to <code>SerialParam</code>
+are good approaches. Below is an overview of these different
+strategies.</p>
+<div id="accessing-the-traceback" class="section level2">
+<h2>Accessing the traceback</h2>
+<p>The traceback is a good place to start when tracking down R-generated
+errors. Because the function is executed on the workers it’s not
+accessible for interactive debugging with functions such as
+<code>trace</code> or <code>debug</code>. The traceback provides a
+snapshot of the state of the worker at the time the error was
+thrown.</p>
+<p>This function takes the square root of the absolute value of a
+vector.</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" tabindex="-1"></a>fun1 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb59-2"><a href="#cb59-2" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">abs</span>(x)</span>
+<span id="cb59-3"><a href="#cb59-3" tabindex="-1"></a>    <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(v), <span class="cf">function</span>(i) <span class="fu">sqrt</span>(v[i]))</span>
+<span id="cb59-4"><a href="#cb59-4" tabindex="-1"></a>}</span></code></pre></div>
+<p>Calling “fun1” with a character throws an error:</p>
+<pre><code>param &lt;- SnowParam(stop.on.error=FALSE)
+result &lt;- bptry({
+    bplapply(list(c(1,3), 5, &quot;6&quot;), fun1, BPPARAM = param)
+})
+result
+## [[1]]
+## [1] 1.000000 1.732051
+##
+## [[2]]
+## [1] 2.236068
+##
+## [[3]]
+## &lt;remote_error in abs(x): non-numeric argument to mathematical function&gt;
+## traceback() available as &#39;attr(x, &quot;traceback&quot;)&#39;
+##
+## attr(,&quot;REDOENV&quot;)
+## &lt;environment: 0x11bdb3a18&gt;</code></pre>
+<p>Identify which elements failed with <code>bpok</code>:</p>
+<pre><code>bpok(result)
+
+## [1]  TRUE  TRUE FALSE</code></pre>
+<p>The error (i.e., third element of “res”) is a <code>condition</code>
+object:</p>
+<pre><code>is(result[[3]], &quot;condition&quot;)
+
+## [1] TRUE</code></pre>
+<p>The traceback is an attribute of the <code>condition</code> and can
+be accessed with the <code>attr</code> function.</p>
+<pre><code>cat(attr(result[[3]], &quot;traceback&quot;), sep = &quot;\n&quot;)
+## 4: handle_error(e)
+## 3: h(simpleError(msg, call))
+## 2: .handleSimpleError(function (e)
+##    {
+##        annotated_condition &lt;- handle_error(e)
+##        stop(annotated_condition)
+##    }, &quot;non-numeric argument to mathematical function&quot;, base::quote(abs(x))) at #2
+## 1: FUN(...)</code></pre>
+<p>In this example the error occurs in <code>FUN</code>; lines 2, 3, 4
+involve error handling.</p>
+</div>
+<div id="adding-debug-messages" class="section level2">
+<h2>Adding debug messages</h2>
+<p>When a <code>numeric()</code> is passed to “fun1” no formal error is
+thrown but the length of the second list element is 2 when it should be
+1.</p>
+<pre><code>bplapply(list(c(1,3), numeric(), 6), fun1, BPPARAM = param)
+
+## [[1]]
+## [1] 1.000000 1.732051
+##
+## [[2]]
+## [[2]][[1]]
+## [1] NA
+##
+## [[2]][[2]]
+## numeric(0)
+##
+## [[3]]
+## [1] 2.44949</code></pre>
+<p>Without a formal error we have no traceback so we’ll add a few debug
+messages. The <em><a href="https://CRAN.R-project.org/package=futile.logger">futile.logger</a></em>
+syntax tags messages with different levels of severity. A message
+created with <code>flog.debug</code> will only print if the threshold is
+<em>DEBUG</em> or lower. So in this case it will catch both
+<code>INFO</code> and <code>DEBUG</code> messages.</p>
+<p><code>fun2</code> has debug statements that show the value of
+<code>x</code>, length of <code>v</code> and the index
+<code>i</code>.</p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" tabindex="-1"></a>fun2 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb65-2"><a href="#cb65-2" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">abs</span>(x)</span>
+<span id="cb65-3"><a href="#cb65-3" tabindex="-1"></a>    futile.logger<span class="sc">::</span><span class="fu">flog.debug</span>(</span>
+<span id="cb65-4"><a href="#cb65-4" tabindex="-1"></a>      <span class="fu">paste0</span>(<span class="st">&quot;&#39;x&#39; = &quot;</span>, <span class="fu">paste</span>(x, <span class="at">collapse=</span><span class="st">&quot;,&quot;</span>), <span class="st">&quot;: length(v) = &quot;</span>, <span class="fu">length</span>(v))</span>
+<span id="cb65-5"><a href="#cb65-5" tabindex="-1"></a>    )</span>
+<span id="cb65-6"><a href="#cb65-6" tabindex="-1"></a>    <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(v), <span class="cf">function</span>(i) {</span>
+<span id="cb65-7"><a href="#cb65-7" tabindex="-1"></a>      futile.logger<span class="sc">::</span><span class="fu">flog.info</span>(<span class="fu">paste0</span>(<span class="st">&quot;&#39;i&#39; = &quot;</span>, i))</span>
+<span id="cb65-8"><a href="#cb65-8" tabindex="-1"></a>      <span class="fu">sqrt</span>(v[i])</span>
+<span id="cb65-9"><a href="#cb65-9" tabindex="-1"></a>    })</span>
+<span id="cb65-10"><a href="#cb65-10" tabindex="-1"></a>}</span></code></pre></div>
+<p>Create a param that logs at a threshold level of <em>DEBUG</em>.</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">SnowParam</span>(<span class="dv">3</span>, <span class="at">log =</span> <span class="cn">TRUE</span>, <span class="at">threshold =</span> <span class="st">&quot;DEBUG&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>), <span class="fu">numeric</span>(), <span class="dv">6</span>), fun2, <span class="at">BPPARAM =</span> param)</span></code></pre></div>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 2
+## Node: 2
+## Timestamp: 2026-04-29 14:58:55.205179
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.038   0.008   0.046 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  997900 53.3    1730174 92.5  1730174 92.5
+## Vcells 1839074 14.1    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## INFO [2026-04-29 14:58:55] loading futile.logger package
+## DEBUG [2026-04-29 14:58:55] &#39;x&#39; = : length(v) = 0
+## INFO [2026-04-29 14:58:55] &#39;i&#39; = 1
+## INFO [2026-04-29 14:58:55] &#39;i&#39; = 0
+## 
+## stderr and stdout:</code></pre>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 3
+## Node: 1
+## Timestamp: 2026-04-29 14:58:55.289284
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.054   0.012   0.068 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  997927 53.3    1730174 92.5  1730174 92.5
+## Vcells 1839141 14.1    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## INFO [2026-04-29 14:58:55] loading futile.logger package
+## DEBUG [2026-04-29 14:58:55] &#39;x&#39; = 6: length(v) = 1
+## INFO [2026-04-29 14:58:55] &#39;i&#39; = 1
+## 
+## stderr and stdout:</code></pre>
+<pre><code>## ############### LOG OUTPUT ###############
+## Task: 1
+## Node: 3
+## Timestamp: 2026-04-29 14:58:55.362074
+## Success: TRUE
+## 
+## Task duration:
+##    user  system elapsed 
+##   0.047   0.021   0.068 
+## 
+## Memory used:
+##           used (Mb) gc trigger (Mb) max used (Mb)
+## Ncells  997949 53.3    1730174 92.5  1730174 92.5
+## Vcells 1839223 14.1    8388608 64.0  3085197 23.6
+## 
+## Log messages:
+## INFO [2026-04-29 14:58:55] loading futile.logger package
+## DEBUG [2026-04-29 14:58:55] &#39;x&#39; = 1,3: length(v) = 2
+## INFO [2026-04-29 14:58:55] &#39;i&#39; = 1
+## INFO [2026-04-29 14:58:55] &#39;i&#39; = 2
+## 
+## stderr and stdout:</code></pre>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" tabindex="-1"></a>res</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1.000000 1.732051
+## 
+## [[2]]
+## [[2]][[1]]
+## [1] NA
+## 
+## [[2]][[2]]
+## numeric(0)
+## 
+## 
+## [[3]]
+## [1] 2.44949</code></pre>
+<p>The debug messages require close inspection, but focusing on task 2
+we see</p>
+<pre><code>res
+## ############### LOG OUTPUT ###############
+## Task: 2
+## Node: 2
+## Timestamp: 2023-03-23 12:17:28.969158
+## Success: TRUE
+##
+## Task duration:
+##    user  system elapsed
+##   0.156   0.005   0.163
+##
+## Memory used:
+##           used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
+## Ncells  942951 50.4    1848364 98.8         NA  1848364 98.8
+## Vcells 1941375 14.9    8388608 64.0      32768  2446979 18.7
+##
+## Log messages:
+## INFO [2023-03-23 12:17:28] loading futile.logger package
+## DEBUG [2023-03-23 12:17:28] &#39;x&#39; = : length(v) = 0
+## INFO [2023-03-23 12:17:28] &#39;i&#39; = 1
+## INFO [2023-03-23 12:17:28] &#39;i&#39; = 0
+##
+## stderr and stdout:</code></pre>
+<p>This reveals the problem. The index for <code>sapply</code> is along
+<code>v</code> which in this case has length 0. This forces
+<code>i</code> to take values of <code>1</code> and <code>0</code>
+giving an output of length 2 for the second element (i.e.,
+<code>NA</code> and <code>numeric(0)</code>).</p>
+<p>“fun2” can be fixed by using <code>seq_along(v)</code> to create the
+index instead of <code>1:length(v)</code>.</p>
+</div>
+<div id="local-debugging-with-serialparam" class="section level2">
+<h2>Local debugging with <code>SerialParam</code></h2>
+<p>Errors that occur on parallel workers can be difficult to debug.
+Often the traceback sent back from the workers is too much to parse or
+not informative. We are also limited in that our interactive strategies
+of <code>browser</code> and <code>trace</code> are not available.</p>
+<p>One option for further debugging is to run the code in serial with
+<code>SerialParam</code>. This removes the “parallel” component and is
+the same as running a straight <code>*apply</code> function. This
+approach may not help if the problem was hardware related but can be
+very useful when the bug is in the R code.</p>
+<p>We use the now familiar square root example with a bug in the second
+element of <code>X</code>.</p>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">bptry</span>({</span>
+<span id="cb74-2"><a href="#cb74-2" tabindex="-1"></a>    <span class="fu">bplapply</span>(<span class="fu">list</span>(<span class="dv">1</span>, <span class="st">&quot;2&quot;</span>, <span class="dv">3</span>), sqrt,</span>
+<span id="cb74-3"><a href="#cb74-3" tabindex="-1"></a>             <span class="at">BPPARAM =</span> <span class="fu">SnowParam</span>(<span class="dv">3</span>, <span class="at">stop.on.error=</span><span class="cn">FALSE</span>))</span>
+<span id="cb74-4"><a href="#cb74-4" tabindex="-1"></a>})</span>
+<span id="cb74-5"><a href="#cb74-5" tabindex="-1"></a>result</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 1
+## 
+## [[2]]
+## [1] 2
+## 
+## [[3]]
+## [1] NA</code></pre>
+<p><code>sqrt</code> is an internal function. The problem is likely with
+our data going into the function and not the <code>sqrt</code> function
+itself. We can write a small wrapper around <code>sqrt</code> so we can
+see the input.</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" tabindex="-1"></a>fun3 <span class="ot">&lt;-</span> <span class="cf">function</span>(i) <span class="fu">sqrt</span>(i)</span></code></pre></div>
+<p>Debug the new function:</p>
+<pre><code>debug(fun3)</code></pre>
+<p>We want to recompute only elements that failed and for that we use
+the <code>BPREDO</code> argument. The BPPARAM has been changed to
+<code>SerialParam</code> so the job is run in the local workspace in
+serial.</p>
+<pre><code>&gt; bplapply(list(1, &quot;2&quot;, 3), fun3, BPREDO = result, BPPARAM = SerialParam())
+Resuming previous calculation ...
+debugging in: FUN(...)
+debug: sqrt(i)
+Browse[2]&gt; objects()
+[1] &quot;i&quot;
+Browse[2]&gt; i
+[1] &quot;2&quot;
+Browse[2]&gt;</code></pre>
+<p>The local browsing allowed us to see the problem input was the
+character “2”.</p>
+</div>
+</div>
+<div id="session-info" class="section level1">
+<h1>Session info</h1>
+<div class="sourceCode" id="cb79"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] BiocParallel_1.46.0 BiocStyle_2.40.0   
+## 
+## loaded via a namespace (and not attached):
+##  [1] base64url_1.4       jsonlite_2.0.0      compiler_4.6.0     
+##  [4] BiocManager_1.30.27 crayon_1.5.3        parallel_4.6.0     
+##  [7] jquerylib_0.1.4     progress_1.2.3      yaml_2.3.12        
+## [10] fastmap_1.2.0       R6_2.6.1            batchtools_0.9.18  
+## [13] knitr_1.51          backports_1.5.1     checkmate_2.3.4    
+## [16] snow_0.4-4          maketools_1.3.2     bslib_0.10.0       
+## [19] rlang_1.2.0         cachem_1.1.0        stringi_1.8.7      
+## [22] xfun_0.57           fs_2.1.0            sass_0.4.10        
+## [25] sys_3.4.3           cli_3.6.6           withr_3.0.2        
+## [28] digest_0.6.39       rappdirs_0.3.4      hms_1.1.4          
+## [31] lifecycle_1.0.5     prettyunits_1.2.0   vctrs_0.7.3        
+## [34] evaluate_1.0.5      data.table_1.18.2.1 codetools_0.2-20   
+## [37] buildtools_1.0.0    rmarkdown_2.31      tools_4.6.0        
+## [40] pkgconfig_2.0.3     htmltools_0.5.9     brew_1.0-10</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#error-handling" id="toc-error-handling">Error Handling</a>
+<ul>
+<li><a href="#messages-and-warnings" id="toc-messages-and-warnings">Messages and warnings</a></li>
+<li><a href="#catching-errors" id="toc-catching-errors">Catching
+errors</a></li>
+<li><a href="#identify-failures-with-bpok" id="toc-identify-failures-with-bpok">Identify failures with
+<code>bpok()</code></a></li>
+<li><a href="#rerun-failed-tasks-with-bpredo" id="toc-rerun-failed-tasks-with-bpredo">Rerun failed tasks with
+<code>BPREDO</code></a></li>
+</ul></li>
+<li><a href="#logging" id="toc-logging">Logging</a>
+<ul>
+<li><a href="#parameters" id="toc-parameters">Parameters</a></li>
+<li><a href="#setting-a-threshold" id="toc-setting-a-threshold">Setting
+a threshold</a></li>
+<li><a href="#log-files" id="toc-log-files">Log files</a></li>
+</ul></li>
+<li><a href="#worker-timeout" id="toc-worker-timeout">Worker
+timeout</a></li>
+<li><a href="#debugging" id="toc-debugging">Debugging</a>
+<ul>
+<li><a href="#accessing-the-traceback" id="toc-accessing-the-traceback">Accessing the traceback</a></li>
+<li><a href="#adding-debug-messages" id="toc-adding-debug-messages">Adding debug messages</a></li>
+<li><a href="#local-debugging-with-serialparam" id="toc-local-debugging-with-serialparam">Local debugging with
+<code>SerialParam</code></a></li>
+</ul></li>
+<li><a href="#session-info" id="toc-session-info">Session info</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

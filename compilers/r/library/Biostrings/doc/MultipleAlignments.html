@@ -1,0 +1,483 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>MultipleAlignment Objects</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">MultipleAlignment Objects</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The <code>DNAMultipleAlignment</code>,
+<code>RNAMultipleAlignment</code> and <code>AAMultipleAlignment</code>
+classes allow users to represent groups of aligned DNA, RNA or amino
+acid sequences as a single object. The frame of reference for aligned
+sequences is static, so manipulation of these objects is confined to be
+non-destructive. In practice, this means that these objects contain
+slots to mask ranges of rows and columns on the original sequence. These
+masks are then respected by methods that manipulate and display the
+objects, allowing the user to remove or expose columns and rows without
+invalidating the original alignment.</p>
+</div>
+<div id="creation-and-masking" class="section level1">
+<h1>Creation and masking</h1>
+<p>To create a <code>MultipleAlignment</code>, call the appropriate read
+function to read in and parse the original alignment. There are
+functions to read clustaW, Phylip and Stolkholm data formats.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(Biostrings)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>origMAlign <span class="ot">&lt;-</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="fu">readDNAMultipleAlignment</span>(<span class="at">filepath =</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>                           <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>                                       <span class="st">&quot;msx2_mRNA.aln&quot;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>                                       <span class="at">package=</span><span class="st">&quot;Biostrings&quot;</span>),</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>                           <span class="at">format=</span><span class="st">&quot;clustal&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>phylipMAlign <span class="ot">&lt;-</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  <span class="fu">readAAMultipleAlignment</span>(<span class="at">filepath =</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>                          <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>                                      <span class="st">&quot;Phylip.txt&quot;</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>                                      <span class="at">package=</span><span class="st">&quot;Biostrings&quot;</span>),</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>                          <span class="at">format=</span><span class="st">&quot;phylip&quot;</span>)</span></code></pre></div>
+<p>Rows can be renamed with <code>rownames</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">rownames</span>(origMAlign)</span></code></pre></div>
+<pre><code>## [1] &quot;gi|84452153|ref|NM_002449.4|&quot;   &quot;gi|208431713|ref|NM_001135625.&quot;
+## [3] &quot;gi|118601823|ref|NM_001079614.&quot; &quot;gi|114326503|ref|NM_013601.2|&quot; 
+## [5] &quot;gi|119220589|ref|NM_012982.3|&quot;  &quot;gi|148540149|ref|NM_001003098.&quot;
+## [7] &quot;gi|45383056|ref|NM_204559.1|&quot;   &quot;gi|213515133|ref|NM_001141603.&quot;</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">rownames</span>(origMAlign) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Human&quot;</span>,<span class="st">&quot;Chimp&quot;</span>,<span class="st">&quot;Cow&quot;</span>,<span class="st">&quot;Mouse&quot;</span>,<span class="st">&quot;Rat&quot;</span>,</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                          <span class="st">&quot;Dog&quot;</span>,<span class="st">&quot;Chicken&quot;</span>,<span class="st">&quot;Salmon&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>origMAlign</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] -----TCCCGTCTCCGCAGCAAAAAA...TCACAATTAAAAAAAAAAAAAAAAA Human
+## [2] --------------------------...------------------------- Chimp
+## [3] --------------------------...------------------------- Cow
+## [4] ----------------------AAAA...------------------------- Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] --------------CGGCTCCGCAGC...------------------------- Chicken
+## [8] GGGGGAGACTTCAGAAGTTGTTGTCC...------------------------- Salmon</code></pre>
+<p>To see a more detailed version of your <code>MultipleAlignment</code>
+object, you can use the <code>detail</code> method, which will show the
+details of the alignment interleaved and without the rows and columns
+that you have masked out.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">detail</span>(origMAlign)</span></code></pre></div>
+<p>Applying masks is a simple matter of specifying which ranges to
+hide.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>maskTest <span class="ot">&lt;-</span> origMAlign</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">1</span>,<span class="at">end=</span><span class="dv">3</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest)</span></code></pre></div>
+<pre><code>## NormalIRanges object with 1 range and 0 metadata columns:
+##           start       end     width
+##       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]         1         3         3</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ----------------------AAAA...------------------------- Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] --------------CGGCTCCGCAGC...------------------------- Chicken
+## [8] GGGGGAGACTTCAGAAGTTGTTGTCC...------------------------- Salmon</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">colmask</span>(maskTest) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1000</span>),<span class="at">end=</span><span class="fu">c</span>(<span class="dv">500</span>,<span class="dv">2343</span>))</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">colmask</span>(maskTest)</span></code></pre></div>
+<pre><code>## NormalIRanges object with 2 ranges and 0 metadata columns:
+##           start       end     width
+##       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]         1       500       500
+##   [2]      1000      2343      1344</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ##########################...######################### Mouse
+## [5] ##########################...######################### Rat
+## [6] ##########################...######################### Dog
+## [7] ##########################...######################### Chicken
+## [8] ##########################...######################### Salmon</code></pre>
+<p>Remove row and column masks by assigning <code>NULL</code>:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest)</span></code></pre></div>
+<pre><code>## NormalIRanges object with 0 ranges and 0 metadata columns:
+##        start       end     width
+##    &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">colmask</span>(maskTest) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">colmask</span>(maskTest)</span></code></pre></div>
+<pre><code>## NormalIRanges object with 0 ranges and 0 metadata columns:
+##        start       end     width
+##    &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</code></pre>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] -----TCCCGTCTCCGCAGCAAAAAA...TCACAATTAAAAAAAAAAAAAAAAA Human
+## [2] --------------------------...------------------------- Chimp
+## [3] --------------------------...------------------------- Cow
+## [4] ----------------------AAAA...------------------------- Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] --------------CGGCTCCGCAGC...------------------------- Chicken
+## [8] GGGGGAGACTTCAGAAGTTGTTGTCC...------------------------- Salmon</code></pre>
+<p>When setting a mask, you might want to specify the rows or columns to
+keep, rather than to hide. To do that, use the <code>invert</code>
+argument. Taking the above example, we can set the exact same masks as
+before by specifying their inverse and using
+<code>invert=TRUE</code>.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest, <span class="at">invert=</span><span class="cn">TRUE</span>) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">4</span>,<span class="at">end=</span><span class="dv">8</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest)</span></code></pre></div>
+<pre><code>## NormalIRanges object with 1 range and 0 metadata columns:
+##           start       end     width
+##       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]         1         3         3</code></pre>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ----------------------AAAA...------------------------- Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] --------------CGGCTCCGCAGC...------------------------- Chicken
+## [8] GGGGGAGACTTCAGAAGTTGTTGTCC...------------------------- Salmon</code></pre>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">colmask</span>(maskTest, <span class="at">invert=</span><span class="cn">TRUE</span>) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">501</span>,<span class="at">end=</span><span class="dv">999</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">colmask</span>(maskTest)</span></code></pre></div>
+<pre><code>## NormalIRanges object with 2 ranges and 0 metadata columns:
+##           start       end     width
+##       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]         1       500       500
+##   [2]      1000      2343      1344</code></pre>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ##########################...######################### Mouse
+## [5] ##########################...######################### Rat
+## [6] ##########################...######################### Dog
+## [7] ##########################...######################### Chicken
+## [8] ##########################...######################### Salmon</code></pre>
+<p>In addition to being able to invert these masks, you can also choose
+the way in which the ranges you provide will be merged with any existing
+masks. The <code>append</code> argument allows you to specify the way in
+which new mask ranges will interact with any existing masks. By default,
+these masks will be the “union” of the new mask and any existing masks,
+but you can also specify that these masks be the mask that results from
+when you “intersect” the current mask and the new mask, or that the new
+mask simply “replace” the current mask. The <code>append</code> argument
+can be used in combination with the <code>invert</code> argument to make
+things even more interesting. In this case, the inversion of the mask
+will happen before it is combined with the existing mask. For
+simplicity, I will only demonstrate this on <code>rowmask</code>, but it
+also works for <code>colmask</code>. Before we begin, lets set the masks
+back to being NULL again.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="do">## 1st lets null out the masks so we can have a fresh start.</span></span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a><span class="fu">colmask</span>(maskTest) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div>
+<p>Then we can do a series of examples, starting with the default which
+uses the “union” value for the <code>append</code> argument.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="do">## Then we can demonstrate how the append argument works</span></span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">1</span>,<span class="at">end=</span><span class="dv">3</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ----------------------AAAA...------------------------- Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] --------------CGGCTCCGCAGC...------------------------- Chicken
+## [8] GGGGGAGACTTCAGAAGTTGTTGTCC...------------------------- Salmon</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest,<span class="at">append=</span><span class="st">&quot;intersect&quot;</span>) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">2</span>,<span class="at">end=</span><span class="dv">5</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] -----TCCCGTCTCCGCAGCAAAAAA...TCACAATTAAAAAAAAAAAAAAAAA Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ----------------------AAAA...------------------------- Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] --------------CGGCTCCGCAGC...------------------------- Chicken
+## [8] GGGGGAGACTTCAGAAGTTGTTGTCC...------------------------- Salmon</code></pre>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest,<span class="at">append=</span><span class="st">&quot;replace&quot;</span>) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">5</span>,<span class="at">end=</span><span class="dv">8</span>)</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] -----TCCCGTCTCCGCAGCAAAAAA...TCACAATTAAAAAAAAAAAAAAAAA Human
+## [2] --------------------------...------------------------- Chimp
+## [3] --------------------------...------------------------- Cow
+## [4] ----------------------AAAA...------------------------- Mouse
+## [5] ##########################...######################### Rat
+## [6] ##########################...######################### Dog
+## [7] ##########################...######################### Chicken
+## [8] ##########################...######################### Salmon</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest,<span class="at">append=</span><span class="st">&quot;replace&quot;</span>,<span class="at">invert=</span><span class="cn">TRUE</span>) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">5</span>,<span class="at">end=</span><span class="dv">8</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ##########################...######################### Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] --------------CGGCTCCGCAGC...------------------------- Chicken
+## [8] GGGGGAGACTTCAGAAGTTGTTGTCC...------------------------- Salmon</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="fu">rowmask</span>(maskTest,<span class="at">append=</span><span class="st">&quot;union&quot;</span>) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">7</span>,<span class="at">end=</span><span class="dv">8</span>)</span>
+<span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a>maskTest</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ##########################...######################### Mouse
+## [5] --------------------------...------------------------- Rat
+## [6] --------------------------...------------------------- Dog
+## [7] ##########################...######################### Chicken
+## [8] ##########################...######################### Salmon</code></pre>
+<p>The function <code>maskMotif</code> works on
+<code>MultipleAlignment</code> objects too, and takes the same arguments
+that it does elsewhere. <code>maskMotif</code> is useful for masking
+occurances of a string from columns where it is present in the consensus
+sequence.</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a>tataMasked <span class="ot">&lt;-</span> <span class="fu">maskMotif</span>(origMAlign, <span class="st">&quot;TATA&quot;</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" tabindex="-1"></a><span class="fu">colmask</span>(tataMasked)</span></code></pre></div>
+<pre><code>## NormalIRanges object with 5 ranges and 0 metadata columns:
+##           start       end     width
+##       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]       811       814         4
+##   [2]      1180      1183         4
+##   [3]      1186      1191         6
+##   [4]      1204      1207         4
+##   [5]      1218      1221         4</code></pre>
+<p><code>maskGaps</code> also operates on columns and will mask collumns
+based on the fraction of each column that contains gaps
+<code>min.fraction</code> along with the width of columns that contain
+this fraction of gaps <code>min.block.width</code>.</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" tabindex="-1"></a>autoMasked <span class="ot">&lt;-</span> <span class="fu">maskGaps</span>(origMAlign, <span class="at">min.fraction=</span><span class="fl">0.5</span>, <span class="at">min.block.width=</span><span class="dv">4</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" tabindex="-1"></a>autoMasked</span></code></pre></div>
+<pre><code>## DNAMultipleAlignment with 8 rows and 2343 columns
+##      aln                                                    names               
+## [1] ##########################...######################### Human
+## [2] ##########################...######################### Chimp
+## [3] ##########################...######################### Cow
+## [4] ##########################...######################### Mouse
+## [5] ##########################...######################### Rat
+## [6] ##########################...######################### Dog
+## [7] ##########################...######################### Chicken
+## [8] ##########################...######################### Salmon</code></pre>
+<p>Sometimes you may want to cast your <code>MultipleAlignment</code> to
+be a matrix for usage eslewhere. <code>as.matrix</code> is supported for
+these circumstances. The ability to convert one object into another is
+not very unusual so why mention it? Because when you cast your object,
+the masks WILL be considered so that the masked rows and columns will be
+left out of the matrix object.</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a>full <span class="ot">=</span> <span class="fu">as.matrix</span>(origMAlign)</span>
+<span id="cb44-2"><a href="#cb44-2" tabindex="-1"></a><span class="fu">dim</span>(full)</span></code></pre></div>
+<pre><code>## [1]    8 2343</code></pre>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" tabindex="-1"></a>partial <span class="ot">=</span> <span class="fu">as.matrix</span>(autoMasked)</span>
+<span id="cb46-2"><a href="#cb46-2" tabindex="-1"></a><span class="fu">dim</span>(partial)</span></code></pre></div>
+<pre><code>## [1]    8 1143</code></pre>
+<p>One example of where you might want to use <code>as.matrix</code> is
+when using the <em><a href="https://CRAN.R-project.org/package=ape">ape</a></em> package. For
+example if you needed to use the <code>dist.dna</code> function you
+would want to use <code>as.matrix</code> followed by
+<code>as.alignment</code> and then the <code>as.DNAbin</code> to create
+a <code>DNAbin</code> object for the <code>dist.dna</code>.</p>
+</div>
+<div id="analytic-utilities" class="section level1">
+<h1>Analytic utilities</h1>
+<p>Once you have masked the sequence, you can then ask questions about
+the properties of that sequence. For example, you can look at the
+alphabet frequency of that sequence. The alphabet frequency will only be
+for the masked sequence.</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" tabindex="-1"></a><span class="fu">alphabetFrequency</span>(autoMasked)</span></code></pre></div>
+<pre><code>##        A   C   G   T M R W S Y K V H D B N   - + .
+## [1,] 260 351 296 218 0 0 0 0 0 0 0 0 0 0 0  18 0 0
+## [2,] 171 271 231 128 0 0 0 0 0 0 0 0 0 0 3 339 0 0
+## [3,] 277 360 275 209 0 0 0 0 0 0 0 0 0 0 0  22 0 0
+## [4,] 265 343 277 226 0 0 0 0 0 0 0 0 0 0 0  32 0 0
+## [5,] 251 345 287 229 0 0 0 0 0 0 0 0 0 0 0  31 0 0
+## [6,] 160 285 241 118 0 0 0 0 0 0 0 0 0 0 0 339 0 0
+## [7,] 224 342 273 190 0 0 0 0 0 0 0 0 0 0 0 114 0 0
+## [8,] 268 289 273 262 0 0 0 0 0 0 0 0 0 0 0  51 0 0</code></pre>
+<p>You can also calculate a consensus matrix, extract the consensus
+string or look at the consensus views. These methods too will all
+consider the masking when you run them.</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" tabindex="-1"></a><span class="fu">consensusMatrix</span>(autoMasked, <span class="at">baseOnly=</span><span class="cn">TRUE</span>)[, <span class="dv">84</span><span class="sc">:</span><span class="dv">90</span>]</span></code></pre></div>
+<pre><code>##       [,1] [,2] [,3] [,4] [,5] [,6] [,7]
+## A        0    3    0    3    0    3    3
+## C        3    0    0    1    1    1    2
+## G        1    2    4    1    2    0    0
+## T        1    0    1    0    1    1    0
+## other    3    3    3    3    4    3    3</code></pre>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" tabindex="-1"></a><span class="fu">substr</span>(<span class="fu">consensusString</span>(autoMasked),<span class="dv">80</span>,<span class="dv">130</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;####CRGABAMGTCA-YRGCTTCTCYGTSCAWAGGCRRTGRCYTGTTYTCG&quot;</code></pre>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a><span class="fu">consensusViews</span>(autoMasked)</span></code></pre></div>
+<pre><code>## Views on a 2343-letter BString subject
+## subject: ----------------------VWVMKYYBSRST...----------------------------------
+## views:
+##       start  end width
+##   [1]    84  325   242 [CRGABAMGTCA-YRGCTTCTCYGTSC...GCGSCTCSGCYGGSGCYRYCCTGSGG]
+##   [2]   330  332     3 [CCR]
+##   [3]   338 1191   854 [CTGCTGCTGYCGGGVCACGGCGYYCG...TGMTAGTTTTTATGTATAAATATATA]
+##   [4]  1198 1241    44 [ATAAAATATAAKAC--TTTTTATAYRSCARATGTAAAAATTCAA]</code></pre>
+<p>You can also cluster the alignments based on their distance to each
+other. Because you must pass in a DNAStringSet, the clustering will also
+take into account the masking. So for example, you can see how
+clustering the unmasked <code>DNAMultipleAlignment</code> will draw a
+funky looking tree.</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a><span class="fu">library</span>(pwalign)  <span class="co"># for stringDist()</span></span>
+<span id="cb56-2"><a href="#cb56-2" tabindex="-1"></a>sdist <span class="ot">&lt;-</span> <span class="fu">stringDist</span>(<span class="fu">as</span>(origMAlign,<span class="st">&quot;DNAStringSet&quot;</span>), <span class="at">method=</span><span class="st">&quot;hamming&quot;</span>)</span>
+<span id="cb56-3"><a href="#cb56-3" tabindex="-1"></a>clust <span class="ot">&lt;-</span> <span class="fu">hclust</span>(sdist, <span class="at">method =</span> <span class="st">&quot;single&quot;</span>)</span>
+<span id="cb56-4"><a href="#cb56-4" tabindex="-1"></a><span class="fu">png</span>(<span class="at">file=</span><span class="st">&quot;badTree.png&quot;</span>)</span>
+<span id="cb56-5"><a href="#cb56-5" tabindex="-1"></a><span class="fu">plot</span>(clust)</span>
+<span id="cb56-6"><a href="#cb56-6" tabindex="-1"></a><span class="fu">dev.off</span>()</span></code></pre></div>
+<pre><code>## png 
+##   2</code></pre>
+<div class="figure" style="text-align: center">
+<img role="img" aria-label="Funky tree produced by using unmasked strings" src="data:image/png;base64,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" alt="Funky tree produced by using unmasked strings" width="240" />
+<p class="caption">
+Funky tree produced by using unmasked strings
+</p>
+</div>
+<p>But, if we use the gap-masked <code>DNAMultipleAlignment</code>, to
+remove the long uninformative regions, and then make our plot, we can
+see the real relationships.</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a>sdist <span class="ot">&lt;-</span> <span class="fu">stringDist</span>(<span class="fu">as</span>(autoMasked,<span class="st">&quot;DNAStringSet&quot;</span>), <span class="at">method=</span><span class="st">&quot;hamming&quot;</span>)</span>
+<span id="cb58-2"><a href="#cb58-2" tabindex="-1"></a>clust <span class="ot">&lt;-</span> <span class="fu">hclust</span>(sdist, <span class="at">method =</span> <span class="st">&quot;single&quot;</span>)</span>
+<span id="cb58-3"><a href="#cb58-3" tabindex="-1"></a><span class="fu">png</span>(<span class="at">file=</span><span class="st">&quot;goodTree.png&quot;</span>)</span>
+<span id="cb58-4"><a href="#cb58-4" tabindex="-1"></a><span class="fu">plot</span>(clust)</span>
+<span id="cb58-5"><a href="#cb58-5" tabindex="-1"></a><span class="fu">dev.off</span>()</span></code></pre></div>
+<pre><code>## png 
+##   2</code></pre>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a>fourgroups <span class="ot">&lt;-</span> <span class="fu">cutree</span>(clust, <span class="dv">4</span>)</span>
+<span id="cb60-2"><a href="#cb60-2" tabindex="-1"></a>fourgroups</span></code></pre></div>
+<pre><code>##   Human   Chimp     Cow   Mouse     Rat     Dog Chicken  Salmon 
+##       1       2       1       1       1       2       3       4</code></pre>
+<div class="figure" style="text-align: center">
+<img role="img" aria-label="A tree produced by using strings with masked gaps" src="data:image/png;base64,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" alt="A tree produced by using strings with masked gaps" width="240" />
+<p class="caption">
+A tree produced by using strings with masked gaps
+</p>
+</div>
+<p>In the “good” plot, the Salmon sequence is once again the most
+distant which is what we expect to see. A closer examination of the
+sequence reveals that the similarity between the mouse, rat and human
+sequences was being inflated by virtue of the fact that those sequences
+were simply much longer (had more information than) the other species
+represented. This is what caused the “funky” result. The relationship
+between the sequences in the funky tree was being driven by extra
+“length” in the rodent/mouse/human sequences, instead of by the
+similarity of the conserved regions.</p>
+</div>
+<div id="exporting-to-file" class="section level1">
+<h1>Exporting to file</h1>
+<p>One possible export option is to write to fasta files If you need to
+write your <code>MultipleAlignment</code> object out as a fasta file,
+you can cast it to a <code>DNAStringSet</code> and then write it out as
+a fasta file like so:</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" tabindex="-1"></a>DNAStr <span class="ot">=</span> <span class="fu">as</span>(origMAlign, <span class="st">&quot;DNAStringSet&quot;</span>)</span>
+<span id="cb62-2"><a href="#cb62-2" tabindex="-1"></a><span class="fu">writeXStringSet</span>(DNAStr, <span class="at">file=</span><span class="st">&quot;myFile.fa&quot;</span>)</span></code></pre></div>
+<p>One other format that is of interest is the Phylip format. The Phylip
+format stores the column masking of your object as well as the sequence
+that you are exporting. So if you have masked the sequence and you write
+out a Phylip file, this mask will be recorded into the file you export.
+As with the fasta example above, any rows that you have masked out will
+be removed from the exported file.</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" tabindex="-1"></a><span class="fu">write.phylip</span>(phylipMAlign, <span class="at">filepath=</span><span class="st">&quot;myFile.txt&quot;</span>)</span></code></pre></div>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session Information</h1>
+<p>All of the output in this vignette was produced under the following
+conditions:</p>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] pwalign_1.6.0        affydata_1.58.0      affy_1.88.0         
+##  [4] hgu95av2cdf_2.18.0   hgu95av2probe_2.18.0 AnnotationDbi_1.72.0
+##  [7] Biobase_2.72.0       Biostrings_2.80.0    Seqinfo_1.0.0       
+## [10] XVector_0.52.0       IRanges_2.44.0       S4Vectors_0.50.0    
+## [13] BiocGenerics_0.56.0  generics_0.1.4       BiocStyle_2.38.0    
+## 
+## loaded via a namespace (and not attached):
+##  [1] bit_4.6.0             preprocessCore_1.72.0 jsonlite_2.0.0       
+##  [4] compiler_4.6.0        BiocManager_1.30.27   crayon_1.5.3         
+##  [7] blob_1.3.0            jquerylib_0.1.4       png_0.1-9            
+## [10] yaml_2.3.12           fastmap_1.2.0         R6_2.6.1             
+## [13] knitr_1.51            maketools_1.3.2       DBI_1.3.0            
+## [16] bslib_0.10.0          affyio_1.80.0         rlang_1.2.0          
+## [19] KEGGREST_1.50.0       cachem_1.1.0          xfun_0.57            
+## [22] sass_0.4.10           sys_3.4.3             bit64_4.8.0          
+## [25] RSQLite_2.4.6         memoise_2.0.1         cli_3.6.6            
+## [28] digest_0.6.39         lifecycle_1.0.5       vctrs_0.7.3          
+## [31] evaluate_1.0.5        buildtools_1.0.0      httr_1.4.8           
+## [34] rmarkdown_2.31        tools_4.6.0           htmltools_0.5.9</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#creation-and-masking" id="toc-creation-and-masking">Creation and masking</a></li>
+<li><a href="#analytic-utilities" id="toc-analytic-utilities">Analytic
+utilities</a></li>
+<li><a href="#exporting-to-file" id="toc-exporting-to-file">Exporting to
+file</a></li>
+<li><a href="#session-information" id="toc-session-information">Session
+Information</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

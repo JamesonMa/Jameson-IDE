@@ -1,0 +1,60 @@
+Package: S4Vectors
+Title: Foundation of vector-like and list-like containers in
+        Bioconductor
+Description: The S4Vectors package defines the Vector and List virtual
+        classes and a set of generic functions that extend the semantic
+        of ordinary vectors and lists in R. Package developers can
+        easily implement vector-like or list-like objects as concrete
+        subclasses of Vector or List. In addition, a few low-level
+        concrete subclasses of general interest (e.g. DataFrame, Rle,
+        Factor, and Hits) are implemented in the S4Vectors package
+        itself (many more are implemented in the IRanges package and in
+        other Bioconductor infrastructure packages).
+biocViews: Infrastructure, DataRepresentation
+URL: https://bioconductor.org/packages/S4Vectors
+BugReports: https://github.com/Bioconductor/S4Vectors/issues
+Version: 0.50.0
+License: Artistic-2.0
+Encoding: UTF-8
+Authors@R: c(
+	person("Hervé", "Pagès", role=c("aut", "cre"),
+		email="hpages.on.github@gmail.com"),
+	person("Michael", "Lawrence", role="aut"),
+	person("Patrick", "Aboyoun", role="aut"),
+	person("Aaron", "Lun", role="ctb"),
+	person("Beryl", "Kanali", role="ctb",
+		comment="Converted vignettes from Sweave to RMarkdown"))
+Depends: R (>= 4.1.0), methods, utils, stats, stats4, BiocGenerics (>=
+        0.53.2)
+Suggests: IRanges, GenomicRanges, SummarizedExperiment, Matrix,
+        DelayedArray, ShortRead, graph, data.table, RUnit, BiocStyle,
+        knitr
+VignetteBuilder: knitr
+Collate: S4-utils.R show-utils.R utils.R normarg-utils.R bindROWS.R
+        LLint-class.R isSorted.R subsetting-utils.R vector-utils.R
+        integer-utils.R character-utils.R raw-utils.R eval-utils.R
+        map_ranges_to_runs.R RectangularData-class.R Annotated-class.R
+        DataFrame_OR_NULL-class.R Vector-class.R Vector-comparison.R
+        Vector-setops.R Vector-merge.R Hits-class.R Hits-comparison.R
+        Hits-setops.R Rle-class.R Rle-utils.R Factor-class.R
+        List-class.R List-comparison.R splitAsList.R List-utils.R
+        SimpleList-class.R HitsList-class.R DataFrame-class.R
+        DataFrame-combine.R DataFrame-comparison.R DataFrame-utils.R
+        DataFrameFactor-class.R TransposedDataFrame-class.R
+        Pairs-class.R FilterRules-class.R stack-methods.R
+        expand-methods.R aggregate-methods.R shiftApply-methods.R zzz.R
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 12:39:07 UTC
+RemoteUrl: https://github.com/bioc/S4Vectors
+RemoteRef: RELEASE_3_23
+RemoteSha: 9e8bd118dd3866dd74525e276decfad8d554a8be
+NeedsCompilation: yes
+Packaged: 2026-04-29 10:49:31 UTC; root
+Author: Hervé Pagès [aut, cre],
+  Michael Lawrence [aut],
+  Patrick Aboyoun [aut],
+  Aaron Lun [ctb],
+  Beryl Kanali [ctb] (Converted vignettes from Sweave to RMarkdown)
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-04-29 10:51:35 UTC; windows
+Archs: x64

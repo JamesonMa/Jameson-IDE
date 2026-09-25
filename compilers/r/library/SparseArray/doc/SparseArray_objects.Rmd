@@ -1,0 +1,501 @@
+---
+title: "SparseArray objects"
+author:
+- name: Hervé Pagès
+  affiliation: Fred Hutch Cancer Center, Seattle, WA
+date: "Compiled `r BiocStyle::doc_date()`; Modified 14 January 2025"
+package: SparseArray
+vignette: |
+  %\VignetteIndexEntry{SparseArray objects}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document
+---
+
+
+```{r setup, include=FALSE}
+library(BiocStyle)
+```
+
+
+# Introduction
+
+
+`r Biocpkg("SparseArray")` is an infrastructure package that enables
+high-performance sparse data representation and manipulation in R.
+The workhorse of the package is an array-like container that allows
+efficient in-memory representation of multidimensional sparse data in R.
+
+
+# Install and load the package
+
+
+Like any other Bioconductor package, `r Biocpkg("SparseArray")` should always
+be installed with `BiocManager::install()`:
+```{r, eval=FALSE}
+if (!require("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("SparseArray")
+```
+
+Load the package:
+```{r, message=FALSE}
+library(SparseArray)
+```
+
+
+# The SparseArray virtual class and its two concrete subclasses
+
+
+The package defines the SparseArray virtual class and two concrete
+subclasses: COO\_SparseArray and SVT\_SparseArray.
+
+Each subclass uses its own internal representation of the nonzero
+multidimensional data: the "COO layout" and the "SVT layout", respectively.
+
+Note that the SparseArray virtual class makes no assumption about the
+internal representation of the nonzero data, so it could easily be
+extended by other S4 classes that use a different layout for the
+nonzero data.
+
+This vignette focuses on the SVT\_SparseArray container, which is
+the most memory-efficient and feature-complete of the two SparseArray
+subclasses. The COO\_SparseArray class is only provided to support
+some rare use-cases. In other words, using SVT\_SparseArray objects
+is almost always preferred over using COO\_SparseArray objects.
+
+
+# SVT\_SparseArray objects
+
+
+The SVT\_SparseArray container provides an efficient representation of the
+nonzero multidimensional data via a novel layout called the "SVT layout".
+
+Note that SVT\_SparseArray objects mimic as much as possible the behavior of
+ordinary matrix or array objects in base R. In particular, they suppport
+most of the "standard matrix and array API" defined in base R and in the
+`r Biocpkg("matrixStats")` package from CRAN.
+
+## Construction
+
+SVT\_SparseArray objects can be constructed in many ways. A common way
+is to start with an empty object and to subassign nonzero values to it:
+```{r}
+svt1 <- SVT_SparseArray(dim=c(6, 4))
+svt1[c(1:2, 8, 10, 15:17, 24)] <- (1:8)*10L
+svt1
+
+svt2 <- SVT_SparseArray(dim=5:3)
+svt2[c(1:2, 8, 10, 15:17, 20, 24, 40, 56:60)] <- (1:15)*10L
+svt2
+```
+
+Another way is to coerce a matrix- or array-like object to
+SVT\_SparseArray:
+```{r}
+# Coerce a dgCMatrix object to SVT_SparseArray:
+dgcm <- Matrix::rsparsematrix(12, 5, density=0.15)
+svt3 <- as(dgcm, "SVT_SparseArray")
+
+# Coerce a TENxMatrix object to SVT_SparseArray:
+suppressMessages(library(HDF5Array))
+M <- writeTENxMatrix(svt3)
+svt3b <- as(M, "SVT_SparseArray")
+
+# Sanity check:
+stopifnot(identical(svt3, svt3b))
+```
+
+Alternatively, these coercions can be done by simply passing the object
+to coerce to the `SVT_SparseArray()` constructor function:
+```{r}
+svt3  <- SVT_SparseArray(dgcm)  # same as as(dgcm, "SVT_SparseArray")
+svt3b <- SVT_SparseArray(M)     # same as as(M, "SVT_SparseArray")
+```
+
+See `?SVT_SparseArray` for more information about the `SVT_SparseArray()`
+constructor function and additional examples.
+
+## SVT\_SparseArray vs COO\_SparseArray
+
+As mentioned earlier, SVT\_SparseArray objects are almost always preferred
+over using COO\_SparseArray objects. Coercing to SparseArray or using
+the `SparseArray()` constructor function reflects this preference i.e.
+in both cases the actual class of the returned SparseArray derivative
+will almost always be SVT\_SparseArray (or SVT\_SparseMatrix). Except
+in the rare situation where returning a COO\_SparseArray object is a more
+natural fit for the input object.
+
+For example coercing the following objects to SparseArray will _always_
+produce an SVT\_SparseArray object:
+```{r}
+# Coerce an ordinary matrix to SparseArray:
+a <- array(rpois(80, lambda=0.35), dim=c(5, 8, 2))
+class(as(a, "SparseArray"))  # SVT_SparseArray
+
+# Coerce a dgCMatrix object to SparseArray:
+svt3  <- as(dgcm, "SparseArray")
+class(svt3)  # SVT_SparseArray
+
+# Coerce a TENxMatrix object to SparseArray:
+svt3b <- as(M, "SparseArray")
+class(svt3)  # SVT_SparseArray
+```
+
+Also using the `SparseArray()` constructor function on these objects will
+_always_ produce an SVT\_SparseArray object:
+```{r}
+SparseArray(a)              # same as as(a, "SparseArray")
+svt3  <- SparseArray(dgcm)  # same as as(dgcm, "SparseArray")
+svt3b <- SparseArray(M)     # same as as(M, "SparseArray")
+```
+This is actually the most convenient way to turn an ordinary matrix or
+array, or a dgCMatrix object, or a TENxMatrix object, into an SVT\_SparseArray
+object.
+
+One situation where `as(x, "SparseArray")` or `SparseArray(x)` will return
+a COO\_SparseArray object is when the input object `x` is a sparseMatrix
+derivative that uses a compressed _row-oriented_ representation (`"R"`
+representation) instead of the more widely used compressed _column-oriented_
+representation (`"C"` representation):
+```{r}
+ngrm <- sparseMatrix(i=c(1, 5, 5, 6), j=c(4, 2, 3, 2), repr="R")
+class(ngrm)  # ngRMatrix
+class(SparseArray(ngrm))  # COO_SparseMatrix
+```
+One way to enforce the SVT\_SparseArray representation is to coerce the
+result to SVT\_SparseArray:
+```{r}
+svt <- as(SparseArray(ngrm), "SVT_SparseArray")
+class(svt)  # SVT_SparseMatrix
+```
+
+Finally, note that coercing back to ordinary matrix or array (dense
+representation) is supported, although obviously not a good idea if
+the SparseArray object is big:
+```{r}
+as.array(svt1)  # same as as.matrix(svt1)
+
+as.array(svt2)
+```
+
+
+# The SparseArray API
+
+
+## The core array API
+
+SVT\_SparseArray objects support the "core array API" defined in base R:
+```{r}
+dim(svt2)
+
+length(svt2)
+
+dimnames(svt2) <- list(NULL, letters[1:4], LETTERS[1:3])
+svt2
+```
+
+## type() and is\_sparse()
+
+`type()` and `is_sparse()` are generic functions defined in
+`r Biocpkg("BiocGenerics")` and `r Biocpkg("S4Arrays")`, respectively.
+They extend the "core array API" defined in base R:
+```{r}
+type(svt1)
+
+type(svt1) <- "double"
+svt1
+
+is_sparse(svt1)
+```
+
+See `?SparseArray` for more information and additional examples.
+
+## is\_nonzero() and the nz\*() functions
+
+A set of functions is provided for direct manipulation of the nonzero
+array elements:
+
+```{r}
+is_nonzero(svt1)
+
+## Get the number of nonzero array elements in 'svt1':
+nzcount(svt1)
+
+## Extract the "linear indices" of the nonzero array elements in 'svt1':
+nzwhich(svt1)
+
+## Extract the "array indices" (a.k.a. "array coordinates") of the
+## nonzero array elements in 'svt1':
+nzwhich(svt1, arr.ind=TRUE)
+
+## Extract the values of the nonzero array elements in 'svt1':
+nzvals(svt1)
+```
+Note that the vectors produced by `nzwhich()` and `nzvals()` are _parallel_,
+that is, they have the same length and the i-th element in one vector
+corresponds to the i-th element in the other vector.
+
+See `?is_nonzero` for more information and additional examples.
+
+## Subsetting and subassignment
+
+```{r}
+svt2[5:3, , "C"]
+```
+
+Like with ordinary arrays in base R, assigning values of type `"double"` to
+an SVT\_SparseArray object of type `"integer"` will automatically change the
+type of the object to `"double"`:
+```{r}
+type(svt2)
+svt2[5, 1, 3] <- NaN
+type(svt2)
+```
+
+See `?SparseArray_subsetting` for more information and additional examples.
+
+## Summarization methods (whole array)
+
+The following summarization methods are provided at the moment: `anyNA()`,
+`any`, `all`, `min`, `max`, `range`, `sum`, `prod`, `mean`, `var`, `sd`.
+
+```{r}
+anyNA(svt2)
+
+range(svt2, na.rm=TRUE)
+
+mean(svt2, na.rm=TRUE)
+
+var(svt2, na.rm=TRUE)
+```
+
+See `?SparseArray_summarization` for more information and additional examples.
+
+## Operations from the Arith, Compare, Logic, Math, Math2, and Complex groups
+
+SVT\_SparseArray objects support operations from the `Arith`, `Compare`,
+`Logic`, `Math`, `Math2`, and `Complex` groups, with some restrictions.
+See `?S4groupGeneric` in the `r Biocpkg("methods")` package for more
+information about these group generics.
+
+```{r}
+signif((svt1^1.5 + svt1) %% 100 - 0.6 * svt1, digits=2)
+```
+
+See `?SparseArray_Arith`, `?SparseArray_Compare`, `?SparseArray_Logic`,
+`?SparseArray_Math`, and `?SparseArray_Complex` for more information
+and additional examples.
+
+
+# The 2D API
+
+
+## SVT\_SparseMatrix objects
+
+SVT\_SparseMatrix objects are just two-dimensional SVT\_SparseArray objects.
+See `?SparseArray` for a diagram of the SparseArray class hierarchy.
+
+## Transposition
+
+```{r}
+t(svt1)
+```
+
+Note that multidimensional transposition is supported via `aperm()`:
+```{r}
+aperm(svt2)
+```
+
+See `?SparseArray_aperm` for more information and additional examples.
+
+## Combine multidimensional objects along a given dimension
+
+Like ordinary matrices in base R, SVT\_SparseMatrix objects can be
+combined by rows or columns, with `rbind()` or `cbind()`:
+```{r}
+svt4 <- poissonSparseMatrix(6, 2, density=0.5)
+
+cbind(svt1, svt4)
+```
+
+Note that multidimensional objects can be combined along any dimension
+with `abind()`:
+```{r}
+svt5a <- poissonSparseArray(c(5, 6, 2), density=0.4)
+svt5b <- poissonSparseArray(c(5, 6, 5), density=0.2)
+svt5c <- poissonSparseArray(c(5, 6, 4), density=0.2)
+abind(svt5a, svt5b, svt5c)
+
+svt6a <- aperm(svt5a, c(1, 3:2))
+svt6b <- aperm(svt5b, c(1, 3:2))
+svt6c <- aperm(svt5c, c(1, 3:2))
+abind(svt6a, svt6b, svt6c, along=2)
+```
+
+See `?SparseArray_abind` for more information and additional examples.
+
+## matrixStats methods
+
+The `r Biocpkg("SparseArray")` package provides memory-efficient col/row
+summarization methods for SVT\_SparseMatrix objects:
+```{r}
+svt7 <- SVT_SparseArray(dim=5:6, dimnames=list(letters[1:5], LETTERS[1:6]))
+svt7[c(2, 6, 12:17, 22:30)] <- 101:117
+
+colVars(svt7)
+```
+
+Note that multidimensional objects are supported:
+```{r}
+colVars(svt2)
+colVars(svt2, dims=2)
+
+colAnyNAs(svt2)
+colAnyNAs(svt2, dims=2)
+```
+
+See `?SparseArray_matrixStats` for more information and additional examples.
+
+## `rowsum()` and `colsum()`
+
+`rowsum()` and `colsum()` are supported:
+```{r}
+rowsum(svt7, group=c(1:3, 2:1))
+
+colsum(svt7, group=c("A", "B", "A", "B", "B", "A"))
+```
+
+See `?rowsum_methods` for more information and additional examples.
+
+## Matrix multiplication and cross-product
+
+SVT\_SparseMatrix objects support matrix multiplication:
+```{r}
+svt7 %*% svt4
+```
+
+as well as `crossprod()` and `tcrossprod()`:
+```{r}
+crossprod(svt4)
+```
+
+See `?SparseMatrix_mult` for more information and additional examples.
+
+
+# Other operations
+
+
+## Generate a random SVT\_SparseArray object
+
+Two convenience functions are provided for this:
+```{r}
+randomSparseArray(c(5, 6, 2), density=0.5)
+
+poissonSparseArray(c(5, 6, 2), density=0.5)
+```
+
+See `?randomSparseArray` for more information and additional examples.
+
+## Read/write a sparse matrix from/to a CSV file
+
+Use `writeSparseCSV()` to write a sparse matrix to a CSV file:
+```{r}
+csv_file <- tempfile()
+writeSparseCSV(svt7, csv_file)
+```
+
+Use `readSparseCSV()` to read the file. This will import the data as
+an SVT\_SparseMatrix object:
+```{r}
+readSparseCSV(csv_file)
+```
+
+See `?readSparseCSV` for more information and additional examples.
+
+
+# Comparison with dgCMatrix objects
+
+
+## "SVT layout" vs "CSC layout"
+
+The nonzero data of a SVT\_SparseArray object is stored in a _Sparse
+Vector Tree_. This internal data representation is referred to as
+the "SVT layout". It is similar to the "CSC layout" (compressed, sparse,
+column-oriented format) used by CsparseMatrix derivatives from
+the `r CRANpkg("Matrix")` package, like dgCMatrix or lgCMatrix objects,
+but with the following improvements:
+
+- The "SVT layout" supports sparse arrays of arbitrary dimensions.
+
+- With the "SVT layout", the sparse data can be of any type.
+  Whereas CsparseMatrix derivatives only support sparse data of
+  type `"double"` or `"logical"`.
+
+- The "SVT layout" imposes no limit on the number of nonzero array
+  elements that can be stored. With dgCMatrix/lgCMatrix objects, this
+  number must be < 2^31.
+
+- Overall, the "SVT layout" allows more efficient operations on
+  SVT\_SparseArray objects.
+
+See `?SVT_SparseArray` for more information about the "SVT layout".
+
+## Working with a big sparse dataset
+
+The "1.3 Million Brain Cell Dataset" from 10x Genomics is a sparse 2D
+dataset with more than 2^31 nonzero values. The dataset is stored in an
+HDF5 file that is available via ExperimentHub (resource id `EH1039`):
+```{r}
+suppressMessages(library(HDF5Array))
+suppressMessages(library(ExperimentHub))
+hub <- ExperimentHub()
+oneM <- TENxMatrix(hub[["EH1039"]], group="mm10")
+oneM
+```
+
+`oneM` is a TENxMatrix object. This is a particular kind of sparse
+DelayedArray object where the data is on disk in an HDF5 file.
+See `?TENxMatrix` in the `r CRANpkg("HDF5Array")` package for more
+information about TENxMatrix objects.
+
+Note that the object has more than 2^31 nonzero values:
+```{r}
+nzcount(oneM)
+```
+
+The standard way to load the data of a TENxMatrix object (or any
+DelayedArray derivative) from disk to memory is to simply coerce the
+object to the desired in-memory representation.
+
+For example, to load the data in an SVT\_SparseArray object:
+```{r, eval=FALSE}
+# WARNING: This takes a couple of minutes on a modern laptop, and will
+# consume about 25Gb of RAM!
+svt <- as(oneM, "SVT_SparseArray")
+```
+
+To load the data in a dgCMatrix object:
+```{r, eval=FALSE}
+# This will fail because 'oneM' has more than 2^31 nonzero values!
+as(oneM, "dgCMatrix")
+```
+
+
+# Learn more
+
+
+Please consult the individual man pages in the `r Biocpkg("SparseArray")`
+package to learn more about SVT\_SparseArray objects and about the
+package. A good starting point is the man page for SparseArray
+objects: `?SparseArray`
+
+
+# Session information
+
+
+```{r}
+sessionInfo()
+```
+

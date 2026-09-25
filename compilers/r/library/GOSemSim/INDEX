@@ -1,0 +1,23 @@
+GOSemSimDATA-class      Class "GOSemSimDATA" This class stores IC and
+                        gene to go mapping for semantic similarity
+                        measurement
+buildGOmap              buildGOmap
+clusterSim              Semantic similarity between two gene clusters
+combineScores           combining similarity matrix to similarity score
+geneSim                 Semantic similarity between two genes
+get_organism            Get organism name from OrgDb object
+goSim                   Semantic similarity between two GO terms
+go_term_table           Information content of GO terms
+godata                  godata
+infoContentMethod       information content based methods
+mclusterSim             Pairwise semantic similarities for a list of
+                        gene clusters
+mgeneSim                Pairwise semantic similarity for a list of
+                        genes
+mgoSim                  Semantic similarity between two GO term sets
+read.blast2go           read.blast2go
+read.gaf                read.gaf
+tcss_cutoff             determine the topological cutoff for TCSS
+                        method
+termSim                 termSim
+wangMethod_internal     wangMethod

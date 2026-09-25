@@ -1,0 +1,36 @@
+Package: XVector
+Title: Foundation of external vector representation and manipulation in
+        Bioconductor
+Description: Provides memory efficient S4 classes for storing sequences
+        "externally" (e.g. behind an R external pointer, or on disk).
+biocViews: Infrastructure, DataRepresentation
+URL: https://bioconductor.org/packages/XVector
+BugReports: https://github.com/Bioconductor/XVector/issues
+Version: 0.52.0
+License: Artistic-2.0
+Encoding: UTF-8
+Author: Hervé Pagès and Patrick Aboyoun
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Depends: R (>= 4.0.0), methods, BiocGenerics (>= 0.37.0), S4Vectors (>=
+        0.27.12), IRanges (>= 2.43.8)
+Imports: methods, utils, stats, tools, BiocGenerics, S4Vectors, IRanges
+LinkingTo: S4Vectors, IRanges
+Suggests: Biostrings, drosophila2probe, RUnit
+Collate: io-utils.R RDS-random-access.R SharedVector-class.R
+        SharedRaw-class.R SharedInteger-class.R SharedDouble-class.R
+        XVector-class.R XRaw-class.R XInteger-class.R XDouble-class.R
+        XVectorList-class.R XRawList-class.R XRawList-comparison.R
+        XIntegerViews-class.R XDoubleViews-class.R OnDiskRaw-class.R
+        RdaCollection-class.R RdsCollection-class.R
+        intra-range-methods.R compact-methods.R reverse-methods.R
+        slice-methods.R view-summarization-methods.R
+        updateObject-methods.R zzz.R
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 12:37:43 UTC
+RemoteUrl: https://github.com/bioc/XVector
+RemoteRef: RELEASE_3_23
+RemoteSha: fa5f5a6296e984f5cb90b52bff781e710d999111
+NeedsCompilation: yes
+Packaged: 2026-04-29 10:49:01 UTC; root
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-04-29 10:56:17 UTC; windows
+Archs: x64

@@ -1,0 +1,68 @@
+Package: GenomicAlignments
+Title: Representation and manipulation of short genomic alignments
+Description: Provides efficient containers for storing and manipulating
+        short genomic alignments (typically obtained by aligning short
+        reads to a reference genome). This includes read counting,
+        computing the coverage, junction detection, and working with
+        the nucleotide content of the alignments.
+biocViews: Infrastructure, DataImport, Genetics, Sequencing, RNASeq,
+        SNP, Coverage, Alignment, ImmunoOncology
+URL: https://bioconductor.org/packages/GenomicAlignments
+Video: https://www.youtube.com/watch?v=2KqBSbkfhRo ,
+        https://www.youtube.com/watch?v=3PK_jx44QTs
+BugReports: https://github.com/Bioconductor/GenomicAlignments/issues
+Version: 1.48.0
+License: Artistic-2.0
+Encoding: UTF-8
+Authors@R: c(
+	person("Hervé", "Pagès", role=c("aut", "cre"),
+		email="hpages.on.github@gmail.com"),
+	person("Valerie", "Obenchain", role="aut"),
+	person("Martin", "Morgan", role="aut"),
+	person("Fedor", "Bezrukov", role="ctb"),
+	person("Robert", "Castelo", role="ctb"),
+	person("Halimat C.", "Atanda", role="ctb",
+		comment="Translated 'WorkingWithAlignedNucleotides' vignette from Sweave to RMarkdown / HTML."
+	))
+Depends: R (>= 4.0.0), methods, BiocGenerics (>= 0.37.0), S4Vectors (>=
+        0.47.6), IRanges (>= 2.23.9), Seqinfo, GenomicRanges (>=
+        1.61.1), SummarizedExperiment (>= 1.39.1), Biostrings (>=
+        2.77.2), Rsamtools (>= 2.25.1)
+Imports: methods, utils, stats, BiocGenerics, S4Vectors, IRanges,
+        GenomicRanges, Biostrings, Rsamtools, BiocParallel, cigarillo
+        (>= 0.99.2)
+LinkingTo: S4Vectors, IRanges
+Suggests: ShortRead, rtracklayer, BSgenome, GenomicFeatures,
+        RNAseqData.HNRNPC.bam.chr14, pasillaBamSubset,
+        TxDb.Hsapiens.UCSC.hg19.knownGene,
+        TxDb.Dmelanogaster.UCSC.dm3.ensGene,
+        BSgenome.Dmelanogaster.UCSC.dm3, BSgenome.Hsapiens.UCSC.hg19,
+        DESeq2, edgeR, RUnit, knitr, BiocStyle
+Collate: utils.R cigar-utils.R GAlignments-class.R
+        GAlignmentPairs-class.R GAlignmentsList-class.R
+        GappedReads-class.R OverlapEncodings-class.R
+        findMateAlignment.R readGAlignments.R junctions-methods.R
+        sequenceLayer.R pileLettersAt.R stackStringsFromGAlignments.R
+        intra-range-methods.R coverage-methods.R setops-methods.R
+        findOverlaps-methods.R coordinate-mapping-methods.R
+        encodeOverlaps-methods.R findCompatibleOverlaps-methods.R
+        summarizeOverlaps-methods.R findSpliceOverlaps-methods.R zzz.R
+VignetteBuilder: knitr
+Config/pak/sysreqs: libbz2-dev liblzma-dev xz-utils zlib1g-dev
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 12:38:25 UTC
+RemoteUrl: https://github.com/bioc/GenomicAlignments
+RemoteRef: RELEASE_3_23
+RemoteSha: 34a743a22b7ce4f754c3962bb06ae872581905b2
+NeedsCompilation: yes
+Packaged: 2026-04-29 15:00:58 UTC; root
+Author: Hervé Pagès [aut, cre],
+  Valerie Obenchain [aut],
+  Martin Morgan [aut],
+  Fedor Bezrukov [ctb],
+  Robert Castelo [ctb],
+  Halimat C. Atanda [ctb] (Translated 'WorkingWithAlignedNucleotides'
+    vignette from Sweave to RMarkdown / HTML.)
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-04-29 15:05:06 UTC; windows
+Archs: x64

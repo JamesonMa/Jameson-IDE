@@ -1,0 +1,280 @@
+VERSION 1.12.0
+--------------
+
+NEW FEATURES
+
+    o Subassignment of an SVT_SparseArray object with a right value that is
+      also an SVT_SparseArray object is finally supported. For example this
+      allows things like
+
+        x[3:6, , 1] <- y
+        x[ , 11:15, 1] <- x[ , 1:5, 3]
+
+      (where 'x' and 'y' are both SVT_SparseArray objects) to operate
+      natively on the sparse representation and therefore to be very fast
+      and very memory-efficient.
+
+    o NaArray objects now support subassignment by an N-index, not just by an
+      L-index or M-index. Like SVT_SparseArray objects, the replacement value
+      (a.k.a. right value) can be a "short" vector, an ordinary array, or
+      another NaArray object.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o A significant refactoring of the code behind subsetting and subassignment
+      of an SVT_SparseArray object results in code that is simpler, cleaner,
+      and faster. In particular, the following speed improvements were obtained
+      compared to SparseArray 1.10.0:
+      - N-dimensional subsetting of an SVT_SparseArray object is 2 to 5 times
+        faster.
+      - Subassignment of an SVT_SparseArray object by a matrix subscript
+        (a.k.a. M-index) is twice faster and uses about 20% less memory.
+      - Subassignment of an SVT_SparseArray object with a "short" vector
+        on the right e.g.
+          svt[i, j, k] <- 0
+        or
+          svt[i, j, k] <- c(4, 0, -1, 1)
+        where each of i, j, k is either missing or a vector of subscripts
+        is faster.
+
+    o Revisited and optimized implementation of the extract_array() method
+      for SVT_SparseArray arrays. Old implementation was doing:
+
+          as.array(.subset_SVT_as_SVT(x, index))
+
+      New implementation is based on new internal helper .subset_SVT_as_Rarray()
+      which avoids the intermediate SVT_SparseArray representation. With these
+      improvements, extract_array() is now 3 to 4 times faster than in
+      SparseArray 1.10.0.
+      As a consequence extracting a single row from an SVT_SparseMatrix
+      object 'x' with
+
+          x[i, ]
+
+      is now 15% to 20% faster.
+
+    o The extract_array() methods for SVT_SparseArray and NaArray objects
+      are now multithreaded when the number of rows to extract is "small".
+
+    o Speed up nzvals() on SVT_SparseMatrix objects and nnavals() on NaArray
+      objects by overriding the default methods with specific methods
+      implemented in C. This yields a 15x to 20x speedup.
+
+BUG FIXES
+
+    o Fix col/rowMedians() methods for SparseArray objects.
+
+    o Fix mishandling of NaN elements in is_nonna(), nnacount(), nnawhich(),
+      and nnavals() default methods. Clarify the meaning of non-NA element
+      in the man page for these functions.
+
+
+VERSION 1.10.0
+--------------
+
+NEW FEATURES
+
+    o Add the two following capabilities to subassignment of SVT_SparseArray
+      objects:
+      - The right value (a.k.a. replacement value) now can be an ordinary
+        array.
+      - Using a long linear subscript (i.e. long integer or numeric vector)
+        is now supported. Note that this is also enabled for NaArray objects.
+
+
+VERSION 1.8.0
+-------------
+
+NEW FEATURES
+
+    o Make rowsum() and colsum() work on any dsparseMatrix derivative and not
+      just on a dgCMatrix object. For example now they also accept a dgRMatrix
+      or dgTMatrix object.
+
+    o Make crossprod(), tcrossprod(), and %*% work between a SparseMatrix
+      object and an ordinary vector.
+
+    o Arith operations between a SparseArray (or NaArray) object 'x' and an
+      atomic vector 'y' are no longer restricted to the latter being a single
+      value: now the length of the latter can also be 'dim(x)[[1]]' or a
+      divisor of it.
+
+BUG FIXES
+
+    o Make sure that SparseArray(x) and SVT_SparseArray(x) always propagate the
+      dimnames.
+
+    o Fix bug in Math and Math2 operations on SVT_SparseArray and NaArray
+      objects.
+
+
+VERSION 1.6.0
+-------------
+
+NEW FEATURES
+
+    o Linear subsetting of a SVT_SparseArray object e.g. svt[11:13].
+
+    o Add the 'dim' and 'dimnames' arguments to SVT_SparseArray() constructor
+      function. Main use case is to make it easy and efficient to construct
+      a zero-only SVT_SparseArray object of arbitrary dimensions.
+
+    o Add is_nonzero() generic with a default method and fast methods for
+      SVT_SparseArray, COO_SparseArray, and sparseMatrix objects.
+
+    o The Sparse Vector Tree of a SVT_SparseArray can have "lacunar leaves",
+      that is, leaves where the nzvals are missing. These leaves are
+      semantically equivalent to leaves where all the values in nzvals are
+      ones. This reduces the memory footprint of a "logical" SVT_SparseArray
+      with no NAs by half.
+      Note that a "logical" SVT_SparseMatrix object with no NAs is similar
+      to an ngCMatrix object from the Matrix package. ngCMatrix objects
+      don't store any non-zero values either (they're implicitly considered
+      to be TRUEs), only their offsets.
+
+    o col/row summarization methods (a.k.a. "matrixStats methods") now work
+      on COO_SparseArray objects (in addition to SVT_SparseArray objects).
+
+    o Add row/colSums2() and row/colMeans2() methods for SparseArray objects.
+
+    o rowsum(), crossprod(), tcrossprod(), and %*% methods now work on
+      COO_SparseMatrix objects (in addition to SVT_SparseMatrix objects).
+
+    o Add fast colsum() methods for SparseMatrix and dgCMatrix objects.
+
+    o Add is.na(), is.nan(), and is.infinite() methods for SVT_SparseArray
+      objects.
+
+    o Add pmin() and pmax() methods for SparseArray objects.
+
+    o aperm(<SVT_SparseArray>) now supports S4Arrays::aperm2() extended
+      semantic. See '?S4Arrays::aperm2' for details.
+
+    o Add 'dimnames' argument to randomSparseArray(), poissonSparseArray(),
+      randomSparseMatrix(), and poissonSparseMatrix().
+
+    o Coercions from dgTMatrix, lgTMatrix, or ngTMatrix, to
+      COO_SparseMatrix/Array or SVT_SparseMatrix/Array, and vice versa.
+
+    o Coercions from ng[C|R|T]Matrix to COO_SparseMatrix, and vice versa.
+
+    o Coercion from ngCMatrix to SVT_SparseMatrix, and vice versa.
+
+    o NaArray objects: WORK-IN-PROGRESS! New objects that use the same
+      internal representation as SVT_SparseArray objects (Sparse Vector
+      Tree), but background value is NA instead of zero. See
+      https://github.com/fmicompbio/footprintR/issues/7 for the
+      motivating use case. They support most operations supported by
+      SVT_SparseArray objects: [, [<-, t(), aperm(), cbind(), rbind(),
+      abind(), matrixStats operations (col*(), row*()), etc...
+      What's missing:
+      - a dedicated vignette;
+      - some row*() functions are not ready yet.
+
+    o Add new generics is_nonna(), nnacount(), nnawhich(), nnavals(), and
+      `nnavals<-`(), with default methods and methods for NaArray objects.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Refactored subassignment of a SVT_SparseArray object, which resulted
+      in significant speed improvement and memory footprint reduction.
+
+    o Speed up some row summarization methods (e.g. rowSums(x)) by implementing
+      them natively in C rather than doing a transposition followed by a column
+      summarization (e.g. colSums(t(x))). This avoids the costly transposition
+      step which is very time and memory consuming.
+      Row summarization methods with native C implementation so far:
+      rowAnyNAs() (35x speedup), rowMins() (6x speedup), rowMaxs() (6x speedup),
+      rowSums() (20x speedup), rowMeans() (18x speedup), rowVars() (5x speedup),
+      and rowSds() (5x speedup).
+      More methods will follow.
+
+    o Special-case 'lambda=0' in poissonSparseArray() so the empty
+      SVT_SparseArray object gets returned instantaneously.
+
+BUG FIXES
+
+    o Fix integer overflow in nzwhich() methods for CsparseMatrix and
+      RsparseMatrix objects when the object has a length >= 2^31.
+
+    o Fix bug in coercion from COO_SparseMatrix to [d|l]gCMatrix or
+      [d|l]gRMatrix when the 'nzcoo' slot of the COO_SparseMatrix object
+      contains duplicates.
+
+    o Make sure that coercion from CsparseMatrix to SVT_SparseMatrix works
+      on any [d|l|n]gCMatrix **derivative** and not just on a [d|l|n]gCMatrix
+      **instance**.
+
+
+VERSION 1.4.0
+-------------
+
+NEW FEATURES
+
+    o The following operation are now multithreaded (via OpenMP):
+        - SparseMatrix multiplication and crossprod()
+        - the matrixStats methods for SparseMatrix objects
+      See ?set_SparseArray_nthread for more information.
+
+    o Define some of the basic coercion methods that used to be defined in
+      the Matrix package but that the lazy Matrix maintainers have decided
+      to deprecate in Matrix 1.7-0 (e.g. coercion from matrix to dgRMatrix).
+
+BUG FIXES
+
+    o Fix aperm(<SVT_SparseArray>) when inner dimensions are not permuted
+      See https://github.com/Bioconductor/SparseArray/issues/6
+
+    o Fix long-standing bug in C function _dotprod_leaf_vector_and_double_col().
+      In some circumstances the function was reading beyond a C array.
+      Observed effects varied from no observed effects (on Linux) to breaking
+      crossprod() unit tests on arm64 Mac (consistently), on Windows
+      (sporadically), and also probably on PowerPC (or possibly a crash
+      sometimes on this platform.
+      See https://github.com/Bioconductor/SparseArray/issues/2
+
+
+VERSION 1.2.0
+-------------
+
+NEW FEATURES
+
+    o Add aperm() method for SVT_SparseArray objects.
+
+    o Add abind() method for SparseArray objects.
+
+    o Add dim() setter for SVT_SparseArray objects.
+
+    o Introduce nzwhich() generic and method for SparseArray derivatives.
+      Also provide a default method for ordinary arrays and other array-like
+      objects.
+
+    o Implement 'Logic' ops on SVT_SparseArray objects.
+
+    o Implement 'Math'/'Math2' ops on SVT_SparseArray objects of type "double".
+
+    o 'Compare' ops now support SVT_SparseArray objects of type() "raw"
+      or "complex".
+
+    o All matrixStats methods (except row/colMedians()) now work on
+      multidimensional SVT_SparseArray objects and support the 'dims'
+      argument, like the row/colSums() and row/colMeans() functions in base R.
+
+    o Add row/colAnys() + row/colAlls() + row/colAnyNAs() + row/colProds()
+      methods for SVT_SparseArray objects.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Rename nzvals() slot getter (for COO_SparseArray objects) -> nzdata().
+      Also reintroduce nzvals() as a fast way to get 'x[nzwhich(x)]' on a
+      sparse array-like object 'x'.
+
+    o Re-implement all matrixStats methods (except row/colMedians()) for
+      SVT_SparseArray objects in C.
+
+
+VERSION 1.0.0
+-------------
+
+    o First version of the package that is ready for general use.
+

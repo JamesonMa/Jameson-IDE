@@ -1,0 +1,48 @@
+COO_SparseArray-class   COO_SparseArray objects
+NaArray                 NaArray objects
+NaArray-Arith-methods   'Arith' operations on NaArray objects
+NaArray-Compare-methods
+                        'Compare' operations on NaArray objects
+NaArray-Logic-methods   'Logic' operations on NaArray objects
+NaArray-Math-methods    'Math' and 'Math2' methods for NaArray objects
+NaArray-abind           Combine multidimensional NaArray objects
+NaArray-aperm           NaArray transposition
+NaArray-matrixStats     NaArray col/row summarization
+NaArray-misc-methods    Miscellaneous operations on a NaArray object
+NaArray-subassignment   NaArray subassignment
+NaArray-subsetting      Subsetting an NaArray object
+NaArray-summarization   NaArray summarization methods
+SVT_SparseArray-class   SVT_SparseArray objects
+SparseArray             SparseArray objects
+SparseArray-Arith-methods
+                        'Arith' operations on SparseArray objects
+SparseArray-Compare-methods
+                        'Compare' operations on SparseArray objects
+SparseArray-Complex-methods
+                        'Complex' methods for SparseArray objects
+SparseArray-Logic-methods
+                        'Logic' operations on SparseArray objects
+SparseArray-Math-methods
+                        'Math' and 'Math2' methods for SparseArray
+                        objects
+SparseArray-abind       Combine multidimensional SparseArray objects
+SparseArray-aperm       SparseArray transposition
+SparseArray-matrixStats
+                        SparseArray col/row summarization
+SparseArray-misc-methods
+                        Miscellaneous operations on a SparseArray
+                        object
+SparseArray-subassignment
+                        SparseArray subassignment
+SparseArray-subsetting
+                        Subsetting a SparseArray object
+SparseArray-summarization
+                        SparseArray summarization methods
+SparseMatrix-mult       SparseMatrix multiplication and cross-product
+is_nonna                is_nonna() and the nna*() functions
+is_nonzero              is_nonzero() and the nz*() functions
+randomSparseArray       Random SparseArray object
+readSparseCSV           Read/write a sparse matrix from/to a CSV file
+rowsum-methods          rowsum() methods for sparse matrices
+thread-control          Number of threads used by SparseArray
+                        operations

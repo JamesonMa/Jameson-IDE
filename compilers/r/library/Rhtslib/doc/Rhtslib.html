@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content="Nathaniel Hayden, Martin Morgan">
+      
+      <title>Motivation and use of Rhtslib</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">Motivation and use of <em>Rhtslib</em></h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="motivation" class="section level1">
+<h1>Motivation</h1>
+<p><em><a href="https://bioconductor.org/packages/3.23/Rhtslib">Rhtslib</a></em>
+is an R package that provides the C <code>HTSlib</code> library for
+high-throughput sequence data analysis. The library provides APIs for
+creating, indexing, manipulating, and analyzing data in SAM/BAM/CRAM
+sequence files and VCF/BCF2 variant files. See the <a href="http://www.htslib.org/">HTSlib website</a> for complete details
+and documentation.</p>
+<p>The <em><a href="https://bioconductor.org/packages/3.23/Rhtslib">Rhtslib</a></em>
+package is primarily useful to developers of other R packages who want
+to use the HTSlib facilities in the C code of their own packages.</p>
+<div id="htslib-version" class="section level2">
+<h2>HTSlib version</h2>
+<p>The version of the included HTSlib is displayed at package load time,
+but a user can also query the HTSlib version directly by calling
+<code>Rhtslib:::htsVersion()</code> in an R session. The current version
+of the package is 1.18.</p>
+<p>Effort is made to update the included version of HTSlib with minor
+version releases from the HTSlib authors. If you notice the included
+HTSlib is older than the current minor release of HTSlib, please contact
+the <em><a href="https://bioconductor.org/packages/3.23/Rhtslib">Rhtslib</a></em>
+maintainer.</p>
+</div>
+<div id="motivation-1" class="section level2">
+<h2>Motivation</h2>
+<p>There are several advantages to using <code>Rhtslib</code>, rather
+than requiring an explicit user system dependency on <code>htslib</code>
+directly.</p>
+<ul>
+<li>Using <code>Rhtslib</code> means that your users (who are not always
+sophisticated system administrators) do not need to manually install
+their own library.</li>
+<li>Your application uses a defined version of <code>htslib</code>, so
+that you as a developer can rely on presence of specific features (and
+bugs!) rather than writing code to manage different library
+versions.</li>
+</ul>
+</div>
+</div>
+<div id="use" class="section level1">
+<h1>Use</h1>
+<p>See the <a href="https://github.com/Bioconductor/Rsamtools"><code>Rsamtools</code></a>
+package for an example of a package that compiles and links against
+<code>Rhtslib</code>.</p>
+<div id="find-headers" class="section level2">
+<h2>Find headers</h2>
+<p>In order for the C/C++ compiler to find HTSlib headers during
+installation of your package, you must add <code>Rhtslib</code> to the
+<code>LinkingTo</code> field of its <code>DESCRIPTION</code> file,
+e.g.,</p>
+<pre><code>LinkingTo: Rhtslib</code></pre>
+<p>Note that as of R 3.0.2 <code>LinkingTo</code> values can include
+version specifications, e.g.,
+<code>LinkingTo: Rhtslib (&gt;= 0.99.10)</code>.</p>
+<p>In C or C++ code files, use standard techniques, e.g.,
+<code>#include &quot;htslib/hts.h&quot;</code>. Header files are available for
+perusal at (enter in an R session)</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">system.file</span>(<span class="at">package=</span><span class="st">&quot;Rhtslib&quot;</span>, <span class="st">&quot;include&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;/tmp/Rtmp9n2lay/Rinst6f366759ce2/Rhtslib/include&quot;</code></pre>
+</div>
+<div id="compile-and-link-against-the-library" class="section level2">
+<h2>Compile and link against the library</h2>
+<p>To compile and link your package successfully against the HTSlib
+included in <em><a href="https://bioconductor.org/packages/3.23/Rhtslib">Rhtslib</a></em>,
+you must include a <code>src/Makevars</code> file.</p>
+<p>Create a <code>src/Makevars</code> file with the following lines</p>
+<pre><code>RHTSLIB_LIBS=$(shell &quot;${R_HOME}/bin${R_ARCH_BIN}/Rscript&quot; -e \
+    &#39;Rhtslib::pkgconfig(&quot;PKG_LIBS&quot;)&#39;)
+RHTSLIB_CPPFLAGS=$(shell &quot;${R_HOME}/bin${R_ARCH_BIN}/Rscript&quot; -e \
+    &#39;Rhtslib::pkgconfig(&quot;PKG_CPPFLAGS&quot;)&#39;)
+
+PKG_LIBS=$(RHTSLIB_LIBS)
+PKG_CPPFLAGS=$(RHTSLIB_CPPFLAGS)</code></pre>
+<p>Note that <code>$(shell ...)</code> is GNU make syntax so you should
+add <code>GNU make</code> to the <code>SystemRequirements</code> field
+of the <code>DESCRIPTION</code> file of your package, e.g.,</p>
+<pre><code>SystemRequirements: GNU make</code></pre>
+<p>The reason we use <code>$(shell echo ...)</code> rather than
+back-ticks (e.g. <code>`echo ...`</code>) is because the latter causes
+problems when, after evaluation, <code>PKG_LIBS</code> and/or
+<code>PKG_CPPFLAGS</code> contain paths with whitespaces in them.</p>
+<p>If your package needs to add to the <code>$PKG_LIBS</code> variable,
+do so by adding to the <code>PKG_LIBS=$(RHTSLIB_LIBS)</code> line,
+e.g.,</p>
+<pre><code>PKG_LIBS=$(RHTSLIB_LIBS) -L/path/to/foolib -lfoo</code></pre>
+<p><a href="#id_%20and%20has%20resolved%20symbolic%20links%20to%20their%20actual%20path.">comment</a>:
+# This can cause problems, e.g., when the ‘head’ node of <a href="#id_%20and%20has%20resolved%20symbolic%20links%20to%20their%20actual%20path.">comment</a>:
+# a cluster mimicks the cluster node via a symbolic link to <a href="#id_%20and%20has%20resolved%20symbolic%20links%20to%20their%20actual%20path.">comment</a>:
+# the directory in which Rhtslib is installed. Use the <a href="#id_%20and%20has%20resolved%20symbolic%20links%20to%20their%20actual%20path.">comment</a>:
+# environment variable <code>RHTSLIB_RPATH</code> to resolve this by <a href="#id_%20and%20has%20resolved%20symbolic%20links%20to%20their%20actual%20path.">comment</a>:
+# setting it to the cluster-node accessible path.</p>
+</div>
+</div>
+<div id="implementation-notes" class="section level1">
+<h1>Implementation notes</h1>
+<p><code>Rhtslib</code> provides both static and dynamic library
+versions of HTSlib on Linux and Mac OS X platforms, but only the static
+version on Windows. The procedure above will link against the static
+library version of HTSlib on all platforms.</p>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#motivation" id="toc-motivation">Motivation</a>
+<ul>
+<li><a href="#htslib-version" id="toc-htslib-version">HTSlib
+version</a></li>
+<li><a href="#motivation-1" id="toc-motivation-1">Motivation</a></li>
+</ul></li>
+<li><a href="#use" id="toc-use">Use</a>
+<ul>
+<li><a href="#find-headers" id="toc-find-headers">Find headers</a></li>
+<li><a href="#compile-and-link-against-the-library" id="toc-compile-and-link-against-the-library">Compile and link against
+the library</a></li>
+</ul></li>
+<li><a href="#implementation-notes" id="toc-implementation-notes">Implementation notes</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

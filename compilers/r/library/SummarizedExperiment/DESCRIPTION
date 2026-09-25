@@ -1,0 +1,51 @@
+Package: SummarizedExperiment
+Title: A container (S4 class) for matrix-like assays
+Description: The SummarizedExperiment container contains one or more
+        assays, each represented by a matrix-like object of numeric or
+        other mode. The rows typically represent genomic ranges of
+        interest and the columns represent samples.
+biocViews: Genetics, Infrastructure, Sequencing, Annotation, Coverage,
+        GenomeAnnotation
+URL: https://bioconductor.org/packages/SummarizedExperiment
+BugReports: https://github.com/Bioconductor/SummarizedExperiment/issues
+Version: 1.42.0
+License: Artistic-2.0
+Encoding: UTF-8
+Authors@R: c(
+	person("Martin", "Morgan", role="aut"),
+	person("Valerie", "Obenchain", role="aut"),
+	person("Jim", "Hester", role="aut"),
+	person("Hervé", "Pagès", role=c("aut", "cre"),
+		email="hpages.on.github@gmail.com"))
+Depends: R (>= 4.0.0), methods, MatrixGenerics (>= 1.1.3),
+        GenomicRanges (>= 1.61.4), Biobase
+Imports: utils, stats, tools, Matrix, BiocGenerics (>= 0.51.3),
+        S4Vectors (>= 0.33.7), IRanges (>= 2.23.9), Seqinfo, S4Arrays
+        (>= 1.1.1), DelayedArray (>= 0.31.12)
+Suggests: GenomeInfoDb (>= 1.45.5), rhdf5, HDF5Array (>= 1.7.5),
+        annotate, AnnotationDbi, GenomicFeatures, SparseArray,
+        SingleCellExperiment, TxDb.Hsapiens.UCSC.hg19.knownGene,
+        hgu95av2.db, airway (>= 1.15.1), BiocStyle, knitr, rmarkdown,
+        RUnit, testthat, digest
+VignetteBuilder: knitr
+Collate: Assays-class.R SummarizedExperiment-class.R
+        RangedSummarizedExperiment-class.R intra-range-methods.R
+        inter-range-methods.R coverage-methods.R combine-methods.R
+        findOverlaps-methods.R nearest-methods.R
+        makeSummarizedExperimentFromExpressionSet.R
+        makeSummarizedExperimentFromDataFrame.R
+        makeSummarizedExperimentFromLoom.R zzz.R
+Config/pak/sysreqs: zlib1g-dev
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 12:41:19 UTC
+RemoteUrl: https://github.com/bioc/SummarizedExperiment
+RemoteRef: RELEASE_3_23
+RemoteSha: 38d319f79612b5bc873e609cb909f9165345f2b1
+NeedsCompilation: no
+Packaged: 2026-04-29 11:27:51 UTC; root
+Author: Martin Morgan [aut],
+  Valerie Obenchain [aut],
+  Jim Hester [aut],
+  Hervé Pagès [aut, cre]
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Built: R 4.6.0; ; 2026-04-29 11:30:24 UTC; windows

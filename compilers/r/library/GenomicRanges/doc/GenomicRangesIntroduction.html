@@ -1,0 +1,1386 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content="Marc Carlson, Patrick Aboyoun, Hervé Pagès, and Martin Morgan">
+      
+      <title>An Introduction to the GenomicRanges Package</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">An Introduction to the GenomicRanges
+Package</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelector("h1").className = "title";
+});
+</script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+  var links = document.links;  
+  for (var i = 0, linksLength = links.length; i < linksLength; i++)
+    if (links[i].hostname != window.location.hostname)
+      links[i].target = '_blank';
+});
+</script>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The <em><a href="https://bioconductor.org/packages/3.22/GenomicRanges">GenomicRanges</a></em>
+package serves as the foundation for representing genomic locations
+within the Bioconductor project. In the Bioconductor package hierarchy,
+it builds upon the <em><a href="https://bioconductor.org/packages/3.22/IRanges">IRanges</a></em>
+(infrastructure) package and provides support for the <em><a href="https://bioconductor.org/packages/3.22/BSgenome">BSgenome</a></em>
+(infrastructure), <em><a href="https://bioconductor.org/packages/3.22/Rsamtools">Rsamtools</a></em>
+(I/O), <em><a href="https://bioconductor.org/packages/3.22/ShortRead">ShortRead</a></em>
+(I/O &amp; QA), <em><a href="https://bioconductor.org/packages/3.22/rtracklayer">rtracklayer</a></em>
+(I/O), <em><a href="https://bioconductor.org/packages/3.22/GenomicFeatures">GenomicFeatures</a></em>
+(infrastructure), <em><a href="https://bioconductor.org/packages/3.22/GenomicAlignments">GenomicAlignments</a></em>
+(sequence reads), <em><a href="https://bioconductor.org/packages/3.22/VariantAnnotation">VariantAnnotation</a></em>
+(called variants), and many other Bioconductor packages.</p>
+<p>This package lays a foundation for genomic analysis by introducing
+three classes (<em>GRanges</em>, <em>GPos</em>, and
+<em>GRangesList</em>), which are used to represent genomic ranges,
+genomic positions, and groups of genomic ranges. This vignette focuses
+on the <em>GRanges</em> and <em>GRangesList</em> classes and their
+associated methods.</p>
+<p>The <em><a href="https://bioconductor.org/packages/3.22/GenomicRanges">GenomicRanges</a></em>
+package is available at <a href="https://bioconductor.org">https://bioconductor.org</a> and can be
+installed via <code>BiocManager::install</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">&quot;BiocManager&quot;</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">&quot;GenomicRanges&quot;</span>)</span></code></pre></div>
+<p>A package only needs to be installed once. Load the package into an R
+session with</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(GenomicRanges)</span></code></pre></div>
+</div>
+<div id="granges-genomic-ranges" class="section level1">
+<h1><em>GRanges</em>: Genomic Ranges</h1>
+<p>The <em>GRanges</em> class represents a collection of genomic ranges
+that each have a single start and end location on the genome. It can be
+used to store the location of genomic features such as contiguous
+binding sites, transcripts, and exons. These objects can be created by
+using the <code>GRanges</code> constructor function. For example,</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>gr <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>    <span class="at">seqnames =</span> <span class="fu">Rle</span>(<span class="fu">c</span>(<span class="st">&quot;chr1&quot;</span>, <span class="st">&quot;chr2&quot;</span>, <span class="st">&quot;chr1&quot;</span>, <span class="st">&quot;chr3&quot;</span>), <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">4</span>)),</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>    <span class="at">ranges =</span> <span class="fu">IRanges</span>(<span class="dv">101</span><span class="sc">:</span><span class="dv">110</span>, <span class="at">end =</span> <span class="dv">111</span><span class="sc">:</span><span class="dv">120</span>, <span class="at">names =</span> <span class="fu">head</span>(letters, <span class="dv">10</span>)),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    <span class="at">strand =</span> <span class="fu">Rle</span>(<span class="fu">strand</span>(<span class="fu">c</span>(<span class="st">&quot;-&quot;</span>, <span class="st">&quot;+&quot;</span>, <span class="st">&quot;*&quot;</span>, <span class="st">&quot;+&quot;</span>, <span class="st">&quot;-&quot;</span>)), <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>)),</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="at">score =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="at">GC =</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="at">length=</span><span class="dv">10</span>))</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>gr</span></code></pre></div>
+<pre><code>## GRanges object with 10 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1   101-111      - |         1  1.000000
+##   b     chr2   102-112      + |         2  0.888889
+##   c     chr2   103-113      + |         3  0.777778
+##   d     chr2   104-114      * |         4  0.666667
+##   e     chr1   105-115      * |         5  0.555556
+##   f     chr1   106-116      + |         6  0.444444
+##   g     chr3   107-117      + |         7  0.333333
+##   h     chr3   108-118      + |         8  0.222222
+##   i     chr3   109-119      - |         9  0.111111
+##   j     chr3   110-120      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>creates a <em>GRanges</em> object with 10 genomic ranges. The output
+of the <em>GRanges</em> <code>show</code> method separates the
+information into a left and right hand region that are separated by
+<code>|</code> symbols. The genomic coordinates (seqnames, ranges, and
+strand) are located on the left-hand side and the metadata columns
+(annotation) are located on the right. For this example, the metadata is
+comprised of <code>score</code> and <code>GC</code> information, but
+almost anything can be stored in the metadata portion of a
+<em>GRanges</em> object.</p>
+<p>The components of the genomic coordinates within a <em>GRanges</em>
+object can be extracted using the <code>seqnames</code>,
+<code>ranges</code>, and <code>strand</code> accessor functions.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">seqnames</span>(gr)</span></code></pre></div>
+<pre><code>## factor-Rle of length 10 with 4 runs
+##   Lengths:    1    3    2    4
+##   Values : chr1 chr2 chr1 chr3
+## Levels(3): chr1 chr2 chr3</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">ranges</span>(gr)</span></code></pre></div>
+<pre><code>## IRanges object with 10 ranges and 0 metadata columns:
+##         start       end     width
+##     &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   a       101       111        11
+##   b       102       112        11
+##   c       103       113        11
+##   d       104       114        11
+##   e       105       115        11
+##   f       106       116        11
+##   g       107       117        11
+##   h       108       118        11
+##   i       109       119        11
+##   j       110       120        11</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">strand</span>(gr)</span></code></pre></div>
+<pre><code>## factor-Rle of length 10 with 5 runs
+##   Lengths: 1 2 2 3 2
+##   Values : - + * + -
+## Levels(3): + - *</code></pre>
+<p>The genomic ranges can be extracted without corresponding metadata
+with <code>granges</code></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">granges</span>(gr)</span></code></pre></div>
+<pre><code>## GRanges object with 10 ranges and 0 metadata columns:
+##     seqnames    ranges strand
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   a     chr1   101-111      -
+##   b     chr2   102-112      +
+##   c     chr2   103-113      +
+##   d     chr2   104-114      *
+##   e     chr1   105-115      *
+##   f     chr1   106-116      +
+##   g     chr3   107-117      +
+##   h     chr3   108-118      +
+##   i     chr3   109-119      -
+##   j     chr3   110-120      -
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>Annotations for these coordinates can be extracted as a
+<em>DataFrame</em> object using the <code>mcols</code> accessor.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">mcols</span>(gr)</span></code></pre></div>
+<pre><code>## DataFrame with 10 rows and 2 columns
+##       score        GC
+##   &lt;integer&gt; &lt;numeric&gt;
+## a         1  1.000000
+## b         2  0.888889
+## c         3  0.777778
+## d         4  0.666667
+## e         5  0.555556
+## f         6  0.444444
+## g         7  0.333333
+## h         8  0.222222
+## i         9  0.111111
+## j        10  0.000000</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">mcols</span>(gr)<span class="sc">$</span>score</span></code></pre></div>
+<pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
+<p>Information about the lengths of the various sequences that the
+ranges are aligned to can also be stored in the <em>GRanges</em> object.
+So if this is data from <em>Homo sapiens</em>, we can set the values
+as:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">seqlengths</span>(gr) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">249250621</span>, <span class="dv">243199373</span>, <span class="dv">198022430</span>)</span></code></pre></div>
+<p>And then retrieves as:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">seqlengths</span>(gr)</span></code></pre></div>
+<pre><code>##      chr1      chr2      chr3 
+## 249250621 243199373 198022430</code></pre>
+<p>Methods for accessing the <code>length</code> and <code>names</code>
+have also been defined.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">names</span>(gr)</span></code></pre></div>
+<pre><code>##  [1] &quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot; &quot;e&quot; &quot;f&quot; &quot;g&quot; &quot;h&quot; &quot;i&quot; &quot;j&quot;</code></pre>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">length</span>(gr)</span></code></pre></div>
+<pre><code>## [1] 10</code></pre>
+<div id="splitting-and-combining-granges-objects" class="section level2">
+<h2>Splitting and combining <em>GRanges</em> objects</h2>
+<p><em>GRanges</em> objects can be divided into groups using the
+<code>split</code> method. This produces a <em>GRangesList</em> object,
+a class that will be discussed in detail in the next section.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>sp <span class="ot">&lt;-</span> <span class="fu">split</span>(gr, <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">each=</span><span class="dv">5</span>))</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>sp</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $`1`
+## GRanges object with 5 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1   101-111      - |         1  1.000000
+##   b     chr2   102-112      + |         2  0.888889
+##   c     chr2   103-113      + |         3  0.777778
+##   d     chr2   104-114      * |         4  0.666667
+##   e     chr1   105-115      * |         5  0.555556
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome
+## 
+## $`2`
+## GRanges object with 5 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   f     chr1   106-116      + |         6  0.444444
+##   g     chr3   107-117      + |         7  0.333333
+##   h     chr3   108-118      + |         8  0.222222
+##   i     chr3   109-119      - |         9  0.111111
+##   j     chr3   110-120      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>Separate <em>GRanges</em> instances can be concatenated by using the
+<code>c</code> and <code>append</code> methods.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">c</span>(sp[[<span class="dv">1</span>]], sp[[<span class="dv">2</span>]])</span></code></pre></div>
+<pre><code>## GRanges object with 10 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1   101-111      - |         1  1.000000
+##   b     chr2   102-112      + |         2  0.888889
+##   c     chr2   103-113      + |         3  0.777778
+##   d     chr2   104-114      * |         4  0.666667
+##   e     chr1   105-115      * |         5  0.555556
+##   f     chr1   106-116      + |         6  0.444444
+##   g     chr3   107-117      + |         7  0.333333
+##   h     chr3   108-118      + |         8  0.222222
+##   i     chr3   109-119      - |         9  0.111111
+##   j     chr3   110-120      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+</div>
+<div id="subsetting-granges-objects" class="section level2">
+<h2>Subsetting <em>GRanges</em> objects</h2>
+<p><em>GRanges</em> objects act like vectors of ranges, with the
+expected vector-like subsetting operations available</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a>gr[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   b     chr2   102-112      + |         2  0.888889
+##   c     chr2   103-113      + |         3  0.777778
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>A second argument to the <code>[</code> subset operator can be used
+to specify which metadata columns to extract from the <em>GRanges</em>
+object. For example,</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a>gr[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>, <span class="st">&quot;GC&quot;</span>]</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 1 metadata column:
+##     seqnames    ranges strand |        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;
+##   b     chr2   102-112      + |  0.888889
+##   c     chr2   103-113      + |  0.777778
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>Elements can also be assigned to the <em>GRanges</em> object. Here is
+an example where the second row of a <em>GRanges</em> object is replaced
+with the first row of <code>gr</code>.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a>singles <span class="ot">&lt;-</span> <span class="fu">split</span>(gr, <span class="fu">names</span>(gr))</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>grMod <span class="ot">&lt;-</span> gr</span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>grMod[<span class="dv">2</span>] <span class="ot">&lt;-</span> singles[[<span class="dv">1</span>]]</span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a><span class="fu">head</span>(grMod, <span class="at">n=</span><span class="dv">3</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1   101-111      - |         1  1.000000
+##   b     chr1   101-111      - |         1  1.000000
+##   c     chr2   103-113      + |         3  0.777778
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>There are methods to repeat, reverse, or select specific portions of
+<em>GRanges</em> objects.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">rep</span>(singles[[<span class="dv">2</span>]], <span class="at">times =</span> <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   b     chr2   102-112      + |         2  0.888889
+##   b     chr2   102-112      + |         2  0.888889
+##   b     chr2   102-112      + |         2  0.888889
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="fu">rev</span>(gr)</span></code></pre></div>
+<pre><code>## GRanges object with 10 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   j     chr3   110-120      - |        10  0.000000
+##   i     chr3   109-119      - |         9  0.111111
+##   h     chr3   108-118      + |         8  0.222222
+##   g     chr3   107-117      + |         7  0.333333
+##   f     chr1   106-116      + |         6  0.444444
+##   e     chr1   105-115      * |         5  0.555556
+##   d     chr2   104-114      * |         4  0.666667
+##   c     chr2   103-113      + |         3  0.777778
+##   b     chr2   102-112      + |         2  0.888889
+##   a     chr1   101-111      - |         1  1.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="fu">head</span>(gr,<span class="at">n=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1   101-111      - |         1  1.000000
+##   b     chr2   102-112      + |         2  0.888889
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="fu">tail</span>(gr,<span class="at">n=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   i     chr3   109-119      - |         9  0.111111
+##   j     chr3   110-120      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" tabindex="-1"></a><span class="fu">window</span>(gr, <span class="at">start=</span><span class="dv">2</span>,<span class="at">end=</span><span class="dv">4</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   b     chr2   102-112      + |         2  0.888889
+##   c     chr2   103-113      + |         3  0.777778
+##   d     chr2   104-114      * |         4  0.666667
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a>gr[<span class="fu">IRanges</span>(<span class="at">start=</span><span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">7</span>), <span class="at">end=</span><span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">9</span>))]</span></code></pre></div>
+<pre><code>## GRanges object with 5 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   b     chr2   102-112      + |         2  0.888889
+##   c     chr2   103-113      + |         3  0.777778
+##   g     chr3   107-117      + |         7  0.333333
+##   h     chr3   108-118      + |         8  0.222222
+##   i     chr3   109-119      - |         9  0.111111
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+</div>
+<div id="basic-interval-operations-for-granges-objects" class="section level2">
+<h2>Basic interval operations for <em>GRanges</em> objects</h2>
+<p>Basic interval characteristics of <em>GRanges</em> objects can be
+extracted using the <code>start</code>, <code>end</code>,
+<code>width</code>, and <code>range</code> methods.</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" tabindex="-1"></a>g <span class="ot">&lt;-</span> gr[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span>
+<span id="cb46-2"><a href="#cb46-2" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="fu">append</span>(g, singles[[<span class="dv">10</span>]])</span>
+<span id="cb46-3"><a href="#cb46-3" tabindex="-1"></a><span class="fu">start</span>(g)</span></code></pre></div>
+<pre><code>## [1] 101 102 103 110</code></pre>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" tabindex="-1"></a><span class="fu">end</span>(g)</span></code></pre></div>
+<pre><code>## [1] 111 112 113 120</code></pre>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" tabindex="-1"></a><span class="fu">width</span>(g)</span></code></pre></div>
+<pre><code>## [1] 11 11 11 11</code></pre>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" tabindex="-1"></a><span class="fu">range</span>(g)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr1   101-111      -
+##   [2]     chr2   102-113      +
+##   [3]     chr3   110-120      -
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>The <em>GRanges</em> class also has many methods for manipulating the
+ranges. The methods can be classified as <em>intra-range methods</em>,
+<em>inter-range methods</em>, and <em>between-range methods</em>.</p>
+<p><em>Intra-range methods</em> operate on each element of a
+<em>GRanges</em> object independent of the other ranges in the object.
+For example, the <code>flank</code> method can be used to recover
+regions flanking the set of ranges represented by the <em>GRanges</em>
+object. So to get a <em>GRanges</em> object containing the ranges that
+include the 10 bases upstream of the ranges:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a><span class="fu">flank</span>(g, <span class="dv">10</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 4 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1   112-121      - |         1  1.000000
+##   b     chr2    92-101      + |         2  0.888889
+##   c     chr2    93-102      + |         3  0.777778
+##   j     chr3   121-130      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>And to include the downstream bases:</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a><span class="fu">flank</span>(g, <span class="dv">10</span>, <span class="at">start=</span><span class="cn">FALSE</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 4 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1    91-100      - |         1  1.000000
+##   b     chr2   113-122      + |         2  0.888889
+##   c     chr2   114-123      + |         3  0.777778
+##   j     chr3   100-109      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>Other examples of intra-range methods include <code>resize</code> and
+<code>shift</code>. The <code>shift</code> method will move the ranges
+by a specific number of base pairs, and the <code>resize</code> method
+will extend the ranges by a specified width.</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a><span class="fu">shift</span>(g, <span class="dv">5</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 4 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1   106-116      - |         1  1.000000
+##   b     chr2   107-117      + |         2  0.888889
+##   c     chr2   108-118      + |         3  0.777778
+##   j     chr3   115-125      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a><span class="fu">resize</span>(g, <span class="dv">30</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 4 ranges and 2 metadata columns:
+##     seqnames    ranges strand |     score        GC
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   a     chr1    82-111      - |         1  1.000000
+##   b     chr2   102-131      + |         2  0.888889
+##   c     chr2   103-132      + |         3  0.777778
+##   j     chr3    91-120      - |        10  0.000000
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>The <em><a href="https://bioconductor.org/packages/3.22/GenomicRanges">GenomicRanges</a></em>
+help page <code>?&quot;intra-range-methods&quot;</code> summarizes these
+methods.</p>
+<p><em>Inter-range methods</em> involve comparisons between ranges in a
+single <em>GRanges</em> object. For instance, the <code>reduce</code>
+method will align the ranges and merge overlapping ranges to produce a
+simplified set.</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" tabindex="-1"></a><span class="fu">reduce</span>(g)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr1   101-111      -
+##   [2]     chr2   102-113      +
+##   [3]     chr3   110-120      -
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>Sometimes one is interested in the gaps or the qualities of the gaps
+between the ranges represented by your <em>GRanges</em> object. The
+<code>gaps</code> method provides this information: reduced version of
+your ranges:</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" tabindex="-1"></a><span class="fu">gaps</span>(g)</span></code></pre></div>
+<pre><code>## GRanges object with 12 ranges and 0 metadata columns:
+##        seqnames        ranges strand
+##           &lt;Rle&gt;     &lt;IRanges&gt;  &lt;Rle&gt;
+##    [1]     chr1   1-249250621      +
+##    [2]     chr1         1-100      -
+##    [3]     chr1 112-249250621      -
+##    [4]     chr1   1-249250621      *
+##    [5]     chr2         1-101      +
+##    ...      ...           ...    ...
+##    [8]     chr2   1-243199373      *
+##    [9]     chr3   1-198022430      +
+##   [10]     chr3         1-109      -
+##   [11]     chr3 121-198022430      -
+##   [12]     chr3   1-198022430      *
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>The <code>disjoin</code> method represents a <em>GRanges</em> object
+as a collection of non-overlapping ranges:</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" tabindex="-1"></a><span class="fu">disjoin</span>(g)</span></code></pre></div>
+<pre><code>## GRanges object with 5 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr1   101-111      -
+##   [2]     chr2       102      +
+##   [3]     chr2   103-112      +
+##   [4]     chr2       113      +
+##   [5]     chr3   110-120      -
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>The <code>coverage</code> method quantifies the degree of overlap for
+all the ranges in a <em>GRanges</em> object.</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" tabindex="-1"></a><span class="fu">coverage</span>(g)</span></code></pre></div>
+<pre><code>## RleList of length 3
+## $chr1
+## integer-Rle of length 249250621 with 3 runs
+##   Lengths:       100        11 249250510
+##   Values :         0         1         0
+## 
+## $chr2
+## integer-Rle of length 243199373 with 5 runs
+##   Lengths:       101         1        10         1 243199260
+##   Values :         0         1         2         1         0
+## 
+## $chr3
+## integer-Rle of length 198022430 with 3 runs
+##   Lengths:       109        11 198022310
+##   Values :         0         1         0</code></pre>
+<p>See the <em><a href="https://bioconductor.org/packages/3.22/GenomicRanges">GenomicRanges</a></em>
+help page <code>?&quot;inter-range-methods&quot;</code> for additional help.</p>
+<p><em>Between-range methods</em> involve operations between two
+<em>GRanges</em> objects; some of these are summarized in the next
+section.</p>
+</div>
+<div id="interval-set-operations-for-granges-objects" class="section level2">
+<h2>Interval set operations for <em>GRanges</em> objects</h2>
+<p><em>Between-range methods</em> calculate relationships between
+different <em>GRanges</em> objects. Of central importance are
+<code>findOverlaps</code> and related operations; these are discussed
+below. Additional operations treat <em>GRanges</em> as mathematical sets
+of coordinates; <code>union(g, g2)</code> is the union of the
+coordinates in <code>g</code> and <code>g2</code>. Here are examples for
+calculating the <code>union</code>, the <code>intersect</code> and the
+asymmetric difference (using <code>setdiff</code>).</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" tabindex="-1"></a>g2 <span class="ot">&lt;-</span> <span class="fu">head</span>(gr, <span class="at">n=</span><span class="dv">2</span>)</span>
+<span id="cb70-2"><a href="#cb70-2" tabindex="-1"></a><span class="fu">union</span>(g, g2)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr1   101-111      -
+##   [2]     chr2   102-113      +
+##   [3]     chr3   110-120      -
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" tabindex="-1"></a><span class="fu">intersect</span>(g, g2)</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr1   101-111      -
+##   [2]     chr2   102-112      +
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" tabindex="-1"></a><span class="fu">setdiff</span>(g, g2)</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr2       113      +
+##   [2]     chr3   110-120      -
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>Related methods are available when the structure of the
+<em>GRanges</em> objects are ‘parallel’ to one another, i.e., element 1
+of object 1 is related to element 1 of object 2, and so on. These
+operations all begin with a <code>p</code>, which is short for parallel.
+The methods then perform element-wise, e.g., the union of element 1 of
+object 1 with element 1 of object 2, etc. A requirement for these
+operations is that the number of elements in each <em>GRanges</em>
+object is the same, and that both of the objects have the same seqnames
+and strand assignments throughout.</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" tabindex="-1"></a>g3 <span class="ot">&lt;-</span> g[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
+<span id="cb76-2"><a href="#cb76-2" tabindex="-1"></a><span class="fu">ranges</span>(g3[<span class="dv">1</span>]) <span class="ot">&lt;-</span> <span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">105</span>, <span class="at">end=</span><span class="dv">112</span>)</span>
+<span id="cb76-3"><a href="#cb76-3" tabindex="-1"></a><span class="fu">punion</span>(g2, g3)</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 0 metadata columns:
+##     seqnames    ranges strand
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   a     chr1   101-112      -
+##   b     chr2   102-112      +
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" tabindex="-1"></a><span class="fu">pintersect</span>(g2, g3)</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 3 metadata columns:
+##     seqnames    ranges strand |     score        GC       hit
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt; &lt;logical&gt;
+##   a     chr1   105-111      - |         1  1.000000      TRUE
+##   b     chr2   102-112      + |         2  0.888889      TRUE
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" tabindex="-1"></a><span class="fu">psetdiff</span>(g2, g3)</span></code></pre></div>
+<pre><code>## GRanges object with 2 ranges and 0 metadata columns:
+##     seqnames    ranges strand
+##        &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   a     chr1   101-104      -
+##   b     chr2   102-101      +
+##   -------
+##   seqinfo: 3 sequences from an unspecified genome</code></pre>
+<p>For more information on the <code>GRanges</code> class be sure to
+consult the manual page.</p>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" tabindex="-1"></a>?GRanges</span></code></pre></div>
+<p>A relatively comprehensive list of available methods is discovered
+with</p>
+<div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" tabindex="-1"></a><span class="fu">methods</span>(<span class="at">class=</span><span class="st">&quot;GRanges&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="grangeslist-groups-of-genomic-ranges" class="section level1">
+<h1><em>GRangesList</em>: Groups of Genomic Ranges</h1>
+<p>Some important genomic features, such as spliced transcripts that are
+comprised of exons, are inherently compound structures. Such a feature
+makes much more sense when expressed as a compound object such as a
+<em>GRangesList</em>. Whenever genomic features consist of multiple
+ranges that are grouped by a parent feature, they can be represented as
+a <em>GRangesList</em> object. Consider the simple example of the two
+transcript <code>GRangesList</code> below created using the
+<code>GRangesList</code> constructor.</p>
+<div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" tabindex="-1"></a>gr1 <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(</span>
+<span id="cb84-2"><a href="#cb84-2" tabindex="-1"></a>    <span class="at">seqnames =</span> <span class="st">&quot;chr2&quot;</span>,</span>
+<span id="cb84-3"><a href="#cb84-3" tabindex="-1"></a>    <span class="at">ranges =</span> <span class="fu">IRanges</span>(<span class="dv">103</span>, <span class="dv">106</span>),</span>
+<span id="cb84-4"><a href="#cb84-4" tabindex="-1"></a>    <span class="at">strand =</span> <span class="st">&quot;+&quot;</span>,</span>
+<span id="cb84-5"><a href="#cb84-5" tabindex="-1"></a>    <span class="at">score =</span> <span class="dv">5</span><span class="dt">L</span>, <span class="at">GC =</span> <span class="fl">0.45</span>)</span>
+<span id="cb84-6"><a href="#cb84-6" tabindex="-1"></a>gr2 <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(</span>
+<span id="cb84-7"><a href="#cb84-7" tabindex="-1"></a>    <span class="at">seqnames =</span> <span class="fu">c</span>(<span class="st">&quot;chr1&quot;</span>, <span class="st">&quot;chr1&quot;</span>),</span>
+<span id="cb84-8"><a href="#cb84-8" tabindex="-1"></a>    <span class="at">ranges =</span> <span class="fu">IRanges</span>(<span class="fu">c</span>(<span class="dv">107</span>, <span class="dv">113</span>), <span class="at">width =</span> <span class="dv">3</span>),</span>
+<span id="cb84-9"><a href="#cb84-9" tabindex="-1"></a>    <span class="at">strand =</span> <span class="fu">c</span>(<span class="st">&quot;+&quot;</span>, <span class="st">&quot;-&quot;</span>),</span>
+<span id="cb84-10"><a href="#cb84-10" tabindex="-1"></a>    <span class="at">score =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">GC =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.5</span>))</span>
+<span id="cb84-11"><a href="#cb84-11" tabindex="-1"></a>grl <span class="ot">&lt;-</span> <span class="fu">GRangesList</span>(<span class="st">&quot;txA&quot;</span> <span class="ot">=</span> gr1, <span class="st">&quot;txB&quot;</span> <span class="ot">=</span> gr2)</span>
+<span id="cb84-12"><a href="#cb84-12" tabindex="-1"></a>grl</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $txA
+## GRanges object with 1 range and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txB
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   107-109      + |         3       0.3
+##   [2]     chr1   113-115      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>The <code>show</code> method for a <em>GRangesList</em> object
+displays it as a named list of <em>GRanges</em> objects, where the names
+of this list are considered to be the names of the grouping feature. In
+the example above, the groups of individual exon ranges are represented
+as separate <em>GRanges</em> objects which are further organized into a
+list structure where each element name is a transcript name. Many other
+combinations of grouped and labeled <em>GRanges</em> objects are
+possible of course, but this example is expected to be a common
+arrangement.</p>
+<div id="basic-grangeslist-accessors" class="section level2">
+<h2>Basic <em>GRangesList</em> accessors</h2>
+<p>Just as with <em>GRanges</em> object, the components of the genomic
+coordinates within a <em>GRangesList</em> object can be extracted using
+simple accessor methods. Not surprisingly, the <em>GRangesList</em>
+objects have many of the same accessors as <em>GRanges</em> objects. The
+difference is that many of these methods return a list since the input
+is now essentially a list of <em>GRanges</em> objects. Here are a few
+examples:</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" tabindex="-1"></a><span class="fu">seqnames</span>(grl)</span></code></pre></div>
+<pre><code>## RleList of length 2
+## $txA
+## factor-Rle of length 1 with 1 run
+##   Lengths:    1
+##   Values : chr2
+## Levels(2): chr2 chr1
+## 
+## $txB
+## factor-Rle of length 2 with 1 run
+##   Lengths:    2
+##   Values : chr1
+## Levels(2): chr2 chr1</code></pre>
+<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" tabindex="-1"></a><span class="fu">ranges</span>(grl)</span></code></pre></div>
+<pre><code>## IRangesList object of length 2:
+## $txA
+## IRanges object with 1 range and 0 metadata columns:
+##           start       end     width
+##       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]       103       106         4
+## 
+## $txB
+## IRanges object with 2 ranges and 0 metadata columns:
+##           start       end     width
+##       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;
+##   [1]       107       109         3
+##   [2]       113       115         3</code></pre>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" tabindex="-1"></a><span class="fu">strand</span>(grl)</span></code></pre></div>
+<pre><code>## RleList of length 2
+## $txA
+## factor-Rle of length 1 with 1 run
+##   Lengths: 1
+##   Values : +
+## Levels(3): + - *
+## 
+## $txB
+## factor-Rle of length 2 with 2 runs
+##   Lengths: 1 1
+##   Values : + -
+## Levels(3): + - *</code></pre>
+<p>The <code>length</code> and <code>names</code> methods will return
+the length or names of the list and the <code>seqlengths</code> method
+will return the set of sequence lengths.</p>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" tabindex="-1"></a><span class="fu">length</span>(grl)</span></code></pre></div>
+<pre><code>## [1] 2</code></pre>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" tabindex="-1"></a><span class="fu">names</span>(grl)</span></code></pre></div>
+<pre><code>## [1] &quot;txA&quot; &quot;txB&quot;</code></pre>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" tabindex="-1"></a><span class="fu">seqlengths</span>(grl)</span></code></pre></div>
+<pre><code>## chr2 chr1 
+##   NA   NA</code></pre>
+<p>The <code>elementNROWS</code> method returns a list of integers
+corresponding to the result of calling <code>NROW</code> on each
+individual <em>GRanges</em> object contained by the
+<em>GRangesList</em>. This is a faster alternative to calling
+<code>lapply</code> on the <em>GRangesList</em>.</p>
+<div class="sourceCode" id="cb98"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" tabindex="-1"></a><span class="fu">elementNROWS</span>(grl)</span></code></pre></div>
+<pre><code>## txA txB 
+##   1   2</code></pre>
+<p><code>isEmpty</code> tests if a <em>GRangesList</em> object contains
+anything.</p>
+<div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" tabindex="-1"></a><span class="fu">isEmpty</span>(grl)</span></code></pre></div>
+<pre><code>## [1] FALSE</code></pre>
+<p>In the context of a <em>GRangesList</em> object, the
+<code>mcols</code> method performs a similar operation to what it does
+on a <em>GRanges</em> object. However, this metadata now refers to
+information at the list level instead of the level of the individual
+<em>GRanges</em> objects.</p>
+<div class="sourceCode" id="cb102"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" tabindex="-1"></a><span class="fu">mcols</span>(grl) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Transcript A&quot;</span>,<span class="st">&quot;Transcript B&quot;</span>)</span>
+<span id="cb102-2"><a href="#cb102-2" tabindex="-1"></a><span class="fu">mcols</span>(grl)</span></code></pre></div>
+<pre><code>## DataFrame with 2 rows and 1 column
+##            value
+##      &lt;character&gt;
+## txA Transcript A
+## txB Transcript B</code></pre>
+<p>Element-level metadata can be retrieved by unlisting the
+<code>GRangesList</code>, and extracting the metadata</p>
+<div class="sourceCode" id="cb104"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" tabindex="-1"></a><span class="fu">mcols</span>(<span class="fu">unlist</span>(grl))</span></code></pre></div>
+<pre><code>## DataFrame with 3 rows and 2 columns
+##         score        GC
+##     &lt;integer&gt; &lt;numeric&gt;
+## txA         5      0.45
+## txB         3      0.30
+## txB         4      0.50</code></pre>
+</div>
+<div id="combining-grangeslist-objects" class="section level2">
+<h2>Combining <em>GRangesList</em> objects</h2>
+<p><em>GRangesList</em> objects can be unlisted to combine the separate
+<em>GRanges</em> objects that they contain as an expanded
+<em>GRanges</em>.</p>
+<div class="sourceCode" id="cb106"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" tabindex="-1"></a>ul <span class="ot">&lt;-</span> <span class="fu">unlist</span>(grl)</span>
+<span id="cb106-2"><a href="#cb106-2" tabindex="-1"></a>ul</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   txA     chr2   103-106      + |         5      0.45
+##   txB     chr1   107-109      + |         3      0.30
+##   txB     chr1   113-115      - |         4      0.50
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>Append lists using <code>append</code> or <code>c</code>.</p>
+<p>A <a href="https://support.bioconductor.org/p/89339/">support site
+user</a> had two <em>GRangesList</em> objects with ‘parallel’ elements,
+and wanted to combined these element-wise into a single
+<em>GRangesList</em>. One solution is to use <code>pc()</code> –
+parallel (element-wise) <code>c()</code>. A more general solution is to
+concatenate the lists and then re-group by some factor, in this case the
+names of the elements.</p>
+<div class="sourceCode" id="cb108"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" tabindex="-1"></a>grl1 <span class="ot">&lt;-</span> <span class="fu">GRangesList</span>(</span>
+<span id="cb108-2"><a href="#cb108-2" tabindex="-1"></a>    <span class="at">gr1 =</span> <span class="fu">GRanges</span>(<span class="st">&quot;chr2&quot;</span>, <span class="fu">IRanges</span>(<span class="dv">3</span>, <span class="dv">6</span>)),</span>
+<span id="cb108-3"><a href="#cb108-3" tabindex="-1"></a>    <span class="at">gr2 =</span> <span class="fu">GRanges</span>(<span class="st">&quot;chr1&quot;</span>, <span class="fu">IRanges</span>(<span class="fu">c</span>(<span class="dv">7</span>,<span class="dv">13</span>), <span class="at">width =</span> <span class="dv">3</span>)))</span>
+<span id="cb108-4"><a href="#cb108-4" tabindex="-1"></a>grl2 <span class="ot">&lt;-</span> <span class="fu">GRangesList</span>(</span>
+<span id="cb108-5"><a href="#cb108-5" tabindex="-1"></a>    <span class="at">gr1 =</span> <span class="fu">GRanges</span>(<span class="st">&quot;chr2&quot;</span>, <span class="fu">IRanges</span>(<span class="dv">9</span>, <span class="dv">12</span>)),</span>
+<span id="cb108-6"><a href="#cb108-6" tabindex="-1"></a>    <span class="at">gr2 =</span> <span class="fu">GRanges</span>(<span class="st">&quot;chr1&quot;</span>, <span class="fu">IRanges</span>(<span class="fu">c</span>(<span class="dv">25</span>,<span class="dv">38</span>), <span class="at">width =</span> <span class="dv">3</span>)))</span>
+<span id="cb108-7"><a href="#cb108-7" tabindex="-1"></a></span>
+<span id="cb108-8"><a href="#cb108-8" tabindex="-1"></a><span class="fu">pc</span>(grl1, grl2)</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $gr1
+## GRanges object with 2 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr2       3-6      *
+##   [2]     chr2      9-12      *
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $gr2
+## GRanges object with 4 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr1       7-9      *
+##   [2]     chr1     13-15      *
+##   [3]     chr1     25-27      *
+##   [4]     chr1     38-40      *
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb110"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1" tabindex="-1"></a>grl3 <span class="ot">&lt;-</span> <span class="fu">c</span>(grl1, grl2)</span>
+<span id="cb110-2"><a href="#cb110-2" tabindex="-1"></a><span class="fu">regroup</span>(grl3, <span class="fu">names</span>(grl3))</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $gr1
+## GRanges object with 2 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr2       3-6      *
+##   [2]     chr2      9-12      *
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $gr2
+## GRanges object with 4 ranges and 0 metadata columns:
+##       seqnames    ranges strand
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]     chr1       7-9      *
+##   [2]     chr1     13-15      *
+##   [3]     chr1     25-27      *
+##   [4]     chr1     38-40      *
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+</div>
+<div id="basic-interval-operations-for-grangeslist-objects" class="section level2">
+<h2>Basic interval operations for <em>GRangesList</em> objects</h2>
+<p>For interval operations, many of the same methods exist for
+<em>GRangesList</em> objects that exist for <em>GRanges</em>
+objects.</p>
+<div class="sourceCode" id="cb112"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1" tabindex="-1"></a><span class="fu">start</span>(grl)</span></code></pre></div>
+<pre><code>## IntegerList of length 2
+## [[&quot;txA&quot;]] 103
+## [[&quot;txB&quot;]] 107 113</code></pre>
+<div class="sourceCode" id="cb114"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb114-1"><a href="#cb114-1" tabindex="-1"></a><span class="fu">end</span>(grl)</span></code></pre></div>
+<pre><code>## IntegerList of length 2
+## [[&quot;txA&quot;]] 106
+## [[&quot;txB&quot;]] 109 115</code></pre>
+<div class="sourceCode" id="cb116"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb116-1"><a href="#cb116-1" tabindex="-1"></a><span class="fu">width</span>(grl)</span></code></pre></div>
+<pre><code>## IntegerList of length 2
+## [[&quot;txA&quot;]] 4
+## [[&quot;txB&quot;]] 3 3</code></pre>
+<p>These operations return a data structure representing, e.g.,
+<em>IntegerList</em>, a list where all elements are integers; it can be
+convenient to use mathematical and other operations on <em>List</em>
+objects that work on each element, e.g.,</p>
+<div class="sourceCode" id="cb118"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb118-1"><a href="#cb118-1" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">width</span>(grl))  <span class="co"># sum of widths of each grl element</span></span></code></pre></div>
+<pre><code>## txA txB 
+##   4   6</code></pre>
+<p>Most of the intra-, inter- and between-range methods operate on
+<em>GRangesList</em> objects, e.g., to shift all the <em>GRanges</em>
+objects in a <em>GRangesList</em> object, or calculate the coverage.
+Both of these operations are also carried out across each
+<em>GRanges</em> list member.</p>
+<div class="sourceCode" id="cb120"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" tabindex="-1"></a><span class="fu">shift</span>(grl, <span class="dv">20</span>)</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $txA
+## GRanges object with 1 range and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   123-126      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txB
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   127-129      + |         3       0.3
+##   [2]     chr1   133-135      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb122"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb122-1"><a href="#cb122-1" tabindex="-1"></a><span class="fu">coverage</span>(grl)</span></code></pre></div>
+<pre><code>## RleList of length 2
+## $chr2
+## integer-Rle of length 106 with 2 runs
+##   Lengths: 102   4
+##   Values :   0   1
+## 
+## $chr1
+## integer-Rle of length 115 with 4 runs
+##   Lengths: 106   3   3   3
+##   Values :   0   1   0   1</code></pre>
+</div>
+<div id="subsetting-grangeslist-objects" class="section level2">
+<h2>Subsetting <em>GRangesList</em> objects</h2>
+<p>A <em>GRangesList</em> object behaves like a <code>list</code>:
+<code>[</code> returns a <em>GRangesList</em> containing a subset of the
+original object; <code>[[</code> or <code>$</code> returns the
+<em>GRanges</em> object at that location in the list.</p>
+<div class="sourceCode" id="cb124"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" tabindex="-1"></a>grl[<span class="dv">1</span>]</span>
+<span id="cb124-2"><a href="#cb124-2" tabindex="-1"></a>grl[[<span class="dv">1</span>]]</span>
+<span id="cb124-3"><a href="#cb124-3" tabindex="-1"></a>grl[<span class="st">&quot;txA&quot;</span>]</span>
+<span id="cb124-4"><a href="#cb124-4" tabindex="-1"></a>grl<span class="sc">$</span>txB</span></code></pre></div>
+<p>In addition, subsetting a <em>GRangesList</em> also accepts a second
+parameter to specify which of the metadata columns you wish to
+select.</p>
+<div class="sourceCode" id="cb125"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" tabindex="-1"></a>grl[<span class="dv">1</span>, <span class="st">&quot;score&quot;</span>]</span></code></pre></div>
+<pre><code>## GRangesList object of length 1:
+## $txA
+## GRanges object with 1 range and 1 metadata column:
+##       seqnames    ranges strand |     score
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt;
+##   [1]     chr2   103-106      + |         5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb127"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb127-1"><a href="#cb127-1" tabindex="-1"></a>grl[<span class="st">&quot;txB&quot;</span>, <span class="st">&quot;GC&quot;</span>]</span></code></pre></div>
+<pre><code>## GRangesList object of length 1:
+## $txB
+## GRanges object with 2 ranges and 1 metadata column:
+##       seqnames    ranges strand |        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;
+##   [1]     chr1   107-109      + |       0.3
+##   [2]     chr1   113-115      - |       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>The <code>head</code>, <code>tail</code>, <code>rep</code>,
+<code>rev</code>, and <code>window</code> methods all behave as you
+would expect them to for a list object. For example, the elements
+referred to by <code>window</code> are now list elements instead of
+<em>GRanges</em> elements.</p>
+<div class="sourceCode" id="cb129"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb129-1"><a href="#cb129-1" tabindex="-1"></a><span class="fu">rep</span>(grl[[<span class="dv">1</span>]], <span class="at">times =</span> <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   [2]     chr2   103-106      + |         5      0.45
+##   [3]     chr2   103-106      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb131"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb131-1"><a href="#cb131-1" tabindex="-1"></a><span class="fu">rev</span>(grl)</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $txB
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   107-109      + |         3       0.3
+##   [2]     chr1   113-115      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txA
+## GRanges object with 1 range and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb133"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb133-1"><a href="#cb133-1" tabindex="-1"></a><span class="fu">head</span>(grl, <span class="at">n=</span><span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## GRangesList object of length 1:
+## $txA
+## GRanges object with 1 range and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb135"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb135-1"><a href="#cb135-1" tabindex="-1"></a><span class="fu">tail</span>(grl, <span class="at">n=</span><span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## GRangesList object of length 1:
+## $txB
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   107-109      + |         3       0.3
+##   [2]     chr1   113-115      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb137"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb137-1"><a href="#cb137-1" tabindex="-1"></a><span class="fu">window</span>(grl, <span class="at">start=</span><span class="dv">1</span>, <span class="at">end=</span><span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## GRangesList object of length 1:
+## $txA
+## GRanges object with 1 range and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb139"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb139-1"><a href="#cb139-1" tabindex="-1"></a>grl[<span class="fu">IRanges</span>(<span class="at">start=</span><span class="dv">2</span>, <span class="at">end=</span><span class="dv">2</span>)]</span></code></pre></div>
+<pre><code>## GRangesList object of length 1:
+## $txB
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   107-109      + |         3       0.3
+##   [2]     chr1   113-115      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+</div>
+<div id="looping-over-grangeslist-objects" class="section level2">
+<h2>Looping over <em>GRangesList</em> objects</h2>
+<p>For <em>GRangesList</em> objects there is also a family of
+<code>apply</code> methods. These include <code>lapply</code>,
+<code>sapply</code>, <code>mapply</code>, <code>endoapply</code>,
+<code>mendoapply</code>, <code>Map</code>, and <code>Reduce</code>.</p>
+<p>The different looping methods defined for <em>GRangesList</em>
+objects are useful for returning different kinds of results. The
+standard <code>lapply</code> and <code>sapply</code> behave according to
+convention, with the <code>lapply</code> method returning a list and
+<code>sapply</code> returning a more simplified output.</p>
+<div class="sourceCode" id="cb141"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb141-1"><a href="#cb141-1" tabindex="-1"></a><span class="fu">lapply</span>(grl, length)</span></code></pre></div>
+<pre><code>## $txA
+## [1] 1
+## 
+## $txB
+## [1] 2</code></pre>
+<div class="sourceCode" id="cb143"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb143-1"><a href="#cb143-1" tabindex="-1"></a><span class="fu">sapply</span>(grl, length)</span></code></pre></div>
+<pre><code>## txA txB 
+##   1   2</code></pre>
+<p>As with <em>IRanges</em> objects, there is also a multivariate
+version of <code>sapply</code>, called <code>mapply</code>, defined for
+<em>GRangesList</em> objects. And, if you don’t want the results
+simplified, you can call the <code>Map</code> method, which does the
+same things as <code>mapply</code> but without simplifying the
+output.</p>
+<div class="sourceCode" id="cb145"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb145-1"><a href="#cb145-1" tabindex="-1"></a>grl2 <span class="ot">&lt;-</span> <span class="fu">shift</span>(grl, <span class="dv">10</span>)</span>
+<span id="cb145-2"><a href="#cb145-2" tabindex="-1"></a><span class="fu">names</span>(grl2) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;shiftTxA&quot;</span>, <span class="st">&quot;shiftTxB&quot;</span>)</span>
+<span id="cb145-3"><a href="#cb145-3" tabindex="-1"></a></span>
+<span id="cb145-4"><a href="#cb145-4" tabindex="-1"></a><span class="fu">mapply</span>(c, grl, grl2)</span></code></pre></div>
+<pre><code>## $txA
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   [2]     chr2   113-116      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txB
+## GRanges object with 4 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   107-109      + |         3       0.3
+##   [2]     chr1   113-115      - |         4       0.5
+##   [3]     chr1   117-119      + |         3       0.3
+##   [4]     chr1   123-125      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb147"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb147-1"><a href="#cb147-1" tabindex="-1"></a><span class="fu">Map</span>(c, grl, grl2)</span></code></pre></div>
+<pre><code>## $txA
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   [2]     chr2   113-116      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txB
+## GRanges object with 4 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   107-109      + |         3       0.3
+##   [2]     chr1   113-115      - |         4       0.5
+##   [3]     chr1   117-119      + |         3       0.3
+##   [4]     chr1   123-125      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>Sometimes you will want to get back a modified version of the
+<em>GRangesList</em> that you originally passed in.</p>
+<p>An endomorphism is a transformation of an object to another instance
+of the same class . This is achieved using the <code>endoapply</code>
+method, which will return the results as a <em>GRangesList</em>
+object.</p>
+<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb149-1"><a href="#cb149-1" tabindex="-1"></a><span class="fu">endoapply</span>(grl, rev)</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $txA
+## GRanges object with 1 range and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txB
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   113-115      - |         4       0.5
+##   [2]     chr1   107-109      + |         3       0.3
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<div class="sourceCode" id="cb151"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" tabindex="-1"></a><span class="fu">mendoapply</span>(c, grl, grl2)</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $txA
+## GRanges object with 2 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   [2]     chr2   113-116      + |         5      0.45
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txB
+## GRanges object with 4 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr1   107-109      + |         3       0.3
+##   [2]     chr1   113-115      - |         4       0.5
+##   [3]     chr1   117-119      + |         3       0.3
+##   [4]     chr1   123-125      - |         4       0.5
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>The <code>Reduce</code> method will allow the <em>GRanges</em>
+objects to be collapsed across the whole of the <em>GRangesList</em>
+object. % Again, this seems like a sub-optimal example to me.</p>
+<div class="sourceCode" id="cb153"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb153-1"><a href="#cb153-1" tabindex="-1"></a><span class="fu">Reduce</span>(c, grl)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 2 metadata columns:
+##       seqnames    ranges strand |     score        GC
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt;
+##   [1]     chr2   103-106      + |         5      0.45
+##   [2]     chr1   107-109      + |         3      0.30
+##   [3]     chr1   113-115      - |         4      0.50
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>Explicit element-wise operations (<code>lapply()</code> and friends)
+on <em>GRangesList</em> objects with many elements can be slow. It is
+therefore beneficial to explore operations that work on <em>List</em>
+objects directly (e.g., many of the ‘group generic’ operators, see
+<code>?S4groupGeneric</code>, and the set and parallel set operators
+(e.g., <code>union</code>, <code>punion</code>). A useful and fast
+strategy is to <code>unlist</code> the <em>GRangesList</em> to a
+<em>GRanges</em> object, operate on the <em>GRanges</em> object, then
+<code>relist</code> the result, e.g.,</p>
+<div class="sourceCode" id="cb155"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb155-1"><a href="#cb155-1" tabindex="-1"></a>gr <span class="ot">&lt;-</span> <span class="fu">unlist</span>(grl)</span>
+<span id="cb155-2"><a href="#cb155-2" tabindex="-1"></a>gr<span class="sc">$</span>log_score <span class="ot">&lt;-</span> <span class="fu">log</span>(gr<span class="sc">$</span>score)</span>
+<span id="cb155-3"><a href="#cb155-3" tabindex="-1"></a>grl <span class="ot">&lt;-</span> <span class="fu">relist</span>(gr, grl)</span>
+<span id="cb155-4"><a href="#cb155-4" tabindex="-1"></a>grl</span></code></pre></div>
+<pre><code>## GRangesList object of length 2:
+## $txA
+## GRanges object with 1 range and 3 metadata columns:
+##       seqnames    ranges strand |     score        GC log_score
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt; &lt;numeric&gt;
+##   txA     chr2   103-106      + |         5      0.45   1.60944
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths
+## 
+## $txB
+## GRanges object with 2 ranges and 3 metadata columns:
+##       seqnames    ranges strand |     score        GC log_score
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt; &lt;numeric&gt;
+##   txB     chr1   107-109      + |         3       0.3   1.09861
+##   txB     chr1   113-115      - |         4       0.5   1.38629
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>See also <code>?extractList</code>.</p>
+<p>For more information on the <code>GRangesList</code> class be sure to
+consult the manual page and available methods</p>
+<div class="sourceCode" id="cb157"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb157-1"><a href="#cb157-1" tabindex="-1"></a>?GRangesList</span>
+<span id="cb157-2"><a href="#cb157-2" tabindex="-1"></a><span class="fu">methods</span>(<span class="at">class=</span><span class="st">&quot;GRangesList&quot;</span>)   <span class="co"># _partial_ list</span></span></code></pre></div>
+</div>
+</div>
+<div id="interval-overlaps-involving-granges-and-grangeslist-objects" class="section level1">
+<h1>Interval overlaps involving <em>GRanges</em> and
+<em>GRangesList</em> objects</h1>
+<p>Interval overlapping is the process of comparing the ranges in two
+objects to determine if and when they overlap. As such, it is perhaps
+the most common operation performed on <em>GRanges</em> and
+<em>GRangesList</em> objects. To this end, the <em><a href="https://bioconductor.org/packages/3.22/GenomicRanges">GenomicRanges</a></em>
+package provides a family of interval overlap functions. The most
+general of these functions is <code>findOverlaps</code>, which takes a
+query and a subject as inputs and returns a <em>Hits</em> object
+containing the index pairings for the overlapping elements.</p>
+<div class="sourceCode" id="cb158"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" tabindex="-1"></a><span class="fu">findOverlaps</span>(gr, grl)</span></code></pre></div>
+<pre><code>## Hits object with 3 hits and 0 metadata columns:
+##       queryHits subjectHits
+##       &lt;integer&gt;   &lt;integer&gt;
+##   [1]         1           1
+##   [2]         2           2
+##   [3]         3           2
+##   -------
+##   queryLength: 3 / subjectLength: 2</code></pre>
+<p>As suggested in the sections discussing the nature of the
+<em>GRanges</em> and <em>GRangesList</em> classes, the index in the
+above <em>Hits</em> object for a <em>GRanges</em> object is a single
+range while for a <em>GRangesList</em> object it is the set of ranges
+that define a “feature”.</p>
+<p>Another function in the overlaps family is
+<code>countOverlaps</code>, which tabulates the number of overlaps for
+each element in the query.</p>
+<div class="sourceCode" id="cb160"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb160-1"><a href="#cb160-1" tabindex="-1"></a><span class="fu">countOverlaps</span>(gr, grl)</span></code></pre></div>
+<pre><code>## txA txB txB 
+##   1   1   1</code></pre>
+<p>A third function in this family is <code>subsetByOverlaps</code>,
+which extracts the elements in the query that overlap at least one
+element in the subject.</p>
+<div class="sourceCode" id="cb162"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb162-1"><a href="#cb162-1" tabindex="-1"></a><span class="fu">subsetByOverlaps</span>(gr,grl)</span></code></pre></div>
+<pre><code>## GRanges object with 3 ranges and 3 metadata columns:
+##       seqnames    ranges strand |     score        GC log_score
+##          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;numeric&gt; &lt;numeric&gt;
+##   txA     chr2   103-106      + |         5      0.45   1.60944
+##   txB     chr1   107-109      + |         3      0.30   1.09861
+##   txB     chr1   113-115      - |         4      0.50   1.38629
+##   -------
+##   seqinfo: 2 sequences from an unspecified genome; no seqlengths</code></pre>
+<p>Finally, you can use the <code>select</code> argument to get the
+index of the first overlapping element in the subject for each element
+in the query.</p>
+<div class="sourceCode" id="cb164"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb164-1"><a href="#cb164-1" tabindex="-1"></a><span class="fu">findOverlaps</span>(gr, grl, <span class="at">select=</span><span class="st">&quot;first&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] 1 2 2</code></pre>
+<div class="sourceCode" id="cb166"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb166-1"><a href="#cb166-1" tabindex="-1"></a><span class="fu">findOverlaps</span>(grl, gr, <span class="at">select=</span><span class="st">&quot;first&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] 1 2</code></pre>
+</div>
+<div id="finding-the-nearest-genomic-position-in-granges-objects" class="section level1">
+<h1>Finding the nearest genomic position in <em>GRanges</em>
+objects</h1>
+<p>The <em><a href="https://bioconductor.org/packages/3.22/GenomicRanges">GenomicRanges</a></em>
+package provides multiple functions to facilitate the indentification of
+neighboring genomic positions. For the following examples, we define an
+arbitrary <em>GRanges</em> object for <code>x</code> and we define the
+<em>GRanges</em> object <code>subject</code> as the collection of genes
+in <em><a href="https://bioconductor.org/packages/3.22/TxDb.Hsapiens.UCSC.hg38.knownGene">TxDb.Hsapiens.UCSC.hg38.knownGene</a></em>
+extracted using the <code>genes</code> method from the <em><a href="https://bioconductor.org/packages/3.22/GenomicFeatures">GenomicFeatures</a></em>
+package.</p>
+<div class="sourceCode" id="cb168"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb168-1"><a href="#cb168-1" tabindex="-1"></a><span class="fu">library</span>(TxDb.Hsapiens.UCSC.hg38.knownGene)</span></code></pre></div>
+<pre><code>## Loading required package: GenomicFeatures</code></pre>
+<pre><code>## Loading required package: AnnotationDbi</code></pre>
+<pre><code>## Loading required package: Biobase</code></pre>
+<pre><code>## Welcome to Bioconductor
+## 
+##     Vignettes contain introductory material; view with
+##     &#39;browseVignettes()&#39;. To cite Bioconductor, see
+##     &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.</code></pre>
+<div class="sourceCode" id="cb173"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb173-1"><a href="#cb173-1" tabindex="-1"></a>txdb <span class="ot">&lt;-</span> TxDb.Hsapiens.UCSC.hg38.knownGene</span>
+<span id="cb173-2"><a href="#cb173-2" tabindex="-1"></a>broads <span class="ot">&lt;-</span> GenomicFeatures<span class="sc">::</span><span class="fu">genes</span>(txdb)</span></code></pre></div>
+<pre><code>##   2169 genes were dropped because they have exons located on both strands of
+##   the same reference sequence or on more than one reference sequence, so cannot
+##   be represented by a single genomic range.
+##   Use &#39;single.strand.genes.only=FALSE&#39; to get all the genes in a GRangesList
+##   object, or use suppressMessages() to suppress this message.</code></pre>
+<div class="sourceCode" id="cb175"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb175-1"><a href="#cb175-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(</span>
+<span id="cb175-2"><a href="#cb175-2" tabindex="-1"></a>    <span class="at">seqnames =</span> <span class="fu">Rle</span>(<span class="fu">c</span>(<span class="st">&quot;chr1&quot;</span>, <span class="st">&quot;chr2&quot;</span>, <span class="st">&quot;chr1&quot;</span>, <span class="st">&quot;chr3&quot;</span>), <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">4</span>)),</span>
+<span id="cb175-3"><a href="#cb175-3" tabindex="-1"></a>    <span class="at">ranges =</span> <span class="fu">IRanges</span>(<span class="dv">101</span><span class="sc">:</span><span class="dv">110</span>, <span class="at">end =</span> <span class="dv">111</span><span class="sc">:</span><span class="dv">120</span>, <span class="at">names =</span> <span class="fu">head</span>(letters, <span class="dv">10</span>)),</span>
+<span id="cb175-4"><a href="#cb175-4" tabindex="-1"></a>    <span class="at">strand =</span> <span class="fu">Rle</span>(<span class="fu">strand</span>(<span class="fu">c</span>(<span class="st">&quot;-&quot;</span>, <span class="st">&quot;+&quot;</span>, <span class="st">&quot;*&quot;</span>, <span class="st">&quot;+&quot;</span>, <span class="st">&quot;-&quot;</span>)), <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>)),</span>
+<span id="cb175-5"><a href="#cb175-5" tabindex="-1"></a>    <span class="at">score =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">GC =</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="at">length=</span><span class="dv">10</span>))</span>
+<span id="cb175-6"><a href="#cb175-6" tabindex="-1"></a>subject <span class="ot">&lt;-</span> broads[ <span class="fu">seqnames</span>(broads) <span class="sc">%in%</span> <span class="fu">seqlevels</span>(gr) ]</span></code></pre></div>
+<p>The <code>nearest</code> method performs conventional nearest
+neighbor finding. It finds the nearest neighbor range in
+<code>subject</code> for each range in <code>x</code>. Overlaps are
+included. If <code>subject</code> is not given as an argument,
+<code>x</code> will also be treated as the <code>subject</code>.</p>
+<div class="sourceCode" id="cb176"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb176-1"><a href="#cb176-1" tabindex="-1"></a><span class="fu">nearest</span>(x, subject)</span></code></pre></div>
+<pre><code>##  [1] 5098 4437 4437 4956   97   97   NA   NA   NA   NA</code></pre>
+<div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb178-1"><a href="#cb178-1" tabindex="-1"></a><span class="fu">nearest</span>(x)</span></code></pre></div>
+<pre><code>##  [1]  5  4  4  3  6  5  8  7 10  9</code></pre>
+<p>The <code>precede</code> method will return the index of the range in
+<code>subject</code> that is preceded by the range in <code>x</code>.
+Overlaps are excluded.</p>
+<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb180-1"><a href="#cb180-1" tabindex="-1"></a><span class="fu">precede</span>(x, subject)</span></code></pre></div>
+<pre><code>##  [1]   NA 4437 4437 4437   97   97   NA   NA   NA   NA</code></pre>
+<p>The <code>follow</code> method will return the index of the range in
+<code>subject</code> that is followed by the range in
+<code>x</code>.</p>
+<div class="sourceCode" id="cb182"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb182-1"><a href="#cb182-1" tabindex="-1"></a><span class="fu">follow</span>(x, subject)</span></code></pre></div>
+<pre><code>##  [1] 5098   NA   NA 4956 5098   NA   NA   NA   NA   NA</code></pre>
+<p>The <code>nearestKNeighbors</code> method performs conventional
+k-nearest neighbor finding. For each range in <code>x</code>, it will
+find the index of the k-nearest neighbors in <code>subject</code>. The
+argument <code>k</code> can be specified to identify more than one
+nearest neighbor. Overlaps are included. If <code>subject</code> is not
+given as an argument, <code>x</code> will also be treated as the
+<code>subject</code>.</p>
+<div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" tabindex="-1"></a><span class="fu">nearestKNeighbors</span>(x, subject)</span></code></pre></div>
+<pre><code>## IntegerList of length 10
+## [[1]] 5098
+## [[2]] 4437
+## [[3]] 4437
+## [[4]] 4956
+## [[5]] 97
+## [[6]] 97
+## [[7]] &lt;NA&gt;
+## [[8]] &lt;NA&gt;
+## [[9]] &lt;NA&gt;
+## [[10]] &lt;NA&gt;</code></pre>
+<div class="sourceCode" id="cb186"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb186-1"><a href="#cb186-1" tabindex="-1"></a><span class="fu">nearestKNeighbors</span>(x, subject, <span class="at">k=</span><span class="dv">10</span>)</span></code></pre></div>
+<pre><code>## IntegerList of length 10
+## [[1]] 5098 814 4999 2256 5294 2315 435 800 2804 2314
+## [[2]] 4437 514 2573 1164 444 524 1165 1166 1208 5232
+## [[3]] 4437 514 2573 1164 444 524 1165 1166 1208 5232
+## [[4]] 4956 4437 514 2573 1164 444 524 1165 1166 1208
+## [[5]] 97 814 1924 131 5394 916 2316 1576 2317 4083
+## [[6]] 97 1924 131 5394 916 2316 1576 2317 4083 4974
+## [[7]] &lt;NA&gt;
+## [[8]] &lt;NA&gt;
+## [[9]] &lt;NA&gt;
+## [[10]] &lt;NA&gt;</code></pre>
+<div class="sourceCode" id="cb188"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb188-1"><a href="#cb188-1" tabindex="-1"></a><span class="fu">nearestKNeighbors</span>(x)</span></code></pre></div>
+<pre><code>## IntegerList of length 10
+## [[1]] 5
+## [[2]] 3
+## [[3]] 2
+## [[4]] 2
+## [[5]] 1
+## [[6]] 5
+## [[7]] 8
+## [[8]] 7
+## [[9]] 10
+## [[10]] 9</code></pre>
+<div class="sourceCode" id="cb190"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb190-1"><a href="#cb190-1" tabindex="-1"></a><span class="fu">nearestKNeighbors</span>(x, <span class="at">k=</span><span class="dv">10</span>)</span></code></pre></div>
+<pre><code>## IntegerList of length 10
+## [[1]] 5 5
+## [[2]] 3 4
+## [[3]] 2 4
+## [[4]] 2 3
+## [[5]] 1 6 1
+## [[6]] 5
+## [[7]] 8
+## [[8]] 7
+## [[9]] 10 10
+## [[10]] 9 9</code></pre>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session Information</h1>
+<p>All of the output in this vignette was produced under the following
+conditions:</p>
+<div class="sourceCode" id="cb192"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb192-1"><a href="#cb192-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] TxDb.Hsapiens.UCSC.hg38.knownGene_3.22.0
+##  [2] GenomicFeatures_1.64.0                  
+##  [3] AnnotationDbi_1.74.0                    
+##  [4] Biobase_2.72.0                          
+##  [5] GenomicRanges_1.64.0                    
+##  [6] Seqinfo_1.2.0                           
+##  [7] IRanges_2.46.0                          
+##  [8] S4Vectors_0.50.0                        
+##  [9] BiocGenerics_0.58.0                     
+## [10] generics_0.1.4                          
+## [11] BiocStyle_2.40.0                        
+## 
+## loaded via a namespace (and not attached):
+##  [1] KEGGREST_1.52.0             SummarizedExperiment_1.42.0
+##  [3] rjson_0.2.23                xfun_0.57                  
+##  [5] bslib_0.10.0                lattice_0.22-9             
+##  [7] vctrs_0.7.3                 tools_4.6.0                
+##  [9] bitops_1.0-9                curl_7.1.0                 
+## [11] parallel_4.6.0              RSQLite_2.4.6              
+## [13] blob_1.3.0                  pkgconfig_2.0.3            
+## [15] Matrix_1.7-5                cigarillo_1.2.0            
+## [17] lifecycle_1.0.5             compiler_4.6.0             
+## [19] Rsamtools_2.28.0            Biostrings_2.80.0          
+## [21] codetools_0.2-20            htmltools_0.5.9            
+## [23] sys_3.4.3                   buildtools_1.0.0           
+## [25] sass_0.4.10                 RCurl_1.98-1.18            
+## [27] yaml_2.3.12                 crayon_1.5.3               
+## [29] jquerylib_0.1.4             BiocParallel_1.46.0        
+## [31] cachem_1.1.0                DelayedArray_0.38.0        
+## [33] abind_1.4-8                 digest_0.6.39              
+## [35] restfulr_0.0.16             maketools_1.3.2            
+## [37] fastmap_1.2.0               grid_4.6.0                 
+## [39] SparseArray_1.12.0          cli_3.6.6                  
+## [41] S4Arrays_1.12.0             XML_3.99-0.23              
+## [43] bit64_4.8.0                 rmarkdown_2.31             
+## [45] XVector_0.52.0              httr_1.4.8                 
+## [47] matrixStats_1.5.0           bit_4.6.0                  
+## [49] png_0.1-9                   memoise_2.0.1              
+## [51] evaluate_1.0.5              knitr_1.51                 
+## [53] BiocIO_1.22.0               rtracklayer_1.72.0         
+## [55] rlang_1.2.0                 DBI_1.3.0                  
+## [57] BiocManager_1.30.27         jsonlite_2.0.0             
+## [59] R6_2.6.1                    MatrixGenerics_1.24.0      
+## [61] GenomicAlignments_1.48.0</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#granges-genomic-ranges" id="toc-granges-genomic-ranges"><em>GRanges</em>: Genomic Ranges</a>
+<ul>
+<li><a href="#splitting-and-combining-granges-objects" id="toc-splitting-and-combining-granges-objects">Splitting and combining
+<em>GRanges</em> objects</a></li>
+<li><a href="#subsetting-granges-objects" id="toc-subsetting-granges-objects">Subsetting <em>GRanges</em>
+objects</a></li>
+<li><a href="#basic-interval-operations-for-granges-objects" id="toc-basic-interval-operations-for-granges-objects">Basic interval
+operations for <em>GRanges</em> objects</a></li>
+<li><a href="#interval-set-operations-for-granges-objects" id="toc-interval-set-operations-for-granges-objects">Interval set
+operations for <em>GRanges</em> objects</a></li>
+</ul></li>
+<li><a href="#grangeslist-groups-of-genomic-ranges" id="toc-grangeslist-groups-of-genomic-ranges"><em>GRangesList</em>:
+Groups of Genomic Ranges</a>
+<ul>
+<li><a href="#basic-grangeslist-accessors" id="toc-basic-grangeslist-accessors">Basic <em>GRangesList</em>
+accessors</a></li>
+<li><a href="#combining-grangeslist-objects" id="toc-combining-grangeslist-objects">Combining <em>GRangesList</em>
+objects</a></li>
+<li><a href="#basic-interval-operations-for-grangeslist-objects" id="toc-basic-interval-operations-for-grangeslist-objects">Basic
+interval operations for <em>GRangesList</em> objects</a></li>
+<li><a href="#subsetting-grangeslist-objects" id="toc-subsetting-grangeslist-objects">Subsetting <em>GRangesList</em>
+objects</a></li>
+<li><a href="#looping-over-grangeslist-objects" id="toc-looping-over-grangeslist-objects">Looping over
+<em>GRangesList</em> objects</a></li>
+</ul></li>
+<li><a href="#interval-overlaps-involving-granges-and-grangeslist-objects" id="toc-interval-overlaps-involving-granges-and-grangeslist-objects">Interval
+overlaps involving <em>GRanges</em> and <em>GRangesList</em>
+objects</a></li>
+<li><a href="#finding-the-nearest-genomic-position-in-granges-objects" id="toc-finding-the-nearest-genomic-position-in-granges-objects">Finding
+the nearest genomic position in <em>GRanges</em> objects</a></li>
+<li><a href="#session-information" id="toc-session-information">Session
+Information</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

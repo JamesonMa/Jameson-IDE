@@ -1,0 +1,26 @@
+Package: enrichit
+Title: 'C++' Implementations of Functional Enrichment Analysis
+Version: 0.1.4
+Authors@R: person(given = "Guangchuang", family = "Yu",
+               email = "guangchuangyu@gmail.com", role  = c("aut", "cre"))
+Maintainer: Guangchuang Yu <guangchuangyu@gmail.com>
+Description: Fast implementations of functional enrichment analysis methods using 'C++' via 'Rcpp'.
+    Currently provides Over-Representation Analysis (ORA) and Gene Set Enrichment Analysis (GSEA).
+    The multilevel GSEA algorithm is derived from the 'fgsea' package.
+    Methods are described in Subramanian et al. (2005) <doi:10.1073/pnas.0506580102> and Korotkevich et al. (2021) <doi:10.1101/060012>.
+License: Artistic-2.0
+Depends: R (>= 3.5.0)
+Imports: methods, Rcpp (>= 1.0.10), stats, yulab.utils (> 0.2.1)
+LinkingTo: Rcpp
+Suggests: AnnotationDbi, clusterProfiler, DOSE, gson, qvalue, quarto,
+        testthat
+Encoding: UTF-8
+VignetteBuilder: quarto
+RoxygenNote: 7.3.3
+NeedsCompilation: yes
+Packaged: 2026-04-08 12:57:46 UTC; HUAWEI
+Author: Guangchuang Yu [aut, cre]
+Repository: CRAN
+Date/Publication: 2026-04-08 19:30:09 UTC
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-05-06 01:14:07 UTC; windows
+Archs: x64

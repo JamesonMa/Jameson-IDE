@@ -1,0 +1,234 @@
+---
+title: "The _Seqinfo_ package"
+author:
+- name: Hervé Pagès
+  affiliation: Fred Hutch Cancer Center, Seattle, WA
+date: "Compiled `r BiocStyle::doc_date()`; Modified 3 June 2025"
+package: Seqinfo
+vignette: |
+  %\VignetteIndexEntry{The Seqinfo package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document
+---
+
+```{r setup, include=FALSE}
+library(BiocStyle)
+library(Seqinfo)
+library(GenomeInfoDb)
+library(GenomicFeatures)
+library(BSgenome)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(BSgenome.Hsapiens.UCSC.hg38)
+```
+
+
+# Introduction
+
+`r Biocpkg("Seqinfo")` is an R/Bioconductor infrastructure package that
+implements a simple S4 class, the Seqinfo class, for storing the following
+information about a collection of genomic sequences:
+
+- the sequence names a.k.a. the _seqnames_;
+
+- the sequence lengths a.k.a. the _seqlengths_;
+
+- the sequence circularity flags, that is, whether the sequences are circular
+  or not;
+
+- the sequence genomes, that is, the genome assembly that each sequence is
+  coming from, if any.
+
+The sequences described in a Seqinfo object are typically, but not necessarily,
+the chromosomes and/or scaffolds of a specific genome assembly of a given
+organism.
+
+Note that Seqinfo objects are rarely used as standalone objects. Instead,
+they are used as part of higher-level objects to represent their `seqinfo()`
+component. Examples of such higher-level objects are GRanges,
+RangedSummarizedExperiment, VCF, GAlignments, TxDb, etc... defined
+in other Bioconductor infrastructure packages.
+
+
+# Install and load the package
+
+
+Like any Bioconductor package, `r Biocpkg("Seqinfo")` should be installed
+with `BiocManager::install()`:
+```{r install, eval=FALSE}
+if (!require("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("Seqinfo")
+```
+
+`BiocManager::install()` will take care of installing the package dependencies
+that are missing.
+
+Load the package:
+```{r load, message=FALSE}
+library(Seqinfo)
+```
+
+
+# The Seqinfo constructor
+
+
+Seqinfo objects can be created with the `Seqinfo()` constructor function:
+```{r Seqinfo_contructor_1}
+## Note that all the arguments (except 'genome') must have the
+## same length. 'genome' can be of length 1, whatever the lengths
+## of the other arguments are.
+si1 <- Seqinfo(seqnames=c("chr1", "chr2", "chr3", "chrM"),
+               seqlengths=c(100, 200, NA, 15),
+               isCircular=c(NA, FALSE, FALSE, TRUE),
+               genome="toy")
+si1
+```
+
+One special form of calling the `Seqinfo()` constructor function is to
+specify only the `genome` argument and set it to the name of an NCBI
+assembly (e.g. `Seqinfo(genome="GRCh38.p14")`) or UCSC genome (e.g.
+`Seqinfo(genome="hg38")`), in which case the sequence information is
+fetched from NCBI or UCSC. This requires the `r Biocpkg("GenomeInfoDb")`
+package (the package only needs to be installed):
+```{r Seqinfo_contructor_2}
+library(GenomeInfoDb)  # just making sure that the package is installed
+
+Seqinfo(genome="GRCh38.p14")
+
+Seqinfo(genome="hg38")
+```
+
+See `?Seqinfo` for more information.
+
+
+# Seqinfo accessors
+
+
+Various accessor functions are provided:
+```{r Seqinfo_accessors}
+length(si1)
+seqnames(si1)
+names(si1)
+seqlevels(si1)
+seqlengths(si1)
+isCircular(si1)
+genome(si1)
+```
+See `?Seqinfo` for more information.
+
+
+# Operations on Seqinfo objects
+
+
+## Subset by seqnames
+
+A Seqinfo object can be subsetted by _seqnames_:
+```{r Seqinfo_subsetting}
+si1[c("chrY", "chr3", "chr1")]
+```
+
+## Rename, drop, add and/or reorder the sequences
+
+Rename:
+```{r rename_Seqinfo}
+si <- si1
+seqlevels(si) <- sub("chr", "ch", seqlevels(si))
+si
+```
+
+Reorder:
+```{r reorder_Seqinfo}
+seqlevels(si) <- rev(seqlevels(si))
+si
+```
+
+Drop/add/reorder:
+```{r drop_add_reorder_Seqinfo}
+seqlevels(si) <- c("ch1", "ch2", "chY")
+si
+```
+
+Rename/reorder/drop/add:
+```{r rename_reorder_drop_add_Seqinfo}
+seqlevels(si) <- c(chY="Y", ch1="1", "22")
+si
+```
+See `?Seqinfo` for more information.
+
+## Merge Seqinfo objects
+
+Two Seqinfo objects can be merged if they are _compatible_:
+```{r merge_compatible_Seqinfo_objects}
+si2 <- Seqinfo(seqnames=c("chr3", "chr4", "chrM"),
+               seqlengths=c(300, NA, 15))
+si2
+
+merge(si1, si2)  # rows for chr3 and chrM are merged
+
+suppressWarnings(merge(si1, si2))
+```
+
+Note that, strictly speaking, merging two Seqinfo objects is not a
+_commutative_ operation, i.e., in general `z1 <- merge(x, y)` is not
+identical to `z2 <- merge(y, x)`. However `z1` and `z2` are guaranteed
+to contain the same information (i.e. the same rows, but typically not
+in the same order):
+```{r merge_is_not_commutative}
+suppressWarnings(merge(si2, si1))
+```
+
+Trying to merge Seqinfo objects that are not compatible will raise
+an error:
+```{r merge_incompatible_Seqinfo_objects}
+## This contradicts what 'x' says about circularity of chr3 and chrM:
+isCircular(si2)[c("chr3", "chrM")] <- c(TRUE, FALSE)
+si2
+```
+```{r, eval=FALSE}
+merge(si1, si2)  # ERROR!
+## Error in mergeNamedAtomicVectors(isCircular(x), isCircular(y), what = c("sequence",  :
+##   sequences chr3, chrM have incompatible circularity flags:
+##   - in 'x': FALSE, TRUE
+##   - in 'y': TRUE, FALSE
+```
+See `?Seqinfo` for more information.
+
+
+# Seqinfo objects as parts of higher-level objects
+
+
+Seqinfo objects are typically found as part of higher-level objects to
+represent their `seqinfo()` component. For example, in TxDb objects:
+```{r seqinfo_TxDb}
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+class(txdb)
+seqinfo(txdb)
+```
+
+and in BSgenome objects:
+```{r seqinfo_BSgenome}
+library(BSgenome.Hsapiens.UCSC.hg38)
+bsg <- BSgenome.Hsapiens.UCSC.hg38
+class(bsg)
+seqinfo(bsg)
+```
+
+Sanity checks:
+```{r sanity_checks}
+stopifnot(identical(seqinfo(txdb), Seqinfo(genome="hg38")))
+stopifnot(identical(seqinfo(bsg), Seqinfo(genome="hg38")))
+```
+
+
+# Session information
+
+
+Here is the output of `sessionInfo()` on the system on which this document
+was compiled:
+```{r}
+sessionInfo()
+```
+

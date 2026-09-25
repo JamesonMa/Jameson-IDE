@@ -1,0 +1,425 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>Random Numbers in BiocParallel</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">Random Numbers in <em>BiocParallel</em></h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="scope" class="section level1">
+<h1>Scope</h1>
+<p><em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+enables use of random number streams in a reproducible manner. This
+document applies to the following <code>*Param()</code>:</p>
+<ul>
+<li><code>SerialParam()</code>: sequential evaluation in a single R
+process.</li>
+<li><code>SnowParam()</code>: parallel evaluation in multiple
+independent R processes.</li>
+<li><code>MulticoreParam())</code>: parallel evaluation in R sessions
+running in forked threads. Not available on Windows.</li>
+</ul>
+<p>The <code>*Param()</code> can be used for evaluation with:</p>
+<ul>
+<li><code>bplapply()</code>: <code>lapply()</code>-like application of a
+user-supplied function <code>FUN</code> to a vector or list of elements
+<code>X</code>.</li>
+<li><code>bpiterate()</code>: apply a user-supplied function
+<code>FUN</code> to an unknown number of elements resulting from
+successive calls to a user-supplied function <code>ITER.</code></li>
+</ul>
+<p>The reproducible random number implementation also supports:</p>
+<ul>
+<li><code>bptry()</code> and the <code>BPREDO=</code> argument, for
+re-evaluation of elements that fail (e.g., because of a bug in
+<code>FUN</code>).</li>
+</ul>
+</div>
+<div id="essentials" class="section level1">
+<h1>Essentials</h1>
+<div id="use-of-bplapply-and-rngseed" class="section level2">
+<h2>Use of <code>bplapply()</code> and <code>RNGseed=</code></h2>
+<p>Attach <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+and ensure that the version is greater than 1.27.5</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>    <span class="fu">packageVersion</span>(<span class="st">&quot;BiocParallel&quot;</span>) <span class="sc">&gt;</span> <span class="st">&quot;1.27.5&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>)</span></code></pre></div>
+<p>For reproducible calculation, use the <code>RNGseed=</code> argument
+in any of the <code>*Param()</code>constructors.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>result1 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>result1</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 0.7393338
+## 
+## [[2]]
+## [1] 0.8216743 0.7451087
+## 
+## [[3]]
+## [1] 0.1962909 0.5226640 0.6857650</code></pre>
+<p>Repeating the calculation with the same value for
+<code>RNGseed=</code> results in the same result; a different random
+number seed results in different results.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>result2 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result2)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>result3 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">200</span>))</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>result3</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 0.9757768
+## 
+## [[2]]
+## [1] 0.6525851 0.6416909
+## 
+## [[3]]
+## [1] 0.6710576 0.5895330 0.7686983</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">identical</span>(result1, result3)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>)</span></code></pre></div>
+<p>Results are invariant across <code>*Param()</code></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>result4 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SnowParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result4)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">identical</span>(.Platform<span class="sc">$</span>OS.type, <span class="st">&quot;windows&quot;</span>)) {</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    result5 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">MulticoreParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    <span class="fu">stopifnot</span>(</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>        <span class="fu">identical</span>(result1, result5)</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    )</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>}</span></code></pre></div>
+<p>Parallel backends can adjust the number of <code>workers</code>
+(processes performing the evaluation) and <code>tasks</code> (how
+elements of <code>X</code> are distributed between workers). Results are
+invariant to these parameters. This is illustrated with
+<code>SnowParam()</code>, but applies also to
+<code>MulticoreParam()</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>result6 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SnowParam</span>(<span class="at">workers =</span> <span class="dv">2</span>, <span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>result7 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SnowParam</span>(<span class="at">workers =</span> <span class="dv">3</span>, <span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>result8 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>    <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>    <span class="at">BPPARAM =</span> <span class="fu">SnowParam</span>(<span class="at">workers =</span> <span class="dv">2</span>, <span class="at">tasks =</span> <span class="dv">3</span>, <span class="at">RNGseed =</span> <span class="dv">100</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result6),</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result7),</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result8)</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>)</span></code></pre></div>
+<p>Subsequent sections illustrate results with
+<code>SerialParam()</code>, but identical results are obtained with
+<code>SnowParam()</code> and <code>MulticoreParam()</code>.</p>
+</div>
+<div id="use-with-bpiterate" class="section level2">
+<h2>Use with <code>bpiterate()</code></h2>
+<p><code>bpiterate()</code> allows parallel processing of a ’stream’ of
+data as a series of tasks, with a task consisting of a portion of the
+overall data. It is useful when the data size is not known or easily
+partitioned into elements of a vector or list. A real use case might
+involve iterating through a BAM file, where a task represents successive
+records (perhaps 100,000 per task) in the file. Here we illustrate with
+a simple example – iterating through a vector <code>x = 1:3</code></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>ITER_FUN_FACTORY <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>    x <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>    i <span class="ot">&lt;-</span> <span class="dv">0</span><span class="dt">L</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>    <span class="cf">function</span>() {</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>        i <span class="ot">&lt;&lt;-</span> i <span class="sc">+</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>        <span class="cf">if</span> (i <span class="sc">&gt;</span> <span class="fu">length</span>(x))</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>            <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>        x[[i]]</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    }</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>}</span></code></pre></div>
+<p><code>ITER_FUN_FACTORY()</code> is used to create a function that, on
+each invocation, returns the next task (here, an element of
+<code>x</code>; in a real example, perhaps 100000 records from a BAM
+file). When there are no more tasks, the function returns
+<code>NULL</code></p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>ITER <span class="ot">&lt;-</span> <span class="fu">ITER_FUN_FACTORY</span>()</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">ITER</span>()</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="do">## [1] 1</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="fu">ITER</span>()</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="do">## [1] 2</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="fu">ITER</span>()</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="do">## [1] 3</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="fu">ITER</span>()</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="do">## NULL</span></span></code></pre></div>
+<p>In our simple example, <code>bpiterate()</code> is performing the
+same computations as <code>bplapply()</code> so the results, including
+the random number streams used by each task in <code>bpiterate()</code>,
+are the same</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>result9 <span class="ot">&lt;-</span> <span class="fu">bpiterate</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>    <span class="fu">ITER_FUN_FACTORY</span>(), runif,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>    <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result9)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="use-with-bptry" class="section level2">
+<h2>Use with <code>bptry()</code></h2>
+<p><code>bptry()</code> in conjunction with the <code>BPREDO=</code>
+argument to <code>bplapply()</code> or <code>bpiterate()</code> allows
+for graceful recovery from errors. Here a buggy <code>FUN1()</code>
+produces an error for the second element. <code>bptry()</code> allows
+evaluation to continue for other elements of <code>X</code>, despite the
+error. This is shown in the result.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>FUN1 <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">identical</span>(i, <span class="dv">2</span><span class="dt">L</span>)) {</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>        <span class="do">## error when evaluating the second element</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>        <span class="fu">stop</span>(<span class="st">&quot;i == 2&quot;</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    } <span class="cf">else</span> <span class="fu">runif</span>(i)</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>}</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>result10 <span class="ot">&lt;-</span> <span class="fu">bptry</span>(<span class="fu">bplapply</span>(</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>    <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, FUN1,</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>    <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>, <span class="at">stop.on.error =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>))</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>result10</span></code></pre></div>
+<pre><code>## [[1]]
+## [1] 0.7393338
+## 
+## [[2]]
+## &lt;remote_error in FUN(...): i == 2&gt;
+## traceback() available as &#39;attr(x, &quot;traceback&quot;)&#39;
+## 
+## [[3]]
+## [1] 0.1962909 0.5226640 0.6857650
+## 
+## attr(,&quot;REDOENV&quot;)
+## &lt;environment: 0x564e100bf0b0&gt;</code></pre>
+<p><code>FUN2()</code> illustrates the flexibility of
+<code>bptry()</code> by fixing the bug when <code>i == 2</code>, but
+also generating incorrect results if invoked for previously correct
+values. The identity of the result to the original computation shows
+that only the error task is re-computed, and that the random number
+stream used by the task is identical to the original stream.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>FUN2 <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">identical</span>(i, <span class="dv">2</span><span class="dt">L</span>)) {</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>        <span class="do">## the random number stream should be in the same state as the</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>        <span class="do">## first time through the loop, and rnorm(i) should return</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>        <span class="do">## same result as FUN</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>        <span class="fu">runif</span>(i)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>        <span class="do">## if this branch is used, then we are incorrectly updating</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>        <span class="do">## already calculated elements -- &#39;0&#39; in the output would</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>        <span class="do">## indicate this error</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>        <span class="dv">0</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>    }</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>}</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>result11 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>    <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, FUN2,</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>    <span class="at">BPREDO =</span> result10,</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>    <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>, <span class="at">stop.on.error =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>)</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result11)</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="relationship-betweenrngseed-and-set.seed" class="section level2">
+<h2>Relationship between<code>RNGseed=</code> and
+<code>set.seed()</code></h2>
+<p>The global random number stream (influenced by
+<code>set.seed()</code>) is ignored by <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>,
+and <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+does NOT increment the global stream.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">200</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>value <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">1</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">200</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>result12 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result12),</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>    <span class="fu">identical</span>(value, <span class="fu">runif</span>(<span class="dv">1</span>))</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>When <code>RNGseed=</code> is not used, an internal stream (not
+accessible to the user) is used and <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>
+does NOT increment the global stream.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">100</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>value <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">1</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">100</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>result13 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> <span class="fu">SerialParam</span>())</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">identical</span>(result1, result13),</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>    <span class="fu">identical</span>(value, <span class="fu">runif</span>(<span class="dv">1</span>))</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="bpstart-and-random-number-streams" class="section level2">
+<h2><code>bpstart()</code> and random number streams</h2>
+<p>In all of the examples so far <code>*Param()</code> objects are
+passed to <code>bplapply()</code> or <code>bpiterate()</code> in the
+’stopped’ state. Internally, <code>bplapply()</code> and
+<code>bpiterate()</code> invoke <code>bpstart()</code> to establish the
+computational environment (e.g., starting workers for
+<code>SnowParam()</code>). <code>bpstart()</code> can be called
+explicitly, e.g., to allow workers to be used across calls to
+<code>bplapply()</code>.</p>
+<p>The cluster random number stream is initiated with
+<code>bpstart()</code>. Thus</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">bpstart</span>(<span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>result16 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> param)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="fu">bpstop</span>(param)</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result16)</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>This allows a second call to <code>bplapply</code> to represent a
+continuation of a random number computation – the second call to
+<code>bplapply()</code> results in different random number streams for
+each element of <code>X</code>.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">bpstart</span>(<span class="fu">SerialParam</span>(<span class="at">RNGseed =</span> <span class="dv">100</span>))</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>result16 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> param)</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>result17 <span class="ot">&lt;-</span> <span class="fu">bplapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif, <span class="at">BPPARAM =</span> param)</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="fu">bpstop</span>(param)</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>    <span class="fu">identical</span>(result1, result16),</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">identical</span>(result1, result17)</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>)</span></code></pre></div>
+<p>The results from <code>bplapply()</code> are different from the
+results from <code>lapply()</code>, even with the same random number
+seed. This is because correctly implemented parallel random streams
+require use of a particular random number generator invoked in specific
+ways for each element of <code>X</code>, as outlined in the
+Implementation notes section.</p>
+</div>
+<div id="relationship-between-bplapply-and-lapply" class="section level2">
+<h2>Relationship between <code>bplapply()</code> and
+<code>lapply()</code></h2>
+<p>The results from <code>bplapply()</code> are different from the
+results from <code>lapply()</code>, even with the same random number
+seed. This is because correctly implemented parallel random streams
+require use of a particular random number generator invoked in specific
+ways for each element of <code>X</code>, as outlined in the
+Implementation notes section.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">100</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>result20 <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, runif)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">identical</span>(result1, result20)</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+<div id="implementation-notes" class="section level1">
+<h1>Implementation notes</h1>
+<p>The implementation uses the L’Ecuyer-CMRG random number generator
+(see <code>?RNGkind</code> and
+<code>?parallel::clusterSetRNGStream</code> for additional details).
+This random number generates independent streams and substreams of
+random numbers. In <em><a href="https://bioconductor.org/packages/3.23/BiocParallel">BiocParallel</a></em>,
+each call to <code>bp start()</code> creates a new stream from the
+L’Ecuyer-CMRG generator. Each element in <code>bplap</code>
+<code>ply()</code> or <code>bpiterate()</code> creates a new substream.
+Each application of <code>FUN</code> is therefore using the
+L’Ecuyer-CMRG random number generator, with a substream that is
+independent of the substreams of all other elements.</p>
+<p>Within the user-supplied <code>FUN</code> of <code>bplapply()</code>
+or <code>bpiterate()</code>, it is a mistake to use
+<code>RNGkind()</code> to set a different random number generator, or to
+use <code>set.seed()</code>. This would in principle compromise the
+independence of the streams across elements.</p>
+</div>
+<div id="sessioninfo" class="section level1">
+<h1><code>sessionInfo()</code></h1>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] GenomicAlignments_1.48.0           Rsamtools_2.28.0                  
+##  [3] Biostrings_2.80.0                  XVector_0.52.0                    
+##  [5] SummarizedExperiment_1.42.0        Biobase_2.72.0                    
+##  [7] MatrixGenerics_1.24.0              matrixStats_1.5.0                 
+##  [9] GenomicRanges_1.64.0               Seqinfo_1.2.0                     
+## [11] IRanges_2.46.0                     S4Vectors_0.50.0                  
+## [13] BiocGenerics_0.58.0                generics_0.1.4                    
+## [15] RNAseqData.HNRNPC.bam.chr14_0.48.0 BiocParallel_1.46.0               
+## [17] BiocStyle_2.40.0                  
+## 
+## loaded via a namespace (and not attached):
+##  [1] rappdirs_0.3.4      sass_0.4.10         bitops_1.0-9       
+##  [4] SparseArray_1.12.0  lattice_0.22-9      stringi_1.8.7      
+##  [7] hms_1.1.4           digest_0.6.39       grid_4.6.0         
+## [10] evaluate_1.0.5      fastmap_1.2.0       Matrix_1.7-5       
+## [13] jsonlite_2.0.0      progress_1.2.3      cigarillo_1.2.0    
+## [16] backports_1.5.1     BiocManager_1.30.27 brew_1.0-10        
+## [19] codetools_0.2-20    jquerylib_0.1.4     abind_1.4-8        
+## [22] cli_3.6.6           rlang_1.2.0         crayon_1.5.3       
+## [25] DelayedArray_0.38.0 withr_3.0.2         cachem_1.1.0       
+## [28] yaml_2.3.12         S4Arrays_1.12.0     tools_4.6.0        
+## [31] parallel_4.6.0      checkmate_2.3.4     base64url_1.4      
+## [34] buildtools_1.0.0    vctrs_0.7.3         R6_2.6.1           
+## [37] lifecycle_1.0.5     fs_2.1.0            pkgconfig_2.0.3    
+## [40] bslib_0.10.0        data.table_1.18.2.1 xfun_0.57          
+## [43] batchtools_0.9.18   sys_3.4.3           knitr_1.51         
+## [46] htmltools_0.5.9     snow_0.4-4          rmarkdown_2.31     
+## [49] maketools_1.3.2     compiler_4.6.0      prettyunits_1.2.0</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#scope" id="toc-scope">Scope</a></li>
+<li><a href="#essentials" id="toc-essentials">Essentials</a>
+<ul>
+<li><a href="#use-of-bplapply-and-rngseed" id="toc-use-of-bplapply-and-rngseed">Use of <code>bplapply()</code> and
+<code>RNGseed=</code></a></li>
+<li><a href="#use-with-bpiterate" id="toc-use-with-bpiterate">Use with
+<code>bpiterate()</code></a></li>
+<li><a href="#use-with-bptry" id="toc-use-with-bptry">Use with
+<code>bptry()</code></a></li>
+<li><a href="#relationship-betweenrngseed-and-set.seed" id="toc-relationship-betweenrngseed-and-set.seed">Relationship
+between<code>RNGseed=</code> and <code>set.seed()</code></a></li>
+<li><a href="#bpstart-and-random-number-streams" id="toc-bpstart-and-random-number-streams"><code>bpstart()</code> and
+random number streams</a></li>
+<li><a href="#relationship-between-bplapply-and-lapply" id="toc-relationship-between-bplapply-and-lapply">Relationship between
+<code>bplapply()</code> and <code>lapply()</code></a></li>
+</ul></li>
+<li><a href="#implementation-notes" id="toc-implementation-notes">Implementation notes</a></li>
+<li><a href="#sessioninfo" id="toc-sessioninfo"><code>sessionInfo()</code></a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

@@ -1,0 +1,3 @@
+BiocFile-class          BiocFile class objects
+IO                      Import and export
+compression             File compression

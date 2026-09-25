@@ -1,0 +1,61 @@
+Package: DelayedArray
+Title: A unified framework for working transparently with on-disk and
+        in-memory array-like datasets
+Description: Wrapping an array-like object (typically an on-disk
+        object) in a DelayedArray object allows one to perform common
+        array operations on it without loading the object in memory. In
+        order to reduce memory usage and optimize performance,
+        operations on the object are either delayed or executed using a
+        block processing mechanism. Note that this also works on
+        in-memory array-like objects like DataFrame objects (typically
+        with Rle columns), Matrix objects, ordinary arrays and, data
+        frames.
+biocViews: Infrastructure, DataRepresentation, Annotation,
+        GenomeAnnotation
+URL: https://bioconductor.org/packages/DelayedArray
+BugReports: https://github.com/Bioconductor/DelayedArray/issues
+Version: 0.38.1
+License: Artistic-2.0
+Encoding: UTF-8
+Authors@R: c(
+	person("Hervé", "Pagès", role=c("aut", "cre"),
+		email="hpages.on.github@gmail.com",
+		comment=c(ORCID="0009-0002-8272-4522")),
+	person("Aaron", "Lun", role="ctb",
+		email="infinite.monkeys.with.keyboards@gmail.com"),
+	person("Peter", "Hickey", role="ctb",
+		email="peter.hickey@gmail.com"))
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Depends: R (>= 4.0.0), methods, stats4, Matrix, BiocGenerics (>=
+        0.53.3), MatrixGenerics (>= 1.1.3), S4Vectors (>= 0.47.6),
+        IRanges (>= 2.17.3), S4Arrays (>= 1.9.3), SparseArray (>=
+        1.7.5)
+Imports: stats
+Suggests: BiocParallel, HDF5Array (>= 1.17.12), ZarrArray, genefilter,
+        SummarizedExperiment, airway, lobstr, DelayedMatrixStats,
+        knitr, rmarkdown, BiocStyle, RUnit
+VignetteBuilder: knitr
+Collate: compress_atomic_vector.R makeCappedVolumeBox.R
+        AutoBlock-global-settings.R AutoGrid.R blockApply.R
+        DelayedOp-class.R DelayedSubset-class.R DelayedAperm-class.R
+        DelayedUnaryIsoOpStack-class.R
+        DelayedUnaryIsoOpWithArgs-class.R DelayedSubassign-class.R
+        DelayedSetDimnames-class.R DelayedNaryIsoOp-class.R
+        DelayedAbind-class.R showtree.R simplify.R DelayedArray-class.R
+        DelayedArray-subsetting.R chunkGrid.R RealizationSink-class.R
+        realize.R DelayedArray-utils.R DelayedArray-stats.R
+        matrixStats-methods.R DelayedMatrix-rowsum.R
+        DelayedMatrix-mult.R ConstantArray-class.R RleArraySeed-class.R
+        RleArray-class.R compat.R zzz.R
+Config/pak/sysreqs: zlib1g-dev
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-29 19:53:06 UTC
+RemoteUrl: https://github.com/bioc/DelayedArray
+RemoteRef: RELEASE_3_23
+RemoteSha: 4c5d07ab22a4c4f0e59a44153a1be64777ce6ed2
+NeedsCompilation: no
+Packaged: 2026-04-29 22:11:54 UTC; root
+Author: Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>),
+  Aaron Lun [ctb],
+  Peter Hickey [ctb]
+Built: R 4.6.0; ; 2026-04-29 22:14:27 UTC; windows

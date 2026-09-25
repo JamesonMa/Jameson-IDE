@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>A quick overview of the S4Arrays package</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">A quick overview of the <em>S4Arrays</em>
+package</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p><em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+is an infrastructure package that provides a framework intended to
+facilitate implementation of <em>array-like</em> containers in other
+Bioconductor packages. <em>Array-like</em> containers are S4 objects
+that mimic the behavior of ordinary matrices or arrays in R. Please note
+that the package is not intended to be used directly by the end
+user.</p>
+</div>
+<div id="installation" class="section level1">
+<h1>Installation</h1>
+<p>Like any other Bioconductor package, <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+should always be installed with <code>BiocManager::install()</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="at">quietly=</span><span class="cn">TRUE</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">&quot;S4Arrays&quot;</span>)</span></code></pre></div>
+<p>However, note that <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+will typically get automatically installed as a dependency of other
+Bioconductor packages, so explicit installation of the package is
+usually not needed.</p>
+</div>
+<div id="the-array-virtual-class" class="section level1">
+<h1>The Array virtual class</h1>
+<p>At the center of the framework provided by the <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+package is the Array virtual class whose only purpose is to be extended
+by other S4 classes that wish to implement a container with an
+array-like semantic. Examples of such classes are:</p>
+<ul>
+<li><p>The SparseArray class defined in the <em><a href="https://bioconductor.org/packages/3.23/SparseArray">SparseArray</a></em>
+package.</p></li>
+<li><p>The DelayedArray class defined in the <em><a href="https://bioconductor.org/packages/3.23/DelayedArray">DelayedArray</a></em>
+package.</p></li>
+<li><p>The ArrayGrid and ArrayViewport classes defined in the <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+package itself.</p></li>
+</ul>
+<p>Note that Array is a virtual class with no slots:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(S4Arrays)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">showClass</span>(<span class="st">&quot;Array&quot;</span>)</span></code></pre></div>
+<pre><code>## Virtual Class &quot;Array&quot; [package &quot;S4Arrays&quot;]
+## 
+## No Slots, prototype of class &quot;S4&quot;
+## 
+## Known Subclasses: 
+## Class &quot;ArrayViewport&quot;, directly
+## Class &quot;ArrayGrid&quot;, directly
+## Class &quot;DummyArrayViewport&quot;, by class &quot;ArrayViewport&quot;, distance 2
+## Class &quot;SafeArrayViewport&quot;, by class &quot;ArrayViewport&quot;, distance 2
+## Class &quot;DummyArrayGrid&quot;, by class &quot;ArrayGrid&quot;, distance 2
+## Class &quot;ArbitraryArrayGrid&quot;, by class &quot;ArrayGrid&quot;, distance 2
+## Class &quot;RegularArrayGrid&quot;, by class &quot;ArrayGrid&quot;, distance 2</code></pre>
+</div>
+<div id="the-extract_array-generic-function" class="section level1">
+<h1>The extract_array() generic function</h1>
+<p>The <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+package also introduces the <code>extract_array()</code> S4 generic
+function that Arrays subclasses (a.k.a. Arrays extensions) are expected
+to support via specific methods. This allows some basic operations like
+<code>type()</code>, <code>as.array()</code> or <code>as.matrix()</code>
+to work out-of-the-box on instances of these Arrays subclasses (a.k.a.
+Arrays derivatives). It also allows them to be used as the seed of a
+DelayedArray object.</p>
+<p>Please refer to the man page of the <code>extract_array()</code>
+function for more information: <code>?extract_array</code></p>
+</div>
+<div id="block-processing-of-array-like-objects" class="section level1">
+<h1>Block processing of array-like objects</h1>
+<p>The <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+package provides a framework that facilitates block processing of
+array-like objects. Note that block processing is typically used on
+<em>on-disk</em> objects, that is, on objects where the array data is
+stored on disk. This framework consists of:</p>
+<ul>
+<li><p>ArrayGrid and ArrayViewport objects for representing grids and
+viewports on array-like objects. See <code>?ArrayGrid</code> for more
+information.</p></li>
+<li><p>The <code>read_block()</code> and <code>write_block()</code>
+functions to read and write array blocks. See <code>?read_block</code>
+and <code>?write_block</code> for more information.</p></li>
+<li><p>The <code>mapToGrid()</code> and <code>mapToRef()</code>
+functions to map a set of reference array positions to grid positions
+and vice-versa. See <code>?mapToGrid</code> for more
+information.</p></li>
+</ul>
+</div>
+<div id="other-functionalities" class="section level1">
+<h1>Other functionalities</h1>
+<p>In addition to the above, the <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>
+package provides the following functionalities:</p>
+<ul>
+<li><p><code>is_sparse()</code>: a generic function for determining
+whether an array-like object uses a sparse representation or not. See
+<code>?is_sparse</code> for more information.</p></li>
+<li><p>Low-level utilities for manipulating array selections. See
+<code>?Lindex2Mindex</code> for more information.</p></li>
+<li><p><code>aperm2()</code>: an extension of <code>base::aperm()</code>
+that allows dropping and/or adding <em>ineffective dimensions</em>. See
+<code>?aperm2</code> for more information.</p></li>
+<li><p><code>abind()</code>: a generic function for binding
+multidimensional array-like objects along any dimension. See
+<code>?abind</code> for more information.</p></li>
+<li><p><code>arep_times()</code> and <code>arep_each()</code>:
+multidimensional versions of <code>base::rep( , times=)</code> and
+<code>base::rep( , each=)</code>. See <code>?arep</code> for more
+information.</p></li>
+<li><p><code>as_tile()</code>: a convenient way to control the direction
+of recycling in the context of arithmetic and other binary operations
+between an array and a vector, or between two arrays of distinct
+dimensions. See <code>?as_tile</code> for more information.</p></li>
+<li><p><code>kronecker()</code> methods for Array objects that work
+out-of-the-box on Array derivatives that support <code>[</code> and
+<code>*</code>. See <code>?kronecker2</code> for more
+information.</p></li>
+</ul>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session information</h1>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+## [1] S4Arrays_1.12.0     IRanges_2.44.0      S4Vectors_0.50.0   
+## [4] BiocGenerics_0.56.0 generics_0.1.4      abind_1.4-8        
+## [7] Matrix_1.7-5        BiocStyle_2.38.0   
+## 
+## loaded via a namespace (and not attached):
+##  [1] cli_3.6.6           knitr_1.51          rlang_1.2.0        
+##  [4] xfun_0.57           jsonlite_2.0.0      buildtools_1.0.0   
+##  [7] htmltools_0.5.9     maketools_1.3.2     sys_3.4.3          
+## [10] sass_0.4.10         rmarkdown_2.31      grid_4.6.0         
+## [13] evaluate_1.0.5      jquerylib_0.1.4     fastmap_1.2.0      
+## [16] yaml_2.3.12         lifecycle_1.0.5     BiocManager_1.30.27
+## [19] compiler_4.6.0      lattice_0.22-9      digest_0.6.39      
+## [22] R6_2.6.1            bslib_0.10.0        tools_4.6.0        
+## [25] cachem_1.1.0</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#installation" id="toc-installation">Installation</a></li>
+<li><a href="#the-array-virtual-class" id="toc-the-array-virtual-class">The Array virtual class</a></li>
+<li><a href="#the-extract_array-generic-function" id="toc-the-extract_array-generic-function">The extract_array() generic
+function</a></li>
+<li><a href="#block-processing-of-array-like-objects" id="toc-block-processing-of-array-like-objects">Block processing of
+array-like objects</a></li>
+<li><a href="#other-functionalities" id="toc-other-functionalities">Other functionalities</a></li>
+<li><a href="#session-information" id="toc-session-information">Session
+information</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

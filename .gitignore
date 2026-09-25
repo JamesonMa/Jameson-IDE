@@ -5,9 +5,6 @@ node_modules/
 dist/
 release/
 
-# Bundled runtimes (distribute separately)
-compilers/
-
 # Source maps
 *.js.map
 

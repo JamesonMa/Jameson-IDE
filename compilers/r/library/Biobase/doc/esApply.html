@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>esApply Introduction</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">esApply Introduction</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="a-note-on-esapply" class="section level1 unnumbered">
+<h1 class="unnumbered">A note on <code>esApply</code></h1>
+<p><code>ExpressionSet</code>s are complex objects.
+<code>exprs(ExpressionSet)</code> produces <span class="math inline">\(G
+\times N\)</span>, where <span class="math inline">\(G\)</span> is the
+number of genes on a chip and <span class="math inline">\(N\)</span> is
+the number of tissues analyzed, and <code>pData(ExpressionSet)</code>
+produces <span class="math inline">\(N \times p\)</span>, where <span class="math inline">\(p\)</span> is the number of phenotypic or
+demographic, etc., variables collected.</p>
+<p>Abstractly, we are often interested in evaluating functions <span class="math inline">\(f(y;x)\)</span> where <span class="math inline">\(y\)</span> is an <span class="math inline">\(N\)</span>-vector of expression results for a
+specific gene and <span class="math inline">\(x\)</span> is an <span class="math inline">\(N\)</span>-dimensional structure, coordinated with
+<span class="math inline">\(y\)</span>, that distinguishes elements of
+<span class="math inline">\(y\)</span> for processing in the function
+<span class="math inline">\(f\)</span>. A basic problem is to guarantee
+that the <span class="math inline">\(j\)</span>th element of <span class="math inline">\(y\)</span> is correctly associated with the <span class="math inline">\(j\)</span>th component of <span class="math inline">\(x\)</span>.</p>
+<p>As an example, let’s consider <code>sample.ExpressionSet</code>,
+which is an <em>ExpressionSet</em> supplied with Biobase. We will print
+a little report, then the first <span class="math inline">\(N\)</span>-vector of gene expressions and some
+covariate data:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>sample.ExpressionSet</span></code></pre></div>
+<pre><code>## ExpressionSet (storageMode: lockedEnvironment)
+## assayData: 500 features, 26 samples 
+##   element names: exprs, se.exprs 
+## protocolData: none
+## phenoData
+##   sampleNames: A B ... Z (26 total)
+##   varLabels: sex type score
+##   varMetadata: labelDescription
+## featureData: none
+## experimentData: use &#39;experimentData(object)&#39;
+## Annotation: hgu95av2</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">exprs</span>(sample.ExpressionSet)[<span class="dv">1</span>,]</span></code></pre></div>
+<pre><code>##        A        B        C        D        E        F        G        H 
+## 192.7420  85.7533 176.7570 135.5750  64.4939  76.3569 160.5050  65.9631 
+##        I        J        K        L        M        N        O        P 
+##  56.9039 135.6080  63.4432  78.2126  83.0943  89.3372  91.0615  95.9377 
+##        Q        R        S        T        U        V        W        X 
+## 179.8450 152.4670 180.8340  85.4146 157.9890 146.8000  93.8829 103.8550 
+##        Y        Z 
+##  64.4340 175.6150</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">pData</span>(sample.ExpressionSet)[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div>
+<pre><code>##      sex    type score
+## A Female Control  0.75
+## B   Male    Case  0.40</code></pre>
+<p>Now let’s see how expressions and a covariate are related:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rbind</span>(<span class="fu">exprs</span>(sample.ExpressionSet[<span class="dv">1</span>,]),</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>            sex <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">pData</span>(sample.ExpressionSet))[<span class="dv">1</span>,])</span></code></pre></div>
+<pre><code>##                A         B         C         D         E         F        
+## AFFX-MurIL2_at &quot;192.742&quot; &quot;85.7533&quot; &quot;176.757&quot; &quot;135.575&quot; &quot;64.4939&quot; &quot;76.3569&quot;
+##                &quot;Female&quot;  &quot;Male&quot;    &quot;Male&quot;    &quot;Male&quot;    &quot;Female&quot;  &quot;Male&quot;   
+##                G         H         I         J         K         L        
+## AFFX-MurIL2_at &quot;160.505&quot; &quot;65.9631&quot; &quot;56.9039&quot; &quot;135.608&quot; &quot;63.4432&quot; &quot;78.2126&quot;
+##                &quot;Male&quot;    &quot;Male&quot;    &quot;Female&quot;  &quot;Male&quot;    &quot;Male&quot;    &quot;Female&quot; 
+##                M         N         O         P         Q         R        
+## AFFX-MurIL2_at &quot;83.0943&quot; &quot;89.3372&quot; &quot;91.0615&quot; &quot;95.9377&quot; &quot;179.845&quot; &quot;152.467&quot;
+##                &quot;Male&quot;    &quot;Male&quot;    &quot;Female&quot;  &quot;Female&quot;  &quot;Female&quot;  &quot;Male&quot;   
+##                S         T         U         V        W         X        
+## AFFX-MurIL2_at &quot;180.834&quot; &quot;85.4146&quot; &quot;157.989&quot; &quot;146.8&quot;  &quot;93.8829&quot; &quot;103.855&quot;
+##                &quot;Male&quot;    &quot;Female&quot;  &quot;Male&quot;    &quot;Female&quot; &quot;Male&quot;    &quot;Male&quot;   
+##                Y        Z        
+## AFFX-MurIL2_at &quot;64.434&quot; &quot;175.615&quot;
+##                &quot;Female&quot; &quot;Female&quot;</code></pre>
+<p>A function that evaluates the difference in median expression across
+strata defined using an abstract covariate <code>x</code> is</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>medContr <span class="ot">&lt;-</span> <span class="cf">function</span>( y, x ) {</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>    ys <span class="ot">&lt;-</span> <span class="fu">split</span>(y,x)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>    <span class="fu">median</span>(ys[[<span class="dv">1</span>]]) <span class="sc">-</span> <span class="fu">median</span>(ys[[<span class="dv">2</span>]])</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a> }</span></code></pre></div>
+<p>We can apply this to a small <em>ExpressionSet</em> that gives back
+the data listed above:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">exprs</span>(sample.ExpressionSet[<span class="dv">1</span>,,<span class="at">drop=</span>F]), <span class="dv">1</span>, medContr, <span class="fu">pData</span>(sample.ExpressionSet)[[<span class="st">&quot;sex&quot;</span>]])</span></code></pre></div>
+<pre><code>## AFFX-MurIL2_at 
+##       -12.7935</code></pre>
+<p>That’s a bit clumsy. This is where <code>esApply</code> comes in. We
+pay for some simplicity by following a strict protocol for the
+definition of the statistical function to be applied.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>medContr1 <span class="ot">&lt;-</span> <span class="cf">function</span>(y) {</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>   ys <span class="ot">&lt;-</span> <span class="fu">split</span>(y,sex)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>   <span class="fu">median</span>(ys[[<span class="dv">1</span>]]) <span class="sc">-</span> <span class="fu">median</span>(ys[[<span class="dv">2</span>]])</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>}</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="fu">esApply</span>( sample.ExpressionSet, <span class="dv">1</span>, medContr1)[<span class="dv">1</span>]</span></code></pre></div>
+<pre><code>## AFFX-MurIL2_at 
+##       -12.7935</code></pre>
+<p>The manual page on <code>esApply</code> has a number of additional
+examples that show how applicable functions can be constructed and used.
+The important thing to note is that the applicable functions
+<em>know</em> the names of the covariates in the <code>pData</code>
+dataframe.</p>
+<p>This is achieved by having an environment populated with all the
+variables in <em>phenoData(ExpressionSet)</em> put in as the environment
+of the function that will be applied. If that function already has an
+environment we retain that but in the second position. Thus, there is
+some potential for variable shadowing.</p>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session Information</h1>
+<p>The version number of R and packages loaded for generating the
+vignette were:</p>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] Biobase_2.72.0      BiocGenerics_0.56.0 generics_0.1.4     
+## [4] BiocStyle_2.38.0   
+## 
+## loaded via a namespace (and not attached):
+##  [1] digest_0.6.39       R6_2.6.1            fastmap_1.2.0      
+##  [4] xfun_0.57           maketools_1.3.2     cachem_1.1.0       
+##  [7] knitr_1.51          htmltools_0.5.9     rmarkdown_2.31     
+## [10] buildtools_1.0.0    lifecycle_1.0.5     cli_3.6.6          
+## [13] sass_0.4.10         jquerylib_0.1.4     compiler_4.6.0     
+## [16] sys_3.4.3           tools_4.6.0         evaluate_1.0.5     
+## [19] bslib_0.10.0        yaml_2.3.12         BiocManager_1.30.27
+## [22] jsonlite_2.0.0      rlang_1.2.0</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#a-note-on-esapply" id="toc-a-note-on-esapply">A note on
+<code>esApply</code></a></li>
+<li><a href="#session-information" id="toc-session-information">Session
+Information</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

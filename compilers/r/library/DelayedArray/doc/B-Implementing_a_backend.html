@@ -1,0 +1,413 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>Implementing A DelayedArray Backend</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">Implementing A DelayedArray Backend</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The DelayedArray framework currently supports a small number of
+on-disk backends: HDF5 (via the <em>HDF5Array</em> package), GDS (via
+the <em>GDSArray</em> package), and VCF (via the <em>VCFArray</em>
+package). This can be extended to support other on-disk backends. In
+theory, it should be possible to implement a DelayedArray backend for
+any file format that has the capability to store array data with fast
+random access.</p>
+<p>Let’s assume that the ADS format (Array Data Store) is such format
+(this is a made-up format for the purpose of this vignette only).
+Implementing a DelayedArray backend for ADS files should typically be
+done in a dedicated package (say <em>ADSArray</em>) that will depend on
+the <em>DelayedArray</em> package.</p>
+<p>The <em>ADSArray</em> package will need to implement:</p>
+<ul>
+<li><p>A low-level class for representing a reference to an array
+located in an ADS file. We’ll refer to this class as “the seed class”
+and will name it ADSArraySeed.</p></li>
+<li><p>Two high-level classes that derive from DelayedArray: ADSArray
+and ADSMatrix. Only the latter is needed if the ADS format only supports
+2-dimensional arrays.</p></li>
+<li><p>A “realization sink” class if you also want to support
+realization of DelayedArray objects as ADSArray objects. This is not
+documented yet.</p></li>
+</ul>
+<p>The rest of this document covers the above topics in greater details.
+Some familiarity with writing R packages is assumed. Don’t hesitate to
+look at the source of the <a href="https://github.com/Bioconductor/HDF5Array"><em>HDF5Array</em></a>
+package for a real example of DelayedArray on-disk backend
+implementation.</p>
+</div>
+<div id="implementing-the-seed-class" class="section level1">
+<h1>Implementing the seed class</h1>
+<div id="class-definition" class="section level2">
+<h2>Class definition</h2>
+<p>A “seed object” should store at least the path or URL to the file. If
+the file format allows storing more than one array per file, then the
+seed object should also store any additional information needed to
+locate a particular array in the file.</p>
+<p>The definition of the seed class will look something like this:</p>
+<pre><code>setClass(&quot;ADSArraySeed&quot;,
+    contains=&quot;Array&quot;,
+    slots=c(
+        filepath=&quot;character&quot;,
+        ...
+        ... additional slots needed
+        ... to locate the array in the file
+        ...
+    )
+)</code></pre>
+<p>The <code>filepath</code> slot should be a single string that
+contains the absolute path to the ADS file so the object doesn’t break
+when the user changes the working directory (e.g. with
+<code>setwd()</code>).</p>
+<p>Note that storing an open connection to the file should be avoided
+because connections don’t work properly in the context of a fork
+(e.g. when processing the seed object in parallel) and tend to break
+when serializing the object.</p>
+</div>
+<div id="constructor" class="section level2">
+<h2>Constructor</h2>
+<p>It is highly recommended to provide a “seed constructor” e.g.:</p>
+<pre><code>ADSArraySeed &lt;- function(filepath, other args)
+{
+    sanity checks
+    ...
+    filepath &lt;- file_path_as_absolute(filepath)
+    ...
+    new(&quot;ADSArraySeed&quot;, filepath=filepath, other args)
+}</code></pre>
+<p>Note that <code>file_path_as_absolute()</code> is defined in the
+<em>tools</em> package so it needs to be imported by adding the
+following to the NAMESPACE file of the <em>ADSArray</em> package:</p>
+<pre><code>importFrom(tools, file_path_as_absolute)</code></pre>
+<p>and adding <em>tools</em> to the <code>Imports</code> field of the
+DESCRIPTION file of the package.</p>
+</div>
+<div id="the-seed-contract" class="section level2">
+<h2>The seed contract</h2>
+<p>Seed objects are expected to comply with the “seed contract” i.e. to
+support <code>dim()</code>, <code>dimnames()</code>, and
+<code>extract_array()</code>. This is normally done by implementing
+methods for these generics, but, as we will see below, explicitly
+defining <code>dim()</code> or <code>dimnames()</code> methods is rarely
+needed.</p>
+<div id="dim-and-dimnames" class="section level3">
+<h3>dim() and dimnames()</h3>
+<p>For example, the <code>dim()</code> method for ADSArraySeed objects
+could look like this:</p>
+<pre><code>### An implementation that extracts the dimensions from the file
+### each time the method is called.
+setMethod(&quot;dim&quot;, &quot;ADSArraySeed&quot;,
+    function(x)
+    {
+        - open the connection to the file
+        - on.exit(close the connection)
+        - extract the dimensions and return them in an integer vector
+    }
+)</code></pre>
+<p>Note that the above <code>dim()</code> method consults the ADS file
+each time it’s called. However this can be avoided by adding a
+<code>dim</code> (and <code>dimnames</code>) slot (of type
+<code>integer</code> for <code>dim</code>, of type <code>list</code> for
+<code>dimnames</code>) to the ADSArraySeed class, and to populate it at
+construction time, so this information is retrieved from the file only
+once. With this approach <code>dim()</code> and <code>dimnames()</code>
+work out-of-the-box on ADSArraySeed objects i.e. there is no need to
+define <code>dim()</code> and <code>dimnames()</code> methods for these
+objects. This is because the <code>dim()</code> and
+<code>dimnames()</code> primitive functions in base R return the content
+of these slots if present.</p>
+<p>If the ADS format does not allow storage of the dimnames, then there
+is no need to implement a <code>dimnames()</code> method or to add a
+<code>dimnames()</code> slot to the ADSArraySeed class. Calling
+<code>dimnames(x)</code> then will simply return <code>NULL</code> for
+any ADSArraySeed object <code>x</code>.</p>
+<p>If the ADS format allows storage of the dimnames, make sure that
+<code>dimnames()</code> always returns them in the <em>standard
+form</em>, that is:</p>
+<ul>
+<li><p>The dimnames must be returned as a <code>NULL</code> (if the
+dataset has no dimnames) or as an ordinary list with one list element
+per dimension in the dataset.</p></li>
+<li><p>Each element in the returned list is either <code>NULL</code> or
+a character vector of length the extend of the dataset along the
+corresponding dimension. It is particularly important to make sure that
+the vectors in the list returned by <code>dimnames()</code> are
+character vectors. Other types like factors or integer vectors are not
+allowed and <em>will</em> break downstream code.</p></li>
+</ul>
+</div>
+<div id="extract_array" class="section level3">
+<h3>extract_array()</h3>
+<p><code>extract_array()</code> is a generic function defined in the
+<em>DelayedArray</em> package:</p>
+<pre><code>library(DelayedArray)
+?extract_array</code></pre>
+<p>It takes 2 arguments: <code>x</code> and <code>index</code>.
+<code>x</code> is the seed object to extract array values from.
+<code>index</code> must be an unnamed list of subscripts as positive
+integer vectors, one vector per seed dimension. Empty and missing
+subscripts (represented by <code>integer(0)</code> and <code>NULL</code>
+list elements, respectively) are allowed. The subscripts in
+<code>index</code> can contain duplicated indices. They cannot contain
+NAs or non-positive values.</p>
+<p>The <code>extract_array()</code> method must return an <em>ordinary
+array</em> of the appropriate type (i.e. <code>integer</code>,
+<code>double</code>, etc…). For example, if <code>x</code> is an
+ADSArraySeed object representing an M x N on-disk matrix of complex
+numbers, <code>extract_array(x, list(NULL, 2L))</code> must return its
+2nd column as an M x 1 <em>ordinary matrix</em> of type
+<code>complex</code>.</p>
+<p>Note that the <code>extract_array()</code> method needs to support
+empty and missing subscripts
+e.g. <code>extract_array(x, list(NULL, integer(0)))</code> must return
+an M x 0 matrix of type <code>complex</code> and
+<code>extract_array(x, list(integer(0), integer(0)))</code> a 0 x 0
+matrix of type <code>complex</code>. This last edge case is important
+because the <code>type()</code> and <code>show()</code> methods for
+DelayedArray objects rely on it to work. More precisely, once the
+<code>extract_array()</code> method supports an <code>index</code> with
+empty integer vectors, the following should work:</p>
+<pre><code>seed &lt;- ADSArraySeed(...)
+M &lt;- DelayedArray(seed)
+type(M)
+show(M)</code></pre>
+<p>Finally note that subscripts are allowed to contain duplicated
+indices so things like
+<code>extract_array(seed, list(c(1:3, 3:1), 2L))</code> need to be
+supported.</p>
+</div>
+</div>
+<div id="what-to-import" class="section level2">
+<h2>What to import?</h2>
+<p>Make sure the NAMESPACE file of the <em>ADSArray</em> package
+contains at least the following imports:</p>
+<pre><code>import(methods)
+importFrom(tools, file_path_as_absolute)
+
+import(BiocGenerics)
+import(S4Vectors)
+import(IRanges)
+import(DelayedArray)</code></pre>
+<p>Unless you have a good reason for it, don’t try to selectively import
+things from the <em>methods</em>, <em>BiocGenerics</em>,
+<em>S4Vectors</em>, <em>IRanges</em>, and <em>DelayedArray</em>
+packages. This will only complicate maintenance of the <em>ADSArray</em>
+package in the long run and has no real benefits (contrary to popular
+belief).</p>
+<p>Add <em>methods</em>, <em>BiocGenerics</em>, and
+<em>DelayedArray</em> to the <code>Depends</code> field of the
+DESCRIPTION file of the package, and <em>tools</em>, <em>S4Vectors</em>,
+and <em>IRanges</em> to its <code>Imports</code> field.</p>
+</div>
+<div id="testing" class="section level2">
+<h2>Testing</h2>
+<p>Make sure to export the ADSArraySeed class, its constructor, and the
+<code>dim</code>, <code>dimnames</code>, and <code>extract_array</code>
+methods.</p>
+<p>At this point, you should be able to wrap an ADSArraySeed object
+<code>seed</code> in a DelayedArray object with
+<code>DelayedArray(seed)</code>, and this should return a fully
+functional DelayedArray object.</p>
+</div>
+</div>
+<div id="implementing-high-level-classes-adsarray-and-adsmatrix" class="section level1">
+<h1>Implementing high-level classes ADSArray and ADSMatrix</h1>
+<p>These classes are not strictly needed but add a nice level of
+convenience.</p>
+<div id="adsarray-class-definition" class="section level2">
+<h2>ADSArray class definition</h2>
+<p>An ADSArray or ADSMatrix object is a DelayedArray derivative that
+doesn’t carry delayed operations yet. As soon as the user will start
+operating on it, it will be degraded to a DelayedArray
+<em>instance</em>.</p>
+<p>The ADSArray and ADSMatrix classes should extend the DelayedArray and
+DelayedMatrix classes, respectively, without adding any slot to
+them.</p>
+<p>So just:</p>
+<pre><code>setClass(&quot;ADSArray&quot;,
+    contains=&quot;DelayedArray&quot;,
+    representation(seed=&quot;ADSArraySeed&quot;)
+)</code></pre>
+<p>We’ll define the ADSMatrix class later.</p>
+</div>
+<div id="the-adsarray-constructor" class="section level2">
+<h2>The ADSArray() constructor</h2>
+<p>Add a <code>DelayedArray()</code> method for ADSArraySeed objects
+that does:</p>
+<pre><code>setMethod(&quot;DelayedArray&quot;, &quot;ADSArraySeed&quot;,
+    function(seed) new_DelayedArray(seed, Class=&quot;ADSArray&quot;)
+)</code></pre>
+<p>Now you should be able to construct an ADSArray object with:</p>
+<pre><code>DelayedArray(ADSArraySeed(...))</code></pre>
+<p>The <code>ADSArray</code> constructor should just do that:</p>
+<pre><code>ADSArray &lt;- function(filepath, other args)
+    DelayedArray(ADSArraySeed(filepath, other args))</code></pre>
+<p>However, it’s also nice to be able to pass an ADSArraySeed object to
+this constructor (with <code>ADSArray(seed)</code>). This can easily be
+supported with something like:</p>
+<pre><code>### Works directly on an ADSArraySeed object, in which case it must be
+### called with a single argument.
+ADSArray &lt;- function(filepath, other args)
+{
+    if (is(filepath, &quot;ADSArraySeed&quot;)) {
+        if (!(missing(other arg1) &amp;&amp; missing(other arg2) &amp;&amp; ...))
+            stop(wmsg(&quot;ADSArray() must be called with a single argument &quot;,
+                      &quot;when passed an ADSArraySeed object&quot;))
+        seed &lt;- filepath
+    } else {
+        seed &lt;- ADSArraySeed(filepath, other args)
+    }
+    DelayedArray(seed)
+}</code></pre>
+</div>
+<div id="adsmatrix-class-definition" class="section level2">
+<h2>ADSMatrix class definition</h2>
+<pre><code>setClass(&quot;ADSMatrix&quot;, contains=c(&quot;ADSArray&quot;, &quot;DelayedMatrix&quot;))</code></pre>
+</div>
+<div id="going-from-adsarray-to-adsmatrix" class="section level2">
+<h2>Going from ADSArray to ADSMatrix</h2>
+<p>Define a <code>matrixClass()</code> method for ADSArray objects as
+follow:</p>
+<pre><code>setMethod(&quot;matrixClass&quot;, &quot;ADSArray&quot;, function(x) &quot;ADSMatrix&quot;)</code></pre>
+<p><code>matrixClass()</code> is a generic function defined in the
+<em>DelayedArray</em> package. When passed an ADSArraySeed object,
+low-level constructor <code>new_DelayedArray</code> (see below) will
+generally return an ADSArray <em>instance</em>, except when the
+ADSArraySeed object is 2-dimensional, in which case it needs to return
+an ADSMatrix <em>instance</em>. It will obtain the name of the class of
+the object to return (<code>&quot;ADSMatrix&quot;</code> in this case) by calling
+<code>matrixClass</code>.</p>
+<p>Also coercion from ADSArray to ADSMatrix needs to be supported
+with:</p>
+<pre><code>setAs(&quot;ADSArray&quot;, &quot;ADSMatrix&quot;, function(from) new(&quot;ADSMatrix&quot;, from))</code></pre>
+<p>This coercion will make sure that the end user gets the following
+error when trying to coerce an ADSArray object that is not 2-dimensional
+to ADSMatrix:</p>
+<pre><code>as(x, &quot;ADSMatrix&quot;)
+# Error in validObject(.Object) : invalid class &quot;ADSMatrix&quot; object:
+#     &#39;x&#39; must have exactly 2 dimensions</code></pre>
+<p>Without the above coercion method, <code>as(x, &quot;ADSMatrix&quot;)</code>
+would silently return an invalid ADSMatrix object.</p>
+</div>
+<div id="going-from-adsmatrix-to-adsarray" class="section level2">
+<h2>Going from ADSMatrix to ADSArray</h2>
+<p>The user should not be able to degrade an ADSMatrix object to an
+ADSArray object so <code>as(x, &quot;ADSArray&quot;, strict=TRUE)</code> should
+fail or be a no-op when <code>x</code> is an ADSMatrix object. The
+easiest (and recommended) way to achieve this is to define the following
+coercion method:</p>
+<pre><code>setAs(&quot;ADSMatrix&quot;, &quot;ADSArray&quot;, function(from) from)  # no-op</code></pre>
+</div>
+<div id="implementing-optimized-backend-specific-methods" class="section level2">
+<h2>Implementing optimized backend-specific methods</h2>
+<p>It is possible, and enouraged, to overwrite current DelayedArray
+block-processed operations (e.g. <code>max</code>, <code>colSums</code>,
+<code>%*%</code>, etc…) with optimized backend-specific methods. For
+example, let’s imagine that ADS files have the capability to store some
+precomputed stats about the dataset. Then one could define a fast
+<code>max()</code> method for ADSArray objects with something like:</p>
+<pre><code>setMethod(&quot;max&quot;, &quot;ADSArraySeed&quot;,
+    function(x, na.rm=FALSE)
+    {
+        get the precomputed max from the file
+    }
+)
+
+setMethod(&quot;max&quot;, &quot;ADSArray&quot;,
+    function(x, na.rm=FALSE) max(x@seed, na.rm=na.rm)
+)</code></pre>
+<p>Note that delayed operations like setting dimnames on an ADSArray
+object (with <code>dimnames(A) &lt;- new_dimnames</code>) or transposing
+an ADSMatrix object (with <code>M2 &lt;- t(M)</code>) will degrade the
+object to a DelayedArray or DelayedMatrix <em>instance</em>, causing
+<code>max(A)</code> and <code>max(M2)</code> to use the far less
+efficient block-processed <code>max()</code> method defined for
+DelayedArray objects. There is clearly room for improvement here and
+work will be done in the near future to make the <code>max()</code>
+method (and other block-processed methods) for DelayedArray objects try
+to take advantage of the backend-specific methods whenever it can.</p>
+<p>However in the meantime, backend authors should resist the temptation
+to overwrite the <code>dimnames&lt;-()</code> and <code>t()</code>
+methods for DelayedArray objects with backend-specific methods that
+modify the seed. This would be a violation of the “never touch the seed”
+principle which is central to the DelayedArray framework. More
+precisely, no matter what delayed operations are performed on a
+DelayedArray object, the seeds of the result should always be identical
+to the original seeds (e.g. <code>seed(t(M))</code> should always be
+identical to <code>seed(M)</code>).</p>
+</div>
+<div id="what-to-export" class="section level2">
+<h2>What to export?</h2>
+<p>Make sure to export the ADSArray and ADSMatrix classes, the
+<code>ADSArray</code> constructor, the <code>coerce</code> methods, and
+any backend-specific method.</p>
+</div>
+</div>
+<div id="testing-1" class="section level1">
+<h1>Testing</h1>
+<p>Install the <em>ADSArray</em> package and load it in a fresh R
+session:</p>
+<pre><code>library(ADSArray)
+... coming soon ...</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#implementing-the-seed-class" id="toc-implementing-the-seed-class">Implementing the seed class</a>
+<ul>
+<li><a href="#class-definition" id="toc-class-definition">Class
+definition</a></li>
+<li><a href="#constructor" id="toc-constructor">Constructor</a></li>
+<li><a href="#the-seed-contract" id="toc-the-seed-contract">The seed
+contract</a></li>
+<li><a href="#what-to-import" id="toc-what-to-import">What to
+import?</a></li>
+<li><a href="#testing" id="toc-testing">Testing</a></li>
+</ul></li>
+<li><a href="#implementing-high-level-classes-adsarray-and-adsmatrix" id="toc-implementing-high-level-classes-adsarray-and-adsmatrix">Implementing
+high-level classes ADSArray and ADSMatrix</a>
+<ul>
+<li><a href="#adsarray-class-definition" id="toc-adsarray-class-definition">ADSArray class definition</a></li>
+<li><a href="#the-adsarray-constructor" id="toc-the-adsarray-constructor">The ADSArray() constructor</a></li>
+<li><a href="#adsmatrix-class-definition" id="toc-adsmatrix-class-definition">ADSMatrix class definition</a></li>
+<li><a href="#going-from-adsarray-to-adsmatrix" id="toc-going-from-adsarray-to-adsmatrix">Going from ADSArray to
+ADSMatrix</a></li>
+<li><a href="#going-from-adsmatrix-to-adsarray" id="toc-going-from-adsmatrix-to-adsarray">Going from ADSMatrix to
+ADSArray</a></li>
+<li><a href="#implementing-optimized-backend-specific-methods" id="toc-implementing-optimized-backend-specific-methods">Implementing
+optimized backend-specific methods</a></li>
+<li><a href="#what-to-export" id="toc-what-to-export">What to
+export?</a></li>
+</ul></li>
+<li><a href="#testing-1" id="toc-testing-1">Testing</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

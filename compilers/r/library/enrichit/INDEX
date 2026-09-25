@@ -1,0 +1,22 @@
+EXTID2NAME              EXTID2NAME
+compareClusterResult-class
+                        Class "compareClusterResult" This class
+                        represents the comparison result of gene
+                        clusters by GO categories at specific level or
+                        GO enrichment analysis.
+enrichResult-class      Class "enrichResult" This class represents the
+                        result of enrichment analysis.
+enrichit_params         Common parameters for enrichit functions
+geneID                  geneID generic
+geneInCategory          geneInCategory generic
+gsea                    Gene Set Enrichment Analysis (GSEA)
+gseaResult-class        Class "gseaResult" This class represents the
+                        result of GSEA analysis
+gseaScores              Calculate GSEA Running Enrichment Scores
+gsea_gson               gsea_gson
+gsfilter                gsfilter
+ora                     Over-Representation Analysis (ORA)
+ora_gson                ora-gson
+setReadable             setReadable
+show                    show method
+summary                 summary method

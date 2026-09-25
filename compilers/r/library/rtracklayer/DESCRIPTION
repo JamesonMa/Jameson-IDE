@@ -1,0 +1,40 @@
+Package: rtracklayer
+Title: R interface to genome annotation files and the UCSC genome
+        browser
+Version: 1.72.0
+Author: Michael Lawrence, Vince Carey, Robert Gentleman
+Depends: R (>= 3.5), methods, GenomicRanges (>= 1.37.2)
+Imports: XML (>= 1.98-0), BiocGenerics (>= 0.35.3), S4Vectors (>=
+        0.23.18), IRanges (>= 2.13.13), XVector (>= 0.19.7), Seqinfo,
+        Biostrings (>= 2.77.2), curl, httr, Rsamtools (>= 1.31.2),
+        GenomicAlignments (>= 1.15.6), BiocIO, tools, restfulr (>=
+        0.0.13)
+Suggests: GenomeInfoDb, BSgenome (>= 1.33.4), humanStemCell, microRNA
+        (>= 1.1.1), genefilter, limma, org.Hs.eg.db, hgu133plus2.db,
+        GenomicFeatures, BSgenome.Hsapiens.UCSC.hg19,
+        TxDb.Hsapiens.UCSC.hg19.knownGene, RUnit
+LinkingTo: S4Vectors, IRanges, XVector
+Description: Extensible framework for interacting with multiple genome
+        browsers (currently UCSC built-in) and manipulating annotation
+        tracks in various formats (currently GFF, BED, bedGraph, BED15,
+        WIG, BigWig and 2bit built-in). The user may export/import
+        tracks to/from the supported browsers, as well as query and
+        modify the browser state, such as the current viewport.
+Maintainer: Michael Lawrence <lawremi@gmail.com>
+License: Artistic-2.0 + file LICENSE
+Collate: io.R web.R ranges.R trackDb.R browser.R ucsc.R readGFF.R gff.R
+        bed.R wig.R utils.R bigWig.R bigBed.R chain.R quickload.R
+        trackhub.R twobit.R fasta.R tabix.R bam.R trackTable.R index.R
+        test_rtracklayer_package.R ncbi.R igv.R zzz.R
+biocViews: Annotation,Visualization,DataImport
+Config/pak/sysreqs: make libbz2-dev liblzma-dev libxml2-dev libssl-dev
+        xz-utils zlib1g-dev
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 12:32:51 UTC
+RemoteUrl: https://github.com/bioc/rtracklayer
+RemoteRef: RELEASE_3_23
+RemoteSha: 3136d28c9e15ed28f32b9fe5428738acade52742
+NeedsCompilation: yes
+Packaged: 2026-04-29 13:06:02 UTC; root
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-04-29 13:09:46 UTC; windows
+Archs: x64

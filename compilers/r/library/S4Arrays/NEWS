@@ -1,0 +1,91 @@
+VERSION 1.12.0
+--------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Add 'drop' argument to subset_Array_by_Nindex()
+
+
+VERSION 1.10.0
+--------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Drop dependency on the crayon package.
+
+
+VERSION 1.8.0
+-------------
+
+NEW FEATURES
+
+    o arep_times() and arep_each(): multidimensional versions of
+      base::rep( , times=) and base::rep( , each=).
+
+    o as_tile(): a convenient way to control the direction of recycling in
+      the context of arithmetic and other binary operations between an array
+      and a vector, or between two arrays of distinct dimensions.
+      Still work-in-progress!
+
+    o kronecker() methods for Array objects that work out-of-the-box on Array
+      derivatives that support [ and *.
+
+
+VERSION 1.6.0
+-------------
+
+NEW FEATURES
+
+    o Add fast colsum() method for ordinary matrices.
+
+    o Define low-level generics:
+        - subset_Array_by_logical_array()
+        - subset_Array_by_Lindex()
+        - subset_Array_by_Mindex()
+        - subset_Array_by_Nindex()
+      with default methods. Their purpose is to support subsetting (`[`)
+      of Array derivatives and to make it easier for developers of Array
+      extensions to implement subsetting for their objects.
+      They are not intended to be used directly by the end user.
+
+    o Define low-level generics:
+        - subassign_Array_by_logical_array()
+        - subassign_Array_by_Lindex()
+        - subassign_Array_by_Mindex()
+        - subassign_Array_by_Nindex()
+      with default methods. Their purpose is to support subassignment (`[<-`)
+      of Array derivatives and to make it easier for developers of Array
+      extensions to implement subassignment for their objects.
+      They are not intended to be used directly by the end user.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o read_block() now uses SparseArray::extract_sparse_array() instead of
+      DelayedArray::OLD_extract_sparse_array() behind the scene to extract
+      and load sparse blocks from a sparse array-like object. As a consequence,
+      sparse blocks are now returned as SparseArray objects (implemented in
+      the SparseArray package) instead of SparseArraySeed objects (implemented
+      in the DelayedArray package).
+
+
+VERSION 1.4.0
+-------------
+
+- No changes in this version.
+
+
+VERSION 1.2.0
+-------------
+
+NEW FEATURES
+
+    o Add abind() generic + default method.
+
+    o Add drop() method and dim() setter for Array objects.
+
+
+VERSION 1.0.0
+-------------
+
+    o First version of the package that is ready for general use.
+

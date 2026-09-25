@@ -1,0 +1,226 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>An Overview of the BiocIO package</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">An Overview of the BiocIO package</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The <code>BiocIO</code> package is primarily to be used by developers
+for interfacing with the abstract classes and generics in this package
+to develop their own related classes and methods.</p>
+</div>
+<div id="installation" class="section level1">
+<h1>Installation</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">&quot;BiocIO&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;BiocIO&quot;</span>)</span></code></pre></div>
+<div id="import-and-export" class="section level2">
+<h2>Import and Export</h2>
+<p>The functions import and export load and save objects from and to
+particular file formats. This package contains the following generics
+for the import and export methods used throughout the Bioconductor
+package suite.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">getGeneric</span>(<span class="st">&quot;import&quot;</span>)</span></code></pre></div>
+<pre><code>## standardGeneric for &quot;import&quot; defined from package &quot;BiocIO&quot;
+## 
+## function (con, format, text, ...) 
+## standardGeneric(&quot;import&quot;)
+## &lt;bytecode: 0x557e89a30f68&gt;
+## &lt;environment: 0x557e89a43d48&gt;
+## Methods may be defined for arguments: con, format, text
+## Use  showMethods(import)  for currently available ones.</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">getGeneric</span>(<span class="st">&quot;export&quot;</span>)</span></code></pre></div>
+<pre><code>## standardGeneric for &quot;export&quot; defined from package &quot;BiocIO&quot;
+## 
+## function (object, con, format, ...) 
+## standardGeneric(&quot;export&quot;)
+## &lt;bytecode: 0x557e89b8fa48&gt;
+## &lt;environment: 0x557e89ba0780&gt;
+## Methods may be defined for arguments: object, con, format
+## Use  showMethods(export)  for currently available ones.</code></pre>
+</div>
+<div id="the-biocfile-class" class="section level2">
+<h2>The BiocFile Class</h2>
+<p><code>BiocFile</code> is a base class for high-level file
+abstractions, where subclasses are associated with a particular file
+format/type. It wraps a low-level representation of a file, currently
+either a path/URL or connection.</p>
+</div>
+<div id="compressedfile" class="section level2">
+<h2>CompressedFile</h2>
+<p><code>CompressedFile</code> is a base class that extends the
+<code>BiocFile</code> class that offers high-level file abstractions for
+compressed file formats. As with the <code>BiocFile</code> class, it
+takes either a path/URL of connection as an argument. This package also
+includes other File classes that extend <code>CompressedFile</code>
+including: <code>BZ2File</code>, <code>XZFile</code>,
+<code>GZFile</code>, and <code>BGZFile</code> which extends the
+<code>GZfile</code> class</p>
+</div>
+</div>
+<div id="for-developers" class="section level1">
+<h1>For developers</h1>
+<div id="converting-existing-file-classes" class="section level2">
+<h2>Converting existing “File” Classes</h2>
+<p>In previous releases, <code>rtracklayer</code> package’s
+<code>RTLFile</code>, <code>RTLList</code>, and
+<code>CompressedFile</code> classes threw errors when a class that
+extended them was initialized. The error could have been seen with the
+<code>LoomFile</code> class from <code>LoomExperiment</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.loom&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">LoomFile</span>(file)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="do">### LoomFile object</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="do">### resource: file.loom</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="do">### Warning messages:</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="do">### 1: This class is extending the deprecated RTLFile class from</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="do">###     rtracklayer. Use BiocFile from BiocIO in place of RTLFile.</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="do">### 2: Use BiocIO::resource()</span></span></code></pre></div>
+<p>The first warning indicated that the <code>RTLFile</code> class from
+<code>rtracklayer</code> was deprecated for future releases. The second
+warning indicated that the <code>resource</code> method from
+<code>rtracklayer</code> was moved to <code>BiocIO</code>.</p>
+<p>To resolve this issue, developers should simply replace the
+<code>contains=&quot;RTLFile&quot;</code> argument in <code>setClass</code> with
+<code>contains=&quot;BiocFile&quot;</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="do">## Old</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">setClass</span>(<span class="st">&#39;LoomFile&#39;</span>, <span class="at">contains=</span><span class="st">&#39;RTLFile&#39;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="do">## New</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">setClass</span>(<span class="st">&#39;LoomFile&#39;</span>, <span class="at">contains=</span><span class="st">&#39;BiocFile&#39;</span>)</span></code></pre></div>
+</div>
+<div id="creating-classes-and-methods-that-extend-biocfiles-class-and-methods" class="section level2">
+<h2>Creating classes and methods that extend BiocFile’s class and
+methods</h2>
+<p>The primary purpose of this package is to provide high-level classes
+and generics to facilitate file IO within the Bioconductor package
+suite. The remainder of this vignette will detail how to create File
+classes that extend the <code>BiocFile</code> class and create methods
+for these classes. This section will also detail using the filter and
+select methods from the tidyverse dplyr package to facilitate lazy
+operations on files.</p>
+<p>The <code>CSVFile</code> class defined in this package will be used
+as an example. The purpose of the <code>CSVFile</code> class is to
+represent <code>CSVFile</code> so that IO operations can be performed on
+the file. The following code defines the <code>CSVFile</code> class that
+extends the <code>BiocFile</code> class using the <code>contains</code>
+argument. The <code>CSVFile</code> function is used as a constructor
+function requiring only the argument <code>resource</code> (either a
+<code>character</code> or a <code>connection</code>).</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>.CSVFile <span class="ot">&lt;-</span> <span class="fu">setClass</span>(<span class="st">&quot;CSVFile&quot;</span>, <span class="at">contains =</span> <span class="st">&quot;BiocFile&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>CSVFile <span class="ot">&lt;-</span> <span class="cf">function</span>(resource) <span class="fu">.CSVFile</span>(<span class="at">resource =</span> resource)</span></code></pre></div>
+<p>Next, the import and export functions are defined. These functions
+are meant to import the data into R in a usable format (a
+<code>data.frame</code> or another user-friendly R class), then export
+that R object into a file. For the <code>CSVFile</code> example, the
+base <code>read.csv()</code> and <code>write.csv()</code> functions are
+used as the body for our methods.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">setMethod</span>(<span class="st">&quot;import&quot;</span>, <span class="st">&quot;CSVFile&quot;</span>, <span class="cf">function</span>(con, format, text, ...) {</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>    <span class="fu">read.csv</span>(<span class="fu">resource</span>(con), ...)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>})</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="fu">setMethod</span>(<span class="st">&quot;export&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;data.frame&quot;</span>, <span class="st">&quot;CSVFile&quot;</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    <span class="cf">function</span>(object, con, format, ...) {</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>        <span class="fu">write.csv</span>(object, <span class="fu">resource</span>(con), ...)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    }</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>And finally a demonstration of the <code>CSVFile</code> class and
+import/export methods in action.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.csv&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>csv <span class="ot">&lt;-</span> <span class="fu">CSVFile</span>(temp)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="fu">export</span>(mtcars, csv)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">import</span>(csv)</span></code></pre></div>
+</div>
+<div id="session-info" class="section level2 unnumbered">
+<h2 class="unnumbered">Session info</h2>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] BiocIO_1.22.0    BiocStyle_2.38.0
+## 
+## loaded via a namespace (and not attached):
+##  [1] digest_0.6.39       R6_2.6.1            fastmap_1.2.0      
+##  [4] xfun_0.57           maketools_1.3.2     cachem_1.1.0       
+##  [7] knitr_1.51          BiocGenerics_0.56.0 htmltools_0.5.9    
+## [10] generics_0.1.4      rmarkdown_2.31      buildtools_1.0.0   
+## [13] stats4_4.6.0        lifecycle_1.0.5     cli_3.6.6          
+## [16] sass_0.4.10         jquerylib_0.1.4     compiler_4.6.0     
+## [19] sys_3.4.3           tools_4.6.0         evaluate_1.0.5     
+## [22] bslib_0.10.0        yaml_2.3.12         BiocManager_1.30.27
+## [25] S4Vectors_0.48.1    jsonlite_2.0.0      rlang_1.2.0</code></pre>
+</div>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#installation" id="toc-installation">Installation</a>
+<ul>
+<li><a href="#import-and-export" id="toc-import-and-export">Import and
+Export</a></li>
+<li><a href="#the-biocfile-class" id="toc-the-biocfile-class">The
+BiocFile Class</a></li>
+<li><a href="#compressedfile" id="toc-compressedfile">CompressedFile</a></li>
+</ul></li>
+<li><a href="#for-developers" id="toc-for-developers">For developers</a>
+<ul>
+<li><a href="#converting-existing-file-classes" id="toc-converting-existing-file-classes">Converting existing “File”
+Classes</a></li>
+<li><a href="#creating-classes-and-methods-that-extend-biocfiles-class-and-methods" id="toc-creating-classes-and-methods-that-extend-biocfiles-class-and-methods">Creating
+classes and methods that extend BiocFile’s class and methods</a></li>
+<li><a href="#session-info" id="toc-session-info">Session info</a></li>
+</ul></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

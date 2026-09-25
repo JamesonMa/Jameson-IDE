@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head><title>R: A simple S4 class for storing basic information about a
+collection of genomic sequences</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<link rel="stylesheet" type="text/css" href="R.css">
+</head><body><div class="container">
+<h1> A simple S4 class for storing basic information about a
+collection of genomic sequences
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]">
+</h1>
+<hr>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]"></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]"></a>
+</div><h2>Documentation for package &lsquo;Seqinfo&rsquo; version 1.2.0</h2>
+
+<ul><li><a href="../DESCRIPTION" type="text/plain; charset=utf-8">DESCRIPTION file</a></li>
+<li><a href="../doc/index.html">User guides, package vignettes and other documentation</a></li>
+<li><a href="../NEWS">Package NEWS</a></li>
+<li><a href="../README.md">Package README</a></li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">as.data.frame-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">as.data.frame.Seqinfo</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">bsgenomeName</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">bsgenomeName-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">checkCompatibleSeqinfo</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">class:GenomeDescription</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">class:Seqinfo</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">coerce-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">commonName</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">commonName-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">genome</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">genome-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">genome-method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">genome&lt;-</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">genome&lt;--method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">genome&lt;--method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">GenomeDescription</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">GenomeDescription-class</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">intersect-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">isCircular</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">isCircular-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">isCircular-method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">isCircular&lt;-</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">isCircular&lt;--method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">isCircular&lt;--method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">length-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">merge-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">merge.Seqinfo</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">names-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">names&lt;--method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="rankSeqlevels.html">orderSeqlevels</a></td>
+<td>Assign sequence IDs to sequence names</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">organism</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">organism-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">provider</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">provider-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">providerVersion</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">providerVersion-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="rankSeqlevels.html">rankSeqlevels</a></td>
+<td>Assign sequence IDs to sequence names</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">releaseDate</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">releaseDate-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">restoreSeqlevels</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">Seqinfo</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqinfo</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">Seqinfo-class</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">seqinfo-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqinfo&lt;-</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlengths</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">seqlengths-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlengths-method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlengths&lt;-</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">seqlengths&lt;--method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlengths&lt;--method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlevels</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">seqlevels-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlevels-method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlevels0</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlevels&lt;-</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">seqlevels&lt;--method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqlevels&lt;--method</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="seqlevelsInUse.html">seqlevelsInUse</a></td>
+<td>Get the sequence levels in use</td></tr>
+<tr><td style="width: 25%;"><a href="seqlevelsInUse.html">seqlevelsInUse-method</a></td>
+<td>Get the sequence levels in use</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqnames</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">seqnames-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">seqnames-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="seqinfo.html">seqnames&lt;-</a></td>
+<td>Accessing/modifying sequence information</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">seqnames&lt;--method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">show-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">show-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="sortSeqlevels.html">sortSeqlevels</a></td>
+<td>Sort the sequence levels of an object</td></tr>
+<tr><td style="width: 25%;"><a href="sortSeqlevels.html">sortSeqlevels-method</a></td>
+<td>Sort the sequence levels of an object</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">species</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="GenomeDescription-class.html">species-method</a></td>
+<td>GenomeDescription objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">summary-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">summary.Seqinfo</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">update-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">update.Seqinfo</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">updateObject-method</a></td>
+<td>Seqinfo objects</td></tr>
+<tr><td style="width: 25%;"><a href="Seqinfo-class.html">[-method</a></td>
+<td>Seqinfo objects</td></tr>
+</table>
+</div></body></html>

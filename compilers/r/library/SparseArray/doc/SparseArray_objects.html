@@ -1,0 +1,873 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>SparseArray objects</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">SparseArray objects</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p><em><a href="https://bioconductor.org/packages/3.23/SparseArray">SparseArray</a></em>
+is an infrastructure package that enables high-performance sparse data
+representation and manipulation in R. The workhorse of the package is an
+array-like container that allows efficient in-memory representation of
+multidimensional sparse data in R.</p>
+</div>
+<div id="install-and-load-the-package" class="section level1">
+<h1>Install and load the package</h1>
+<p>Like any other Bioconductor package, <em><a href="https://bioconductor.org/packages/3.23/SparseArray">SparseArray</a></em>
+should always be installed with <code>BiocManager::install()</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="at">quietly=</span><span class="cn">TRUE</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">&quot;SparseArray&quot;</span>)</span></code></pre></div>
+<p>Load the package:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(SparseArray)</span></code></pre></div>
+</div>
+<div id="the-sparsearray-virtual-class-and-its-two-concrete-subclasses" class="section level1">
+<h1>The SparseArray virtual class and its two concrete subclasses</h1>
+<p>The package defines the SparseArray virtual class and two concrete
+subclasses: COO_SparseArray and SVT_SparseArray.</p>
+<p>Each subclass uses its own internal representation of the nonzero
+multidimensional data: the “COO layout” and the “SVT layout”,
+respectively.</p>
+<p>Note that the SparseArray virtual class makes no assumption about the
+internal representation of the nonzero data, so it could easily be
+extended by other S4 classes that use a different layout for the nonzero
+data.</p>
+<p>This vignette focuses on the SVT_SparseArray container, which is the
+most memory-efficient and feature-complete of the two SparseArray
+subclasses. The COO_SparseArray class is only provided to support some
+rare use-cases. In other words, using SVT_SparseArray objects is almost
+always preferred over using COO_SparseArray objects.</p>
+</div>
+<div id="svt_sparsearray-objects" class="section level1">
+<h1>SVT_SparseArray objects</h1>
+<p>The SVT_SparseArray container provides an efficient representation of
+the nonzero multidimensional data via a novel layout called the “SVT
+layout”.</p>
+<p>Note that SVT_SparseArray objects mimic as much as possible the
+behavior of ordinary matrix or array objects in base R. In particular,
+they suppport most of the “standard matrix and array API” defined in
+base R and in the <em><a href="https://bioconductor.org/packages/3.23/matrixStats">matrixStats</a></em>
+package from CRAN.</p>
+<div id="construction" class="section level2">
+<h2>Construction</h2>
+<p>SVT_SparseArray objects can be constructed in many ways. A common way
+is to start with an empty object and to subassign nonzero values to
+it:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>svt1 <span class="ot">&lt;-</span> <span class="fu">SVT_SparseArray</span>(<span class="at">dim=</span><span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>svt1[<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">15</span><span class="sc">:</span><span class="dv">17</span>, <span class="dv">24</span>)] <span class="ot">&lt;-</span> (<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>)<span class="sc">*</span><span class="dv">10</span><span class="dt">L</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>svt1</span></code></pre></div>
+<pre><code>## &lt;6 x 4 SparseMatrix&gt; of type &quot;integer&quot; [nzcount=8 (33%)]:
+##      [,1] [,2] [,3] [,4]
+## [1,]   10    0    0    0
+## [2,]   20   30    0    0
+## [3,]    0    0   50    0
+## [4,]    0   40   60    0
+## [5,]    0    0   70    0
+## [6,]    0    0    0   80</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>svt2 <span class="ot">&lt;-</span> <span class="fu">SVT_SparseArray</span>(<span class="at">dim=</span><span class="dv">5</span><span class="sc">:</span><span class="dv">3</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>svt2[<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">15</span><span class="sc">:</span><span class="dv">17</span>, <span class="dv">20</span>, <span class="dv">24</span>, <span class="dv">40</span>, <span class="dv">56</span><span class="sc">:</span><span class="dv">60</span>)] <span class="ot">&lt;-</span> (<span class="dv">1</span><span class="sc">:</span><span class="dv">15</span>)<span class="sc">*</span><span class="dv">10</span><span class="dt">L</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>svt2</span></code></pre></div>
+<pre><code>## &lt;5 x 4 x 3 SparseArray&gt; of type &quot;integer&quot; [nzcount=15 (25%)]:
+## ,,1
+##      [,1] [,2] [,3] [,4]
+## [1,]   10    0    0   60
+## [2,]   20    0    0   70
+## [3,]    0   30    0    0
+## [4,]    0    0    0    0
+## [5,]    0   40   50   80
+## 
+## ,,2
+##      [,1] [,2] [,3] [,4]
+## [1,]    0    0    0    0
+## [2,]    0    0    0    0
+## [3,]    0    0    0    0
+## [4,]   90    0    0    0
+## [5,]    0    0    0  100
+## 
+## ,,3
+##      [,1] [,2] [,3] [,4]
+## [1,]    0    0    0  110
+## [2,]    0    0    0  120
+## [3,]    0    0    0  130
+## [4,]    0    0    0  140
+## [5,]    0    0    0  150</code></pre>
+<p>Another way is to coerce a matrix- or array-like object to
+SVT_SparseArray:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Coerce a dgCMatrix object to SVT_SparseArray:</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>dgcm <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">rsparsematrix</span>(<span class="dv">12</span>, <span class="dv">5</span>, <span class="at">density=</span><span class="fl">0.15</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>svt3 <span class="ot">&lt;-</span> <span class="fu">as</span>(dgcm, <span class="st">&quot;SVT_SparseArray&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co"># Coerce a TENxMatrix object to SVT_SparseArray:</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(HDF5Array))</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>M <span class="ot">&lt;-</span> <span class="fu">writeTENxMatrix</span>(svt3)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>svt3b <span class="ot">&lt;-</span> <span class="fu">as</span>(M, <span class="st">&quot;SVT_SparseArray&quot;</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co"># Sanity check:</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(svt3, svt3b))</span></code></pre></div>
+<p>Alternatively, these coercions can be done by simply passing the
+object to coerce to the <code>SVT_SparseArray()</code> constructor
+function:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>svt3  <span class="ot">&lt;-</span> <span class="fu">SVT_SparseArray</span>(dgcm)  <span class="co"># same as as(dgcm, &quot;SVT_SparseArray&quot;)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>svt3b <span class="ot">&lt;-</span> <span class="fu">SVT_SparseArray</span>(M)     <span class="co"># same as as(M, &quot;SVT_SparseArray&quot;)</span></span></code></pre></div>
+<p>See <code>?SVT_SparseArray</code> for more information about the
+<code>SVT_SparseArray()</code> constructor function and additional
+examples.</p>
+</div>
+<div id="svt_sparsearray-vs-coo_sparsearray" class="section level2">
+<h2>SVT_SparseArray vs COO_SparseArray</h2>
+<p>As mentioned earlier, SVT_SparseArray objects are almost always
+preferred over using COO_SparseArray objects. Coercing to SparseArray or
+using the <code>SparseArray()</code> constructor function reflects this
+preference i.e. in both cases the actual class of the returned
+SparseArray derivative will almost always be SVT_SparseArray (or
+SVT_SparseMatrix). Except in the rare situation where returning a
+COO_SparseArray object is a more natural fit for the input object.</p>
+<p>For example coercing the following objects to SparseArray will
+<em>always</em> produce an SVT_SparseArray object:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Coerce an ordinary matrix to SparseArray:</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="fu">rpois</span>(<span class="dv">80</span>, <span class="at">lambda=</span><span class="fl">0.35</span>), <span class="at">dim=</span><span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">8</span>, <span class="dv">2</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">class</span>(<span class="fu">as</span>(a, <span class="st">&quot;SparseArray&quot;</span>))  <span class="co"># SVT_SparseArray</span></span></code></pre></div>
+<pre><code>## [1] &quot;SVT_SparseArray&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;SparseArray&quot;</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Coerce a dgCMatrix object to SparseArray:</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>svt3  <span class="ot">&lt;-</span> <span class="fu">as</span>(dgcm, <span class="st">&quot;SparseArray&quot;</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="fu">class</span>(svt3)  <span class="co"># SVT_SparseArray</span></span></code></pre></div>
+<pre><code>## [1] &quot;SVT_SparseMatrix&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;SparseArray&quot;</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Coerce a TENxMatrix object to SparseArray:</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>svt3b <span class="ot">&lt;-</span> <span class="fu">as</span>(M, <span class="st">&quot;SparseArray&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">class</span>(svt3)  <span class="co"># SVT_SparseArray</span></span></code></pre></div>
+<pre><code>## [1] &quot;SVT_SparseMatrix&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;SparseArray&quot;</code></pre>
+<p>Also using the <code>SparseArray()</code> constructor function on
+these objects will <em>always</em> produce an SVT_SparseArray
+object:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">SparseArray</span>(a)              <span class="co"># same as as(a, &quot;SparseArray&quot;)</span></span></code></pre></div>
+<pre><code>## &lt;5 x 8 x 2 SparseArray&gt; of type &quot;integer&quot; [nzcount=33 (41%)]:
+## ,,1
+##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8]
+## [1,]    1    0    1    1    0    0    1    0
+## [2,]    2    0    0    0    0    1    0    0
+## [3,]    0    0    0    0    1    0    2    1
+## [4,]    0    1    0    3    0    0    2    0
+## [5,]    1    0    1    1    0    0    0    0
+## 
+## ,,2
+##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8]
+## [1,]    1    2    1    0    0    1    0    0
+## [2,]    0    0    1    1    0    1    2    0
+## [3,]    0    2    0    0    0    0    1    2
+## [4,]    1    0    1    1    0    0    1    0
+## [5,]    0    1    0    2    1    0    0    0</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>svt3  <span class="ot">&lt;-</span> <span class="fu">SparseArray</span>(dgcm)  <span class="co"># same as as(dgcm, &quot;SparseArray&quot;)</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>svt3b <span class="ot">&lt;-</span> <span class="fu">SparseArray</span>(M)     <span class="co"># same as as(M, &quot;SparseArray&quot;)</span></span></code></pre></div>
+<p>This is actually the most convenient way to turn an ordinary matrix
+or array, or a dgCMatrix object, or a TENxMatrix object, into an
+SVT_SparseArray object.</p>
+<p>One situation where <code>as(x, &quot;SparseArray&quot;)</code> or
+<code>SparseArray(x)</code> will return a COO_SparseArray object is when
+the input object <code>x</code> is a sparseMatrix derivative that uses a
+compressed <em>row-oriented</em> representation (<code>&quot;R&quot;</code>
+representation) instead of the more widely used compressed
+<em>column-oriented</em> representation (<code>&quot;C&quot;</code>
+representation):</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>ngrm <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>(<span class="at">i=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">6</span>), <span class="at">j=</span><span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">2</span>), <span class="at">repr=</span><span class="st">&quot;R&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">class</span>(ngrm)  <span class="co"># ngRMatrix</span></span></code></pre></div>
+<pre><code>## [1] &quot;ngRMatrix&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;Matrix&quot;</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">class</span>(<span class="fu">SparseArray</span>(ngrm))  <span class="co"># COO_SparseMatrix</span></span></code></pre></div>
+<pre><code>## [1] &quot;COO_SparseMatrix&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;SparseArray&quot;</code></pre>
+<p>One way to enforce the SVT_SparseArray representation is to coerce
+the result to SVT_SparseArray:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>svt <span class="ot">&lt;-</span> <span class="fu">as</span>(<span class="fu">SparseArray</span>(ngrm), <span class="st">&quot;SVT_SparseArray&quot;</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="fu">class</span>(svt)  <span class="co"># SVT_SparseMatrix</span></span></code></pre></div>
+<pre><code>## [1] &quot;SVT_SparseMatrix&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;SparseArray&quot;</code></pre>
+<p>Finally, note that coercing back to ordinary matrix or array (dense
+representation) is supported, although obviously not a good idea if the
+SparseArray object is big:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">as.array</span>(svt1)  <span class="co"># same as as.matrix(svt1)</span></span></code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   10    0    0    0
+## [2,]   20   30    0    0
+## [3,]    0    0   50    0
+## [4,]    0   40   60    0
+## [5,]    0    0   70    0
+## [6,]    0    0    0   80</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">as.array</span>(svt2)</span></code></pre></div>
+<pre><code>## , , 1
+## 
+##      [,1] [,2] [,3] [,4]
+## [1,]   10    0    0   60
+## [2,]   20    0    0   70
+## [3,]    0   30    0    0
+## [4,]    0    0    0    0
+## [5,]    0   40   50   80
+## 
+## , , 2
+## 
+##      [,1] [,2] [,3] [,4]
+## [1,]    0    0    0    0
+## [2,]    0    0    0    0
+## [3,]    0    0    0    0
+## [4,]   90    0    0    0
+## [5,]    0    0    0  100
+## 
+## , , 3
+## 
+##      [,1] [,2] [,3] [,4]
+## [1,]    0    0    0  110
+## [2,]    0    0    0  120
+## [3,]    0    0    0  130
+## [4,]    0    0    0  140
+## [5,]    0    0    0  150</code></pre>
+</div>
+</div>
+<div id="the-sparsearray-api" class="section level1">
+<h1>The SparseArray API</h1>
+<div id="the-core-array-api" class="section level2">
+<h2>The core array API</h2>
+<p>SVT_SparseArray objects support the “core array API” defined in base
+R:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">dim</span>(svt2)</span></code></pre></div>
+<pre><code>## [1] 5 4 3</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="fu">length</span>(svt2)</span></code></pre></div>
+<pre><code>## [1] 60</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">dimnames</span>(svt2) <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="cn">NULL</span>, letters[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>], LETTERS[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>])</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>svt2</span></code></pre></div>
+<pre><code>## &lt;5 x 4 x 3 SparseArray&gt; of type &quot;integer&quot; [nzcount=15 (25%)]:
+## ,,A
+##       a  b  c  d
+## [1,] 10  0  0 60
+## [2,] 20  0  0 70
+## [3,]  0 30  0  0
+## [4,]  0  0  0  0
+## [5,]  0 40 50 80
+## 
+## ,,B
+##        a   b   c   d
+## [1,]   0   0   0   0
+## [2,]   0   0   0   0
+## [3,]   0   0   0   0
+## [4,]  90   0   0   0
+## [5,]   0   0   0 100
+## 
+## ,,C
+##        a   b   c   d
+## [1,]   0   0   0 110
+## [2,]   0   0   0 120
+## [3,]   0   0   0 130
+## [4,]   0   0   0 140
+## [5,]   0   0   0 150</code></pre>
+</div>
+<div id="type-and-is_sparse" class="section level2">
+<h2>type() and is_sparse()</h2>
+<p><code>type()</code> and <code>is_sparse()</code> are generic
+functions defined in <em><a href="https://bioconductor.org/packages/3.23/BiocGenerics">BiocGenerics</a></em>
+and <em><a href="https://bioconductor.org/packages/3.23/S4Arrays">S4Arrays</a></em>,
+respectively. They extend the “core array API” defined in base R:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">type</span>(svt1)</span></code></pre></div>
+<pre><code>## [1] &quot;integer&quot;</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="fu">type</span>(svt1) <span class="ot">&lt;-</span> <span class="st">&quot;double&quot;</span></span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a>svt1</span></code></pre></div>
+<pre><code>## &lt;6 x 4 SparseMatrix&gt; of type &quot;double&quot; [nzcount=8 (33%)]:
+##      [,1] [,2] [,3] [,4]
+## [1,]   10    0    0    0
+## [2,]   20   30    0    0
+## [3,]    0    0   50    0
+## [4,]    0   40   60    0
+## [5,]    0    0   70    0
+## [6,]    0    0    0   80</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="fu">is_sparse</span>(svt1)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<p>See <code>?SparseArray</code> for more information and additional
+examples.</p>
+</div>
+<div id="is_nonzero-and-the-nz-functions" class="section level2">
+<h2>is_nonzero() and the nz*() functions</h2>
+<p>A set of functions is provided for direct manipulation of the nonzero
+array elements:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="fu">is_nonzero</span>(svt1)</span></code></pre></div>
+<pre><code>## &lt;6 x 4 SparseMatrix&gt; of type &quot;logical&quot; [nzcount=8 (33%)]:
+##       [,1]  [,2]  [,3]  [,4]
+## [1,]  TRUE FALSE FALSE FALSE
+## [2,]  TRUE  TRUE FALSE FALSE
+## [3,] FALSE FALSE  TRUE FALSE
+## [4,] FALSE  TRUE  TRUE FALSE
+## [5,] FALSE FALSE  TRUE FALSE
+## [6,] FALSE FALSE FALSE  TRUE</code></pre>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" tabindex="-1"></a><span class="do">## Get the number of nonzero array elements in &#39;svt1&#39;:</span></span>
+<span id="cb42-2"><a href="#cb42-2" tabindex="-1"></a><span class="fu">nzcount</span>(svt1)</span></code></pre></div>
+<pre><code>## [1] 8</code></pre>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a><span class="do">## Extract the &quot;linear indices&quot; of the nonzero array elements in &#39;svt1&#39;:</span></span>
+<span id="cb44-2"><a href="#cb44-2" tabindex="-1"></a><span class="fu">nzwhich</span>(svt1)</span></code></pre></div>
+<pre><code>## [1]  1  2  8 10 15 16 17 24</code></pre>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" tabindex="-1"></a><span class="do">## Extract the &quot;array indices&quot; (a.k.a. &quot;array coordinates&quot;) of the</span></span>
+<span id="cb46-2"><a href="#cb46-2" tabindex="-1"></a><span class="do">## nonzero array elements in &#39;svt1&#39;:</span></span>
+<span id="cb46-3"><a href="#cb46-3" tabindex="-1"></a><span class="fu">nzwhich</span>(svt1, <span class="at">arr.ind=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>##      [,1] [,2]
+## [1,]    1    1
+## [2,]    2    1
+## [3,]    2    2
+## [4,]    4    2
+## [5,]    3    3
+## [6,]    4    3
+## [7,]    5    3
+## [8,]    6    4</code></pre>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" tabindex="-1"></a><span class="do">## Extract the values of the nonzero array elements in &#39;svt1&#39;:</span></span>
+<span id="cb48-2"><a href="#cb48-2" tabindex="-1"></a><span class="fu">nzvals</span>(svt1)</span></code></pre></div>
+<pre><code>## [1] 10 20 30 40 50 60 70 80</code></pre>
+<p>Note that the vectors produced by <code>nzwhich()</code> and
+<code>nzvals()</code> are <em>parallel</em>, that is, they have the same
+length and the i-th element in one vector corresponds to the i-th
+element in the other vector.</p>
+<p>See <code>?is_nonzero</code> for more information and additional
+examples.</p>
+</div>
+<div id="subsetting-and-subassignment" class="section level2">
+<h2>Subsetting and subassignment</h2>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" tabindex="-1"></a>svt2[<span class="dv">5</span><span class="sc">:</span><span class="dv">3</span>, , <span class="st">&quot;C&quot;</span>]</span></code></pre></div>
+<pre><code>## &lt;3 x 4 SparseMatrix&gt; of type &quot;integer&quot; [nzcount=3 (25%)]:
+##        a   b   c   d
+## [1,]   0   0   0 150
+## [2,]   0   0   0 140
+## [3,]   0   0   0 130</code></pre>
+<p>Like with ordinary arrays in base R, assigning values of type
+<code>&quot;double&quot;</code> to an SVT_SparseArray object of type
+<code>&quot;integer&quot;</code> will automatically change the type of the object
+to <code>&quot;double&quot;</code>:</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" tabindex="-1"></a><span class="fu">type</span>(svt2)</span></code></pre></div>
+<pre><code>## [1] &quot;integer&quot;</code></pre>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a>svt2[<span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="cn">NaN</span></span>
+<span id="cb54-2"><a href="#cb54-2" tabindex="-1"></a><span class="fu">type</span>(svt2)</span></code></pre></div>
+<pre><code>## [1] &quot;double&quot;</code></pre>
+<p>See <code>?SparseArray_subsetting</code> for more information and
+additional examples.</p>
+</div>
+<div id="summarization-methods-whole-array" class="section level2">
+<h2>Summarization methods (whole array)</h2>
+<p>The following summarization methods are provided at the moment:
+<code>anyNA()</code>, <code>any</code>, <code>all</code>,
+<code>min</code>, <code>max</code>, <code>range</code>,
+<code>sum</code>, <code>prod</code>, <code>mean</code>,
+<code>var</code>, <code>sd</code>.</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a><span class="fu">anyNA</span>(svt2)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a><span class="fu">range</span>(svt2, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1]   0 150</code></pre>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a><span class="fu">mean</span>(svt2, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1] 20.33898</code></pre>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" tabindex="-1"></a><span class="fu">var</span>(svt2, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1] 1717.124</code></pre>
+<p>See <code>?SparseArray_summarization</code> for more information and
+additional examples.</p>
+</div>
+<div id="operations-from-the-arith-compare-logic-math-math2-and-complex-groups" class="section level2">
+<h2>Operations from the Arith, Compare, Logic, Math, Math2, and Complex
+groups</h2>
+<p>SVT_SparseArray objects support operations from the
+<code>Arith</code>, <code>Compare</code>, <code>Logic</code>,
+<code>Math</code>, <code>Math2</code>, and <code>Complex</code> groups,
+with some restrictions. See <code>?S4groupGeneric</code> in the <em><a href="https://bioconductor.org/packages/3.23/methods">methods</a></em>
+package for more information about these group generics.</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" tabindex="-1"></a><span class="fu">signif</span>((svt1<span class="sc">^</span><span class="fl">1.5</span> <span class="sc">+</span> svt1) <span class="sc">%%</span> <span class="dv">100</span> <span class="sc">-</span> <span class="fl">0.6</span> <span class="sc">*</span> svt1, <span class="at">digits=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>## &lt;6 x 4 SparseMatrix&gt; of type &quot;double&quot; [nzcount=8 (33%)]:
+##       [,1]  [,2]  [,3]  [,4]
+## [1,]  36.0   0.0   0.0   0.0
+## [2,]  -2.6  76.0   0.0   0.0
+## [3,]   0.0   0.0 -26.0   0.0
+## [4,]   0.0  69.0 -11.0   0.0
+## [5,]   0.0   0.0  14.0   0.0
+## [6,]   0.0   0.0   0.0  48.0</code></pre>
+<p>See <code>?SparseArray_Arith</code>,
+<code>?SparseArray_Compare</code>, <code>?SparseArray_Logic</code>,
+<code>?SparseArray_Math</code>, and <code>?SparseArray_Complex</code>
+for more information and additional examples.</p>
+</div>
+</div>
+<div id="the-2d-api" class="section level1">
+<h1>The 2D API</h1>
+<div id="svt_sparsematrix-objects" class="section level2">
+<h2>SVT_SparseMatrix objects</h2>
+<p>SVT_SparseMatrix objects are just two-dimensional SVT_SparseArray
+objects. See <code>?SparseArray</code> for a diagram of the SparseArray
+class hierarchy.</p>
+</div>
+<div id="transposition" class="section level2">
+<h2>Transposition</h2>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" tabindex="-1"></a><span class="fu">t</span>(svt1)</span></code></pre></div>
+<pre><code>## &lt;4 x 6 SparseMatrix&gt; of type &quot;double&quot; [nzcount=8 (33%)]:
+##      [,1] [,2] [,3] [,4] [,5] [,6]
+## [1,]   10   20    0    0    0    0
+## [2,]    0   30    0   40    0    0
+## [3,]    0    0   50   60   70    0
+## [4,]    0    0    0    0    0   80</code></pre>
+<p>Note that multidimensional transposition is supported via
+<code>aperm()</code>:</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" tabindex="-1"></a><span class="fu">aperm</span>(svt2)</span></code></pre></div>
+<pre><code>## &lt;3 x 4 x 5 SparseArray&gt; of type &quot;double&quot; [nzcount=16 (27%)]:
+## ,,1
+##     a   b   c   d
+## A  10   0   0  60
+## B   0   0   0   0
+## C   0   0   0 110
+## 
+## ,,2
+##     a   b   c   d
+## A  20   0   0  70
+## B   0   0   0   0
+## C   0   0   0 120
+## 
+## ,,3
+##     a   b   c   d
+## A   0  30   0   0
+## B   0   0   0   0
+## C   0   0   0 130
+## 
+## ,,4
+##     a   b   c   d
+## A   0   0   0   0
+## B  90   0   0   0
+## C   0   0   0 140
+## 
+## ,,5
+##     a   b   c   d
+## A   0  40  50  80
+## B   0   0   0 100
+## C NaN   0   0 150</code></pre>
+<p>See <code>?SparseArray_aperm</code> for more information and
+additional examples.</p>
+</div>
+<div id="combine-multidimensional-objects-along-a-given-dimension" class="section level2">
+<h2>Combine multidimensional objects along a given dimension</h2>
+<p>Like ordinary matrices in base R, SVT_SparseMatrix objects can be
+combined by rows or columns, with <code>rbind()</code> or
+<code>cbind()</code>:</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" tabindex="-1"></a>svt4 <span class="ot">&lt;-</span> <span class="fu">poissonSparseMatrix</span>(<span class="dv">6</span>, <span class="dv">2</span>, <span class="at">density=</span><span class="fl">0.5</span>)</span>
+<span id="cb70-2"><a href="#cb70-2" tabindex="-1"></a></span>
+<span id="cb70-3"><a href="#cb70-3" tabindex="-1"></a><span class="fu">cbind</span>(svt1, svt4)</span></code></pre></div>
+<pre><code>## &lt;6 x 6 SparseMatrix&gt; of type &quot;double&quot; [nzcount=14 (39%)]:
+##      [,1] [,2] [,3] [,4] [,5] [,6]
+## [1,]   10    0    0    0    2    0
+## [2,]   20   30    0    0    1    0
+## [3,]    0    0   50    0    1    1
+## [4,]    0   40   60    0    1    2
+## [5,]    0    0   70    0    0    0
+## [6,]    0    0    0   80    0    0</code></pre>
+<p>Note that multidimensional objects can be combined along any
+dimension with <code>abind()</code>:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" tabindex="-1"></a>svt5a <span class="ot">&lt;-</span> <span class="fu">poissonSparseArray</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">2</span>), <span class="at">density=</span><span class="fl">0.4</span>)</span>
+<span id="cb72-2"><a href="#cb72-2" tabindex="-1"></a>svt5b <span class="ot">&lt;-</span> <span class="fu">poissonSparseArray</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">5</span>), <span class="at">density=</span><span class="fl">0.2</span>)</span>
+<span id="cb72-3"><a href="#cb72-3" tabindex="-1"></a>svt5c <span class="ot">&lt;-</span> <span class="fu">poissonSparseArray</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">4</span>), <span class="at">density=</span><span class="fl">0.2</span>)</span>
+<span id="cb72-4"><a href="#cb72-4" tabindex="-1"></a><span class="fu">abind</span>(svt5a, svt5b, svt5c)</span></code></pre></div>
+<pre><code>## &lt;5 x 6 x 11 SparseArray&gt; of type &quot;integer&quot; [nzcount=76 (23%)]:
+## ,,1
+##      [,1] [,2] [,3] [,4] [,5] [,6]
+## [1,]    2    0    0    0    1    1
+## [2,]    0    1    0    3    1    0
+## [3,]    0    1    1    0    0    0
+## [4,]    0    1    1    0    1    1
+## [5,]    1    1    1    0    0    0
+## 
+## ...
+## 
+## ,,11
+##      [,1] [,2] [,3] [,4] [,5] [,6]
+## [1,]    0    0    0    1    0    0
+## [2,]    0    0    1    0    0    0
+## [3,]    0    0    0    0    2    0
+## [4,]    0    0    1    0    0    0
+## [5,]    0    0    0    0    0    0</code></pre>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" tabindex="-1"></a>svt6a <span class="ot">&lt;-</span> <span class="fu">aperm</span>(svt5a, <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span><span class="sc">:</span><span class="dv">2</span>))</span>
+<span id="cb74-2"><a href="#cb74-2" tabindex="-1"></a>svt6b <span class="ot">&lt;-</span> <span class="fu">aperm</span>(svt5b, <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span><span class="sc">:</span><span class="dv">2</span>))</span>
+<span id="cb74-3"><a href="#cb74-3" tabindex="-1"></a>svt6c <span class="ot">&lt;-</span> <span class="fu">aperm</span>(svt5c, <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span><span class="sc">:</span><span class="dv">2</span>))</span>
+<span id="cb74-4"><a href="#cb74-4" tabindex="-1"></a><span class="fu">abind</span>(svt6a, svt6b, svt6c, <span class="at">along=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>## &lt;5 x 11 x 6 SparseArray&gt; of type &quot;integer&quot; [nzcount=76 (23%)]:
+## ,,1
+##       [,1]  [,2]  [,3]  [,4] ...  [,8]  [,9] [,10] [,11]
+## [1,]     2     1     0     0   .     0     2     0     0
+## [2,]     0     0     1     0   .     0     0     0     0
+## [3,]     0     1     0     0   .     0     0     0     0
+## [4,]     0     0     0     1   .     0     0     1     0
+## [5,]     1     1     0     0   .     1     0     0     0
+## 
+## ...
+## 
+## ,,6
+##       [,1]  [,2]  [,3]  [,4] ...  [,8]  [,9] [,10] [,11]
+## [1,]     1     0     0     0   .     0     0     0     0
+## [2,]     0     0     2     0   .     0     0     0     0
+## [3,]     0     0     0     0   .     1     0     0     0
+## [4,]     1     0     1     0   .     0     0     1     0
+## [5,]     0     2     0     0   .     0     0     0     0</code></pre>
+<p>See <code>?SparseArray_abind</code> for more information and
+additional examples.</p>
+</div>
+<div id="matrixstats-methods" class="section level2">
+<h2>matrixStats methods</h2>
+<p>The <em><a href="https://bioconductor.org/packages/3.23/SparseArray">SparseArray</a></em>
+package provides memory-efficient col/row summarization methods for
+SVT_SparseMatrix objects:</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" tabindex="-1"></a>svt7 <span class="ot">&lt;-</span> <span class="fu">SVT_SparseArray</span>(<span class="at">dim=</span><span class="dv">5</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">dimnames=</span><span class="fu">list</span>(letters[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], LETTERS[<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]))</span>
+<span id="cb76-2"><a href="#cb76-2" tabindex="-1"></a>svt7[<span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">6</span>, <span class="dv">12</span><span class="sc">:</span><span class="dv">17</span>, <span class="dv">22</span><span class="sc">:</span><span class="dv">30</span>)] <span class="ot">&lt;-</span> <span class="dv">101</span><span class="sc">:</span><span class="dv">117</span></span>
+<span id="cb76-3"><a href="#cb76-3" tabindex="-1"></a></span>
+<span id="cb76-4"><a href="#cb76-4" tabindex="-1"></a><span class="fu">colVars</span>(svt7)</span></code></pre></div>
+<pre><code>##      A      B      C      D      E      F 
+## 2040.2 2080.8 2185.3 3467.0 2443.3    2.5</code></pre>
+<p>Note that multidimensional objects are supported:</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" tabindex="-1"></a><span class="fu">colVars</span>(svt2)</span></code></pre></div>
+<pre><code>##      A    B   C
+## a   80 1620 NaN
+## b  380    0   0
+## c  500    0   0
+## d 1520 2000 250</code></pre>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" tabindex="-1"></a><span class="fu">colVars</span>(svt2, <span class="at">dims=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>##        A        B        C 
+## 732.6316 857.6316      NaN</code></pre>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" tabindex="-1"></a><span class="fu">colAnyNAs</span>(svt2)</span></code></pre></div>
+<pre><code>##       A     B     C
+## a FALSE FALSE  TRUE
+## b FALSE FALSE FALSE
+## c FALSE FALSE FALSE
+## d FALSE FALSE FALSE</code></pre>
+<div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" tabindex="-1"></a><span class="fu">colAnyNAs</span>(svt2, <span class="at">dims=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>##     A     B     C 
+## FALSE FALSE  TRUE</code></pre>
+<p>See <code>?SparseArray_matrixStats</code> for more information and
+additional examples.</p>
+</div>
+<div id="rowsum-and-colsum" class="section level2">
+<h2><code>rowsum()</code> and <code>colsum()</code></h2>
+<p><code>rowsum()</code> and <code>colsum()</code> are supported:</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" tabindex="-1"></a><span class="fu">rowsum</span>(svt7, <span class="at">group=</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="dv">2</span><span class="sc">:</span><span class="dv">1</span>))</span></code></pre></div>
+<pre><code>##     A   B   C   D   E   F
+## 1   0 102 106 107 112 230
+## 2 101   0 208 108 220 230
+## 3   0   0 104   0 110 115</code></pre>
+<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" tabindex="-1"></a><span class="fu">colsum</span>(svt7, <span class="at">group=</span><span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;A&quot;</span>))</span></code></pre></div>
+<pre><code>##     A   B
+## a 113 209
+## b 318 217
+## c 219 110
+## d 221 111
+## e 223 112</code></pre>
+<p>See <code>?rowsum_methods</code> for more information and additional
+examples.</p>
+</div>
+<div id="matrix-multiplication-and-cross-product" class="section level2">
+<h2>Matrix multiplication and cross-product</h2>
+<p>SVT_SparseMatrix objects support matrix multiplication:</p>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" tabindex="-1"></a>svt7 <span class="sc">%*%</span> svt4</span></code></pre></div>
+<pre><code>##   [,1] [,2]
+## a  209  214
+## b  413  319
+## c  104  104
+## d  105  105
+## e  106  106</code></pre>
+<p>as well as <code>crossprod()</code> and
+<code>tcrossprod()</code>:</p>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" tabindex="-1"></a><span class="fu">crossprod</span>(svt4)</span></code></pre></div>
+<pre><code>##      [,1] [,2]
+## [1,]    7    3
+## [2,]    3    5</code></pre>
+<p>See <code>?SparseMatrix_mult</code> for more information and
+additional examples.</p>
+</div>
+</div>
+<div id="other-operations" class="section level1">
+<h1>Other operations</h1>
+<div id="generate-a-random-svt_sparsearray-object" class="section level2">
+<h2>Generate a random SVT_SparseArray object</h2>
+<p>Two convenience functions are provided for this:</p>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" tabindex="-1"></a><span class="fu">randomSparseArray</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">2</span>), <span class="at">density=</span><span class="fl">0.5</span>)</span></code></pre></div>
+<pre><code>## &lt;5 x 6 x 2 SparseArray&gt; of type &quot;double&quot; [nzcount=30 (50%)]:
+## ,,1
+##        [,1]   [,2]   [,3]   [,4]   [,5]   [,6]
+## [1,] -0.077 -1.000  0.000  0.000  0.000  0.000
+## [2,]  0.000 -3.200  0.000  0.000  0.000 -0.440
+## [3,]  0.910  0.000  1.100  0.000  0.000  0.420
+## [4,]  0.000  0.079  0.000  0.000  0.190  1.100
+## [5,]  0.000 -0.380  0.000  0.220  0.770 -0.620
+## 
+## ,,2
+##       [,1]  [,2]  [,3]  [,4]  [,5]  [,6]
+## [1,]  1.50  0.76 -2.00  0.00 -0.33  0.00
+## [2,]  0.00  0.38  1.20 -0.87  0.60  0.00
+## [3,] -1.50 -1.20  0.00  0.00  0.89  0.68
+## [4,] -0.26  0.00  0.00  0.00  0.00  0.00
+## [5,]  0.46  0.38  0.00  0.00 -0.14  0.00</code></pre>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" tabindex="-1"></a><span class="fu">poissonSparseArray</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">2</span>), <span class="at">density=</span><span class="fl">0.5</span>)</span></code></pre></div>
+<pre><code>## &lt;5 x 6 x 2 SparseArray&gt; of type &quot;integer&quot; [nzcount=30 (50%)]:
+## ,,1
+##      [,1] [,2] [,3] [,4] [,5] [,6]
+## [1,]    0    0    2    2    1    0
+## [2,]    1    0    2    2    1    0
+## [3,]    1    0    0    2    0    0
+## [4,]    0    0    0    0    0    0
+## [5,]    1    0    2    0    0    2
+## 
+## ,,2
+##      [,1] [,2] [,3] [,4] [,5] [,6]
+## [1,]    0    1    1    1    1    1
+## [2,]    0    2    0    0    0    1
+## [3,]    0    6    1    0    2    0
+## [4,]    0    0    1    1    1    1
+## [5,]    1    1    0    1    0    1</code></pre>
+<p>See <code>?randomSparseArray</code> for more information and
+additional examples.</p>
+</div>
+<div id="readwrite-a-sparse-matrix-fromto-a-csv-file" class="section level2">
+<h2>Read/write a sparse matrix from/to a CSV file</h2>
+<p>Use <code>writeSparseCSV()</code> to write a sparse matrix to a CSV
+file:</p>
+<div class="sourceCode" id="cb98"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" tabindex="-1"></a>csv_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
+<span id="cb98-2"><a href="#cb98-2" tabindex="-1"></a><span class="fu">writeSparseCSV</span>(svt7, csv_file)</span></code></pre></div>
+<p>Use <code>readSparseCSV()</code> to read the file. This will import
+the data as an SVT_SparseMatrix object:</p>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1" tabindex="-1"></a><span class="fu">readSparseCSV</span>(csv_file)</span></code></pre></div>
+<pre><code>## &lt;5 x 6 SparseMatrix&gt; of type &quot;integer&quot; [nzcount=17 (57%)]:
+##     A   B   C   D   E   F
+## a   0 102   0 107   0 113
+## b 101   0 103 108 109 114
+## c   0   0 104   0 110 115
+## d   0   0 105   0 111 116
+## e   0   0 106   0 112 117</code></pre>
+<p>See <code>?readSparseCSV</code> for more information and additional
+examples.</p>
+</div>
+</div>
+<div id="comparison-with-dgcmatrix-objects" class="section level1">
+<h1>Comparison with dgCMatrix objects</h1>
+<div id="svt-layout-vs-csc-layout" class="section level2">
+<h2>“SVT layout” vs “CSC layout”</h2>
+<p>The nonzero data of a SVT_SparseArray object is stored in a
+<em>Sparse Vector Tree</em>. This internal data representation is
+referred to as the “SVT layout”. It is similar to the “CSC layout”
+(compressed, sparse, column-oriented format) used by CsparseMatrix
+derivatives from the <em><a href="https://CRAN.R-project.org/package=Matrix">Matrix</a></em>
+package, like dgCMatrix or lgCMatrix objects, but with the following
+improvements:</p>
+<ul>
+<li><p>The “SVT layout” supports sparse arrays of arbitrary
+dimensions.</p></li>
+<li><p>With the “SVT layout”, the sparse data can be of any type.
+Whereas CsparseMatrix derivatives only support sparse data of type
+<code>&quot;double&quot;</code> or <code>&quot;logical&quot;</code>.</p></li>
+<li><p>The “SVT layout” imposes no limit on the number of nonzero array
+elements that can be stored. With dgCMatrix/lgCMatrix objects, this
+number must be &lt; 2^31.</p></li>
+<li><p>Overall, the “SVT layout” allows more efficient operations on
+SVT_SparseArray objects.</p></li>
+</ul>
+<p>See <code>?SVT_SparseArray</code> for more information about the “SVT
+layout”.</p>
+</div>
+<div id="working-with-a-big-sparse-dataset" class="section level2">
+<h2>Working with a big sparse dataset</h2>
+<p>The “1.3 Million Brain Cell Dataset” from 10x Genomics is a sparse 2D
+dataset with more than 2^31 nonzero values. The dataset is stored in an
+HDF5 file that is available via ExperimentHub (resource id
+<code>EH1039</code>):</p>
+<div class="sourceCode" id="cb101"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(HDF5Array))</span>
+<span id="cb101-2"><a href="#cb101-2" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(ExperimentHub))</span>
+<span id="cb101-3"><a href="#cb101-3" tabindex="-1"></a>hub <span class="ot">&lt;-</span> <span class="fu">ExperimentHub</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb102"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" tabindex="-1"></a>oneM <span class="ot">&lt;-</span> <span class="fu">TENxMatrix</span>(hub[[<span class="st">&quot;EH1039&quot;</span>]], <span class="at">group=</span><span class="st">&quot;mm10&quot;</span>)</span></code></pre></div>
+<pre><code>## TENxBrainData not installed.
+##   Full functionality, documentation, and loading of data might not be possible without installing</code></pre>
+<pre><code>## downloading 1 resources</code></pre>
+<pre><code>## retrieving 1 resource</code></pre>
+<pre><code>## loading from cache</code></pre>
+<div class="sourceCode" id="cb107"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb107-1"><a href="#cb107-1" tabindex="-1"></a>oneM</span></code></pre></div>
+<pre><code>## &lt;27998 x 1306127&gt; sparse TENxMatrix object of type &quot;integer&quot;:
+##                      AAACCTGAGATAGGAG-1 ... TTTGTCATCTGAAAGA-133
+## ENSMUSG00000051951                    0   .                    0
+## ENSMUSG00000089699                    0   .                    0
+## ENSMUSG00000102343                    0   .                    0
+## ENSMUSG00000025900                    0   .                    0
+## ENSMUSG00000109048                    0   .                    0
+##                ...                    .   .                    .
+## ENSMUSG00000079808                    0   .                    0
+## ENSMUSG00000095041                    1   .                    0
+## ENSMUSG00000063897                    0   .                    0
+## ENSMUSG00000096730                    0   .                    0
+## ENSMUSG00000095742                    0   .                    0</code></pre>
+<p><code>oneM</code> is a TENxMatrix object. This is a particular kind
+of sparse DelayedArray object where the data is on disk in an HDF5 file.
+See <code>?TENxMatrix</code> in the <em><a href="https://CRAN.R-project.org/package=HDF5Array">HDF5Array</a></em>
+package for more information about TENxMatrix objects.</p>
+<p>Note that the object has more than 2^31 nonzero values:</p>
+<div class="sourceCode" id="cb109"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb109-1"><a href="#cb109-1" tabindex="-1"></a><span class="fu">nzcount</span>(oneM)</span></code></pre></div>
+<pre><code>## [1] 2624828308</code></pre>
+<p>The standard way to load the data of a TENxMatrix object (or any
+DelayedArray derivative) from disk to memory is to simply coerce the
+object to the desired in-memory representation.</p>
+<p>For example, to load the data in an SVT_SparseArray object:</p>
+<div class="sourceCode" id="cb111"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb111-1"><a href="#cb111-1" tabindex="-1"></a><span class="co"># </span><span class="al">WARNING</span><span class="co">: This takes a couple of minutes on a modern laptop, and will</span></span>
+<span id="cb111-2"><a href="#cb111-2" tabindex="-1"></a><span class="co"># consume about 25Gb of RAM!</span></span>
+<span id="cb111-3"><a href="#cb111-3" tabindex="-1"></a>svt <span class="ot">&lt;-</span> <span class="fu">as</span>(oneM, <span class="st">&quot;SVT_SparseArray&quot;</span>)</span></code></pre></div>
+<p>To load the data in a dgCMatrix object:</p>
+<div class="sourceCode" id="cb112"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1" tabindex="-1"></a><span class="co"># This will fail because &#39;oneM&#39; has more than 2^31 nonzero values!</span></span>
+<span id="cb112-2"><a href="#cb112-2" tabindex="-1"></a><span class="fu">as</span>(oneM, <span class="st">&quot;dgCMatrix&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="learn-more" class="section level1">
+<h1>Learn more</h1>
+<p>Please consult the individual man pages in the <em><a href="https://bioconductor.org/packages/3.23/SparseArray">SparseArray</a></em>
+package to learn more about SVT_SparseArray objects and about the
+package. A good starting point is the man page for SparseArray objects:
+<code>?SparseArray</code></p>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session information</h1>
+<div class="sourceCode" id="cb113"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb113-1"><a href="#cb113-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] ExperimentHub_3.2.0   AnnotationHub_4.2.0   BiocFileCache_3.2.0  
+##  [4] dbplyr_2.5.2          HDF5Array_1.40.0      h5mread_1.4.0        
+##  [7] rhdf5_2.56.0          DelayedArray_0.38.1   SparseArray_1.12.2   
+## [10] S4Arrays_1.12.0       IRanges_2.46.0        abind_1.4-8          
+## [13] S4Vectors_0.50.0      MatrixGenerics_1.24.0 matrixStats_1.5.0    
+## [16] BiocGenerics_0.58.0   generics_0.1.4        Matrix_1.7-5         
+## [19] BiocStyle_2.40.0     
+## 
+## loaded via a namespace (and not attached):
+##  [1] KEGGREST_1.52.0      xfun_0.57            bslib_0.10.0        
+##  [4] httr2_1.2.2          Biobase_2.72.0       lattice_0.22-9      
+##  [7] rhdf5filters_1.24.0  vctrs_0.7.3          tools_4.6.0         
+## [10] curl_7.1.0           tibble_3.3.1         AnnotationDbi_1.74.0
+## [13] RSQLite_2.4.6        blob_1.3.0           pkgconfig_2.0.3     
+## [16] lifecycle_1.0.5      compiler_4.6.0       Biostrings_2.80.0   
+## [19] Seqinfo_1.2.0        htmltools_0.5.9      sys_3.4.3           
+## [22] buildtools_1.0.0     sass_0.4.10          yaml_2.3.12         
+## [25] pillar_1.11.1        crayon_1.5.3         jquerylib_0.1.4     
+## [28] cachem_1.1.0         tidyselect_1.2.1     digest_0.6.39       
+## [31] purrr_1.2.2          dplyr_1.2.1          BiocVersion_3.23.1  
+## [34] maketools_1.3.2      fastmap_1.2.0        grid_4.6.0          
+## [37] cli_3.6.6            magrittr_2.0.5       withr_3.0.2         
+## [40] filelock_1.0.3       rappdirs_0.3.4       bit64_4.8.0         
+## [43] rmarkdown_2.31       XVector_0.52.0       httr_1.4.8          
+## [46] bit_4.6.0            png_0.1-9            memoise_2.0.1       
+## [49] evaluate_1.0.5       knitr_1.51           rlang_1.2.0         
+## [52] glue_1.8.1           DBI_1.3.0            BiocManager_1.30.27 
+## [55] jsonlite_2.0.0       R6_2.6.1             Rhdf5lib_2.0.0</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#install-and-load-the-package" id="toc-install-and-load-the-package">Install and load the
+package</a></li>
+<li><a href="#the-sparsearray-virtual-class-and-its-two-concrete-subclasses" id="toc-the-sparsearray-virtual-class-and-its-two-concrete-subclasses">The
+SparseArray virtual class and its two concrete subclasses</a></li>
+<li><a href="#svt_sparsearray-objects" id="toc-svt_sparsearray-objects">SVT_SparseArray objects</a>
+<ul>
+<li><a href="#construction" id="toc-construction">Construction</a></li>
+<li><a href="#svt_sparsearray-vs-coo_sparsearray" id="toc-svt_sparsearray-vs-coo_sparsearray">SVT_SparseArray vs
+COO_SparseArray</a></li>
+</ul></li>
+<li><a href="#the-sparsearray-api" id="toc-the-sparsearray-api">The
+SparseArray API</a>
+<ul>
+<li><a href="#the-core-array-api" id="toc-the-core-array-api">The core
+array API</a></li>
+<li><a href="#type-and-is_sparse" id="toc-type-and-is_sparse">type() and
+is_sparse()</a></li>
+<li><a href="#is_nonzero-and-the-nz-functions" id="toc-is_nonzero-and-the-nz-functions">is_nonzero() and the nz*()
+functions</a></li>
+<li><a href="#subsetting-and-subassignment" id="toc-subsetting-and-subassignment">Subsetting and
+subassignment</a></li>
+<li><a href="#summarization-methods-whole-array" id="toc-summarization-methods-whole-array">Summarization methods (whole
+array)</a></li>
+<li><a href="#operations-from-the-arith-compare-logic-math-math2-and-complex-groups" id="toc-operations-from-the-arith-compare-logic-math-math2-and-complex-groups">Operations
+from the Arith, Compare, Logic, Math, Math2, and Complex groups</a></li>
+</ul></li>
+<li><a href="#the-2d-api" id="toc-the-2d-api">The 2D API</a>
+<ul>
+<li><a href="#svt_sparsematrix-objects" id="toc-svt_sparsematrix-objects">SVT_SparseMatrix objects</a></li>
+<li><a href="#transposition" id="toc-transposition">Transposition</a></li>
+<li><a href="#combine-multidimensional-objects-along-a-given-dimension" id="toc-combine-multidimensional-objects-along-a-given-dimension">Combine
+multidimensional objects along a given dimension</a></li>
+<li><a href="#matrixstats-methods" id="toc-matrixstats-methods">matrixStats methods</a></li>
+<li><a href="#rowsum-and-colsum" id="toc-rowsum-and-colsum"><code>rowsum()</code> and
+<code>colsum()</code></a></li>
+<li><a href="#matrix-multiplication-and-cross-product" id="toc-matrix-multiplication-and-cross-product">Matrix multiplication
+and cross-product</a></li>
+</ul></li>
+<li><a href="#other-operations" id="toc-other-operations">Other
+operations</a>
+<ul>
+<li><a href="#generate-a-random-svt_sparsearray-object" id="toc-generate-a-random-svt_sparsearray-object">Generate a random
+SVT_SparseArray object</a></li>
+<li><a href="#readwrite-a-sparse-matrix-fromto-a-csv-file" id="toc-readwrite-a-sparse-matrix-fromto-a-csv-file">Read/write a sparse
+matrix from/to a CSV file</a></li>
+</ul></li>
+<li><a href="#comparison-with-dgcmatrix-objects" id="toc-comparison-with-dgcmatrix-objects">Comparison with dgCMatrix
+objects</a>
+<ul>
+<li><a href="#svt-layout-vs-csc-layout" id="toc-svt-layout-vs-csc-layout">“SVT layout” vs “CSC layout”</a></li>
+<li><a href="#working-with-a-big-sparse-dataset" id="toc-working-with-a-big-sparse-dataset">Working with a big sparse
+dataset</a></li>
+</ul></li>
+<li><a href="#learn-more" id="toc-learn-more">Learn more</a></li>
+<li><a href="#session-information" id="toc-session-information">Session
+information</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

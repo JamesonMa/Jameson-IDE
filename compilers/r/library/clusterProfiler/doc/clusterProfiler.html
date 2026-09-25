@@ -1,0 +1,99 @@
+<html><head><meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content="Guangchuang Yu School of Basic Medical Sciences, Southern Medical University">
+      
+      <title>Statistical analysis and visualization of functional profiles for genes and gene clusters</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">Statistical analysis and visualization of functional profiles for genes and gene clusters</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><h1 id="overview">Overview</h1>
+<p><a href="https://www.bioconductor.org/packages/clusterProfiler">clusterProfiler</a> implements methods to analyze and visualize functional profiles of genomic coordinates (supported by <a href="https://www.bioconductor.org/packages/ChIPseeker">ChIPseeker</a>), gene and gene clusters.</p>
+<h2 id="supported-analysis">Supported Analysis</h2>
+<ul>
+<li>Over-Representation Analysis</li>
+<li>Gene Set Enrichment Analysis</li>
+<li>Biological theme comparison</li>
+</ul>
+<h2 id="supported-ontologiespathways">Supported ontologies/pathways</h2>
+<ul>
+<li>Disease Ontology (via <a href="https://www.bioconductor.org/packages/DOSE">DOSE</a>)</li>
+<li><a href="http://ncg.kcl.ac.uk/">Network of Cancer Gene</a> (via <a href="https://www.bioconductor.org/packages/DOSE">DOSE</a>)</li>
+<li><a href="http://www.disgenet.org/web/DisGeNET/menu/home">DisGeNET</a> (via <a href="https://www.bioconductor.org/packages/DOSE">DOSE</a>)</li>
+<li>Gene Ontology (supports many species with GO annotation query online via <a href="https://bioconductor.org/packages/AnnotationHub/">AnnotationHub</a>)</li>
+<li>KEGG Pathway and Module with latest online data (supports more than 4000 species listed in <a href="http://www.genome.jp/kegg/catalog/org_list.html" class="uri">http://www.genome.jp/kegg/catalog/org_list.html</a>)</li>
+<li>Reactome Pathway (via <a href="https://www.bioconductor.org/packages/ReactomePA">ReactomePA</a>)</li>
+<li>DAVID (via <a href="https://www.bioconductor.org/packages/RDAVIDWebService">RDAVIDWebService</a>)</li>
+<li><a href="http://software.broadinstitute.org/gsea/msigdb">Molecular Signatures Database</a>
+<ul>
+<li>hallmark gene sets</li>
+<li>positional gene sets</li>
+<li>curated gene sets</li>
+<li>motif gene sets</li>
+<li>computational gene sets</li>
+<li>GO gene sets</li>
+<li>oncogenic signatures</li>
+<li>immunologic signatures</li>
+</ul></li>
+<li>Other Annotations
+<ul>
+<li>from other sources (e.g. <a href="http://www.disgenet.org/web/DisGeNET/menu/home">DisGeNET</a> as <a href="https://guangchuangyu.github.io/2015/05/use-clusterprofiler-as-an-universal-enrichment-analysis-tool/">an example</a>)</li>
+<li>user’s annotation</li>
+<li>customized ontology</li>
+<li>and many others</li>
+</ul></li>
+</ul>
+<h2 id="visualization">Visualization</h2>
+<ul>
+<li>barplot</li>
+<li>cnetplot</li>
+<li>dotplot</li>
+<li>emapplot</li>
+<li>gseaplot</li>
+<li>goplot</li>
+<li>upsetplot</li>
+</ul>
+<h1 id="vignette">Vignette</h1>
+<p>Please go to <a href="https://yulab-smu.github.io/clusterProfiler-book/" class="uri">https://yulab-smu.github.io/clusterProfiler-book/</a> for the full vignette.</p>
+<h1 id="citation">Citation</h1>
+<p>If you use <a href="https://www.bioconductor.org/packages/clusterProfiler">clusterProfiler</a> in published research, please cite:</p>
+<p><strong><em>G Yu</em></strong>, LG Wang, Y Han, QY He. clusterProfiler: an R package for comparing biological themes among gene clusters. <strong><em>OMICS: A Journal of Integrative Biology</em></strong> 2012, 16(5):284-287. doi:<a href="http://dx.doi.org/10.1089/omi.2011.0118">10.1089/omi.2011.0118</a></p>
+<h1 id="need-helps">Need helps?</h1>
+<p>If you have questions/issues, please visit <a href="https://guangchuangyu.github.io/software/clusterProfiler/">clusterProfiler homepage</a> first. Your problems are mostly documented. If you think you found a bug, please follow <a href="https://guangchuangyu.github.io/2016/07/how-to-bug-author/">the guide</a> and provide a reproducible example to be posted on <a href="https://github.com/GuangchuangYu/clusterProfiler/issues">github issue tracker</a>. For questions, please post to <a href="https://support.bioconductor.org/">Bioconductor support site</a> and tag your post with <em>clusterProfiler</em>.</p></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#overview" id="toc-overview">Overview</a>
+<ul>
+<li><a href="#supported-analysis" id="toc-supported-analysis">Supported Analysis</a></li>
+<li><a href="#supported-ontologiespathways" id="toc-supported-ontologiespathways">Supported ontologies/pathways</a></li>
+<li><a href="#visualization" id="toc-visualization">Visualization</a></li>
+</ul></li>
+<li><a href="#vignette" id="toc-vignette">Vignette</a></li>
+<li><a href="#citation" id="toc-citation">Citation</a></li>
+<li><a href="#need-helps" id="toc-need-helps">Need helps?</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   
+
+</body></html>

@@ -1,0 +1,43 @@
+Package: Seqinfo
+Title: A simple S4 class for storing basic information about a
+        collection of genomic sequences
+Description: The Seqinfo class stores the names, lengths, circularity
+        flags, and genomes for a particular collection of sequences.
+        These sequences are typically the chromosomes and/or scaffolds
+        of a specific genome assembly of a given organism. Seqinfo
+        objects are rarely used as standalone objects. Instead, they
+        are used as part of higher-level objects to represent their
+        seqinfo() component. Examples of such higher-level objects are
+        GRanges, RangedSummarizedExperiment, VCF, GAlignments, etc...
+        defined in other Bioconductor infrastructure packages.
+biocViews: Infrastructure, DataRepresentation, GenomeAssembly,
+        Annotation, GenomeAnnotation
+URL: https://bioconductor.org/packages/Seqinfo
+BugReports: https://github.com/Bioconductor/Seqinfo/issues
+Version: 1.2.0
+License: Artistic-2.0
+Encoding: UTF-8
+Authors@R: person("Hervé", "Pagès", role=c("aut", "cre"),
+		  email="hpages.on.github@gmail.com",
+		  comment=c(ORCID="0009-0002-8272-4522"))
+Depends: methods, BiocGenerics
+Imports: stats, S4Vectors (>= 0.47.6), IRanges
+Suggests: GenomeInfoDb, GenomicRanges, BSgenome, GenomicFeatures,
+        TxDb.Hsapiens.UCSC.hg38.knownGene,
+        TxDb.Dmelanogaster.UCSC.dm3.ensGene,
+        BSgenome.Hsapiens.UCSC.hg38, BSgenome.Celegans.UCSC.ce2, RUnit,
+        knitr, rmarkdown, BiocStyle
+VignetteBuilder: knitr
+Collate: utils.R rankSeqlevels.R seqinfo.R sortSeqlevels.R
+        Seqinfo-class.R seqlevelsInUse.R GenomeDescription-class.R
+        zzz.R
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 13:05:07 UTC
+RemoteUrl: https://github.com/bioc/Seqinfo
+RemoteRef: RELEASE_3_23
+RemoteSha: 345dd61b77c8ff7e90ecc587d7b32c4d7189f690
+NeedsCompilation: no
+Packaged: 2026-05-04 08:52:58 UTC; root
+Author: Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>)
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Built: R 4.6.0; ; 2026-05-04 08:56:19 UTC; windows

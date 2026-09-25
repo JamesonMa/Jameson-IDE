@@ -1,0 +1,302 @@
+Agent                   Agent Class
+AgentRegistry           AgentRegistry Class
+AgentTeam               AgentTeam Class
+AiHubMixProvider        AiHubMix Provider Class
+AnthropicProvider       Anthropic Provider Class
+BailianProvider         Bailian Provider Class
+ChannelAdapter          Channel Adapter
+ChannelRuntime          Channel Runtime
+ChannelSessionStore     Channel Session Store
+ChatSession             ChatSession Class
+Computer                Computer Class
+DeepSeekProvider        DeepSeek Provider Class
+EmbeddingModelV1        Embedding Model V1 (Abstract Base Class)
+FeishuChannelAdapter    Feishu Channel Adapter
+FileChannelSessionStore
+                        File Channel Session Store
+Flow                    Flow Class
+GeminiProvider          Gemini Provider Class
+GenerateResult          Generate Result
+HookHandler             Hook Handler
+LanguageModelV1         Language Model V1 (Abstract Base Class)
+McpClient               MCP Client
+McpDiscovery            MCP Discovery Class
+McpRouter               MCP Router Class
+McpServer               MCP Server
+McpSseClient            MCP SSE Client
+Middleware              Middleware (Base Class)
+Mission                 Mission Class
+MissionHookHandler      MissionHookHandler Class
+MissionOrchestrator     MissionOrchestrator Class
+MissionStep             MissionStep Class
+NvidiaProvider          NVIDIA Provider Class
+ObjectStrategy          Object Strategy
+OpenAIProvider          OpenAI Provider Class
+OpenRouterProvider      OpenRouter Provider Class
+OutputStrategy          Output Strategy Interface
+ProjectMemory           Project Memory Class
+ProviderRegistry        Provider Registry
+SandboxManager          SandboxManager Class
+SharedSession           SharedSession Class
+Skill                   Skill Class
+SkillRegistry           SkillRegistry Class
+SkillStore              Skill Store Class
+SlmEngine               SLM Engine Class
+StepfunProvider         Stepfun Provider Class
+Telemetry               Telemetry Class
+Tool                    Tool Class
+VolcengineProvider      Volcengine Provider Class
+XAIProvider             xAI Provider Class
+agent_evals             Performance & Benchmarking: Agent Evals
+agent_library           Agent Library: Built-in Agent Specialists
+agent_registry          Agent Registry: Agent Storage and Lookup
+aiChatServer            AI Chat Server
+aiChatUI                AI Chat UI
+aisdk-package           aisdk: AI SDK for R
+analyze_r_package       Analyze R Package for Skill Creation
+apiConfigServer         API Configuration Server
+apiConfigUI             API Configuration UI
+api_diagnostics         API Diagnostics
+auth_hook               Human-in-the-Loop Authorization
+auto_fix                Autonomous Data Science Pipelines
+benchmark_agent         Benchmark Agent
+cache                   Caching System
+cache_tool              Cache Tool
+channel_documents       Channel Document Ingest
+channel_feishu          Feishu Channel Adapter
+channel_runtime         Channel Runtime
+channel_session_store   Channel Session Store
+channel_types           Channel Integration Types
+check_api               Connect and Diagnose API Reachability
+check_ast_safety        Check AST Safety
+check_sdk_compatibility
+                        Check SDK Version Compatibility
+clear_ai_session        Clear AI Engine Session
+compat                  Compatibility Layer: Feature Flags and
+                        Migration Support
+configure_api           Launch API Configuration App
+console                 Console Chat: Interactive REPL
+console_agent           Console Agent: Intelligent Terminal Assistant
+console_chat            Start Console Chat
+console_confirm         Console Confirmation Prompt
+console_input           Console Text Input
+console_menu            Console Interactive Menu
+content_image           Create Image Content
+content_text            Create Text Content
+context                 Context Management
+core_api                Core API: High-Level Functions
+core_object             Core Object API: Structured Output Generation
+create_agent            Create an Agent
+create_agent_registry   Create an Agent Registry
+create_aihubmix         Create AiHubMix Provider
+create_aihubmix_anthropic
+                        Create AiHubMix Provider (Anthropic API Format)
+create_aihubmix_gemini
+                        Create AiHubMix Provider (Gemini API Format)
+create_anthropic        Create Anthropic Provider
+create_bailian          Create Alibaba Cloud Bailian Provider
+create_channel_runtime
+                        Create a Channel Runtime
+create_chat_session     Create a Chat Session
+create_coder_agent      Create a CoderAgent
+create_computer_tools   Create Computer Tools
+create_console_agent    Create Console Agent
+create_console_tools    Create Console Tools
+create_custom_provider
+                        Create a custom provider
+create_data_agent       Create a DataAgent
+create_deepseek         Create DeepSeek Provider
+create_deepseek_anthropic
+                        Create DeepSeek Provider (Anthropic API Format)
+create_embeddings       Create Embeddings
+create_env_agent        Create an EnvAgent
+create_feishu_channel_adapter
+                        Create a Feishu Channel Adapter
+create_feishu_channel_runtime
+                        Create a Feishu Channel Runtime
+create_feishu_event_processor
+                        Create a Feishu Event Processor
+create_feishu_webhook_handler
+                        Create a Feishu Webhook Handler
+create_file_agent       Create a FileAgent
+create_file_channel_session_store
+                        Create a File Channel Session Store
+create_flow             Create a Flow
+create_gemini           Create Gemini Provider
+create_hooks            Create Hooks
+create_mcp_client       Create an MCP Client
+create_mcp_server       Create an MCP Server
+create_mcp_sse_client   Create MCP SSE Client
+create_mission          Create a Mission
+create_mission_hooks    Create Mission Hooks
+create_mission_orchestrator
+                        Create a Mission Orchestrator
+create_nvidia           Create NVIDIA Provider
+create_openai           Create OpenAI Provider
+create_openrouter       Create OpenRouter Provider
+create_orchestration    Create Orchestration Flow (Compatibility
+                        Wrapper)
+create_permission_hook
+                        Create Permission Hook
+create_planner_agent    Create a PlannerAgent
+create_r_code_tool      Create R Code Interpreter Tool
+create_sandbox_system_prompt
+                        Create Sandbox System Prompt
+create_schema_from_func
+                        Create Schema from Function
+create_session          Create Session (Compatibility Wrapper)
+create_shared_session   Create a Shared Session
+create_skill            Create Skill Scaffold
+create_skill_architect_agent
+                        Create a SkillArchitect Agent
+create_skill_forge_tools
+                        Create Skill Forge Tools
+create_skill_registry   Create a Skill Registry
+create_skill_tools      Create Skill Tools
+create_standard_registry
+                        Create Standard Agent Registry
+create_step             Create a MissionStep
+create_stepfun          Create Stepfun Provider
+create_team             Create an Agent Team
+create_telemetry        Create Telemetry
+create_visualizer_agent
+                        Create a VisualizerAgent
+create_volcengine       Create Volcengine/Ark Provider
+create_xai              Create xAI Provider
+create_z_ggtree         Create Schema for ggtree Function
+download_model          Download Model from Hugging Face
+enable_api_tests        Check if API tests should be enabled
+execute_tool_calls      Execute Tool Calls
+expect_llm_pass         Expect LLM Pass
+expect_no_hallucination
+                        Expect No Hallucination
+expect_tool_selection   Expect Tool Selection
+extract_geom_params     Extract Geom Parameters from ggproto Object
+fetch_api_models        Fetch available models from API provider
+generate_text           Generate Text
+get_ai_session          Get AI Engine Session
+get_anthropic_base_url
+                        Get Anthropic base URL from environment
+get_anthropic_model     Get Anthropic model name from environment
+get_anthropic_model_id
+                        Get Anthropic model ID from environment
+get_default_registry    Get Default Registry
+get_memory              Get or Create Global Memory
+get_model               Get Default Model
+get_model_info          Get Full Model Info
+get_openai_base_url     Get OpenAI Base URL from environment
+get_openai_embedding_model
+                        Get OpenAI Embedding Model from environment
+get_openai_model        Get OpenAI Model from environment
+get_openai_model_id     Get OpenAI Model ID from environment
+get_r_context           Get R Context
+get_skill_store         Get Skill Store
+ggplot_to_frontend_json
+                        Export ggplot as Frontend-Ready JSON
+ggplot_to_z_object      Convert ggplot Object to Schema-Compliant
+                        Structure
+has_api_key             Check if specific provider key is available
+hooks                   Hooks System
+hypothesis_fix_verify   Hypothesis-Fix-Verify Loop
+init_skill              Initialize a New Skill
+install_skill           Install a Skill
+knitr_engine            Knitr Engine for AI
+list_local_models       List Available Local Models
+list_models             List Models for Provider
+list_skills             List Installed Skills
+load_chat_session       Load a Chat Session
+mcp_discover            Distributed MCP Ecosystem
+mcp_router              Create MCP Router
+migrate_pattern         Migrate Legacy Code
+mission_hooks           Mission Hook System
+mission_orchestrator    Mission Orchestrator: Concurrent Mission
+                        Scheduling
+model                   Model Shortcut
+model_defaults          Default Model Configuration
+multimodal              Multimodal Helpers
+package_skill           Package a Skill
+print.GenerateObjectResult
+                        Print GenerateObjectResult
+print.benchmark_result
+                        Print Benchmark Result
+print.z_schema          Print Method for z_schema
+print_migration_guide   Print Migration Guide
+project_memory          Project Memory System
+provider_custom         Custom Provider Factory
+r_data_tasks            Create R Data Tasks Benchmark
+reactive_tool           Reactive Tool
+register_ai_engine      Register AI Engine
+reload_env              Reload project-level environment variables
+render_text             Render Markdown Text
+request_authorization   Request User Authorization (HITL)
+run_feishu_webhook_server
+                        Run a Feishu Webhook Server
+safe_eval               Safe Eval with Timeout
+safe_parse_json         Safe JSON Parser
+safe_to_json            Safe Serialization to JSON
+sandbox                 R-Native Programmatic Sandbox
+scan_skills             Scan for Skills
+schema                  Schema DSL: Lightweight JSON Schema Generator
+schema_generator        Schema Generator
+schema_to_json          Convert Schema to JSON
+sdk_clear_protected_vars
+                        Reset the Variable Registry
+sdk_feature             Get Feature Flag
+sdk_get_var_metadata    Get Metadata for a Protected Variable
+sdk_is_var_locked       Check if a Variable is Locked
+sdk_list_features       List Feature Flags
+sdk_protect_var         Protect a Variable from Agent Modification
+sdk_reset_features      Reset Feature Flags
+sdk_set_feature         Set Feature Flag
+sdk_unprotect_var       Unprotect a Variable
+search_skills           Search Skills
+session                 Session Management: Stateful Chat Sessions
+set_model               Set Default Model
+shared_session          SharedSession: Enhanced Multi-Agent Session
+                        Management
+skill_manifest          Skill Manifest Specification
+skill_registry          Skill Registry: Scan and Manage Skills
+skill_store             Global Skill Store
+slm_engine              Native SLM (Small Language Model) Engine
+spec_model              Specification Layer: Model Interfaces
+start_feishu_webhook_server
+                        Start a Feishu Webhook Server
+stdlib_agents           Standard Agent Library: Built-in Specialist
+                        Agents
+strategy                Output Strategy System
+stream_text             Stream Text
+team                    Agent Team: Automated Multi-Agent Orchestration
+test_new_skill          Test a Newly Created Skill
+tool                    Create a Tool
+uninstall_skill         Uninstall a Skill
+update_renviron         Update .Renviron with new values
+utils_capture           Capture R Console Output
+utils_http              Utilities: HTTP and Retry Logic
+utils_json              JSON Utilities
+utils_middleware        Utilities: Middleware System
+utils_registry          Utilities: Provider Registry
+variable_registry       Variable Registry
+walk_ast                Walk an Abstract Syntax Tree
+wrap_language_model     Wrap Language Model with Middleware
+wrap_reactive_tools     Wrap Reactive Tools
+z_aes_mapping           Aesthetic Mapping Schema
+z_any                   Create Any Schema
+z_array                 Create Array Schema
+z_boolean               Create Boolean Schema
+z_coord                 Coordinate System Schema
+z_dataframe             Create Dataframe Schema
+z_describe              Describe Schema
+z_empty_object          Create Empty Object Schema
+z_enum                  Create Enum Schema
+z_facet                 Facet Schema
+z_geom_layer            Build Geom-Specific Layer Schema
+z_ggplot                GGPlot Object Schema
+z_guide                 Guide Schema
+z_integer               Create Integer Schema
+z_layer                 Layer Schema
+z_number                Create Number Schema
+z_object                Create Object Schema
+z_position              Position Adjustment Schema
+z_scale                 Scale Schema
+z_string                Create String Schema
+z_theme                 Theme Schema

@@ -1,0 +1,229 @@
+---
+title: "The _cigarillo_ package"
+author:
+- name: Hervé Pagès
+  affiliation: Fred Hutch Cancer Center, Seattle, WA
+date: "Compiled `r BiocStyle::doc_date()`; Modified 21 September 2025"
+package: cigarillo
+vignette: |
+  %\VignetteIndexEntry{The cigarillo package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document
+---
+
+```{r setup, include=FALSE}
+library(BiocStyle)
+library(cigarillo)
+```
+
+
+# Introduction
+
+
+CIGAR stands for Concise Idiosyncratic Gapped Alignment Report.
+CIGAR strings are typically found in the SAM/BAM files produced by
+most aligners and in the AIRR-formatted output produced by IgBLAST.
+
+`r Biocpkg("cigarillo")` is an R/Bioconductor infrastructure package
+that provides functions to parse and inspect CIGAR strings, trim them,
+turn them into ranges of positions relative to the "query space"
+or "reference space", and project positions or sequences from
+one space to the other.
+
+Note that these operations are low-level operations that the user
+rarely needs to perform directly. More typically, they are performed
+behind the scene by higher-level functionality implemented in other
+packages like Bioconductor packages `r Biocpkg("GenomicAlignments")`
+and `r Biocpkg("igblastr")`.
+
+
+# Install and load the package
+
+
+Like any Bioconductor package, `r Biocpkg("cigarillo")` should be installed
+with `BiocManager::install()`:
+```{r install, eval=FALSE}
+if (!require("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("cigarillo")
+```
+
+`BiocManager::install()` will take care of installing the package
+dependencies that are missing.
+
+Load the package:
+```{r load, message=FALSE}
+library(cigarillo)
+```
+
+
+# A quick overview of the functionality available in the package
+
+
+## Explode CIGAR strings
+
+Functions `explode_cigar_ops()` and `explode_cigar_oplens()` can
+be used to extract the letters (or lengths) of the CIGAR operations
+contained in a vector of CIGAR strings:
+```{r explode_cigars}
+my_cigars <- c(
+    "40M2I9M",
+    "60M",
+    "3H15M55N4M2I6M2D5M6S",
+    "50=2X3=1X10=",
+    "2S10M2000N15M",
+    "3H33M5H"
+)
+explode_cigar_ops(my_cigars)
+explode_cigar_oplens(my_cigars)
+```
+
+See `?explode_cigars` for more information and additional examples.
+
+## Tabulate CIGAR operations
+
+Function `tabulate_cigar_ops()` can be used to count the occurences
+of CIGAR operations in a vector of CIGAR strings:
+```{r tabulate_cigar_ops}
+tabulate_cigar_ops(my_cigars)
+```
+
+See `?tabulate_cigar_ops` for more information and additional examples.
+
+## Calculate the number of positions spanned by a CIGAR
+
+Three functions are provided to calculate the _extent_ of a CIGAR string,
+that is, the number of positions spanned by the alignment that it describes:
+
+1. `cigar_extent_along_ref()` calculates the extent along
+   the "reference space".
+
+2. `cigar_extent_along_query()` calculates the extent along
+   the "query space".
+
+3. `cigar_extent_along_pwa()` calculates the extent along
+   the "pairwise alignment space".
+
+The three functions are vectorized.
+
+```{r cigar_extent}
+cigar_extent_along_ref(my_cigars)
+cigar_extent_along_query(my_cigars)
+```
+
+See `?cigar_extent` for more information and additional examples.
+
+## Trim CIGAR strings along the reference or query space
+
+Functions `trim_cigars_along_ref()` and `trim_cigars_along_query()` can
+be used to compute the CIGAR string that describes a _trimmed alignment_,
+that is, the portion of the alignment that is left after trimming
+it by a given number of positions on its left and/or right ends.
+The two functions are vectorized.
+
+```{r trim_cigars}
+cigar1 <- "3H15M55N4M2I6M2D5M6S"
+
+trim_cigars_along_ref(cigar1)  # only drops the soft/hard clipping
+
+trim_cigars_along_ref(cigar1, Lnpos=14, Rnpos=16)
+
+trim_cigars_along_query(cigar1, Lnpos=19, Rnpos=2)
+```
+
+See `?trim_cigars` for more information and additional examples.
+
+## Turn CIGAR strings into ranges of positions
+
+Functions `cigars_as_ranges_along_ref()`, `cigars_as_ranges_along_query()`,
+and `cigars_as_ranges_along_pwa()`, can be used to turn CIGAR strings into
+ranges of positions relative to the "query space", "reference space",
+and "pairwise alignment space", respectively:
+```{r cigars_as_ranges}
+cigars_as_ranges_along_ref(my_cigars, with.ops=TRUE)
+
+lmmpos <- c(1001, 2001, 3001, 4001, 5001, 6001)
+cigars_as_ranges_along_ref(my_cigars, lmmpos=lmmpos, with.ops=TRUE)
+
+cigars_as_ranges_along_query(my_cigars, with.ops=TRUE)
+```
+See `?cigars_as_ranges` for more information and additional examples.
+
+## Project positions from query to reference space and vice versa
+
+Function `query_pos_as_ref_pos()` projects positions defined along
+the "query space" onto the "reference space", that is, it turns
+them into positions defined along the "reference space":
+```{r project_positions}
+my_query_pos <- 1:9
+my_cigars <- rep("3M2I2M60N2M", 9)
+query_pos_as_ref_pos(my_query_pos, my_cigars, lmmpos=51, narrow.left=TRUE)
+```
+
+Function `ref_pos_as_query_pos()` does the opposite i.e. it projects
+positions defined along the "reference space" onto the "query space".
+
+See `?project_positions` for more information and additional examples.
+
+## Project sequences from one space to the other
+
+Function `project_sequences()` can be used to project sequences that
+belong to a given _projection space_ (e.g. the "query space") onto
+another _projection space_ (e.g. the "reference space") by removing/injecting
+substrings from/into them, based on their corresponding CIGAR string.
+See `?cigar_ops_visibility` for the 8 supported _projection spaces_.
+
+For example, consider the following query and reference sequences:
+```{r project_sequences_1}
+qseqs <- BStringSet(c(id1="XZ",  id2="ABCdeFGKL",  id3="MNoPQTUV"))
+rseqs <- BStringSet(c(id1="XyZ", id2="ABCFGhijKL", id3="MNPQrsTUV"))
+```
+
+A descent pairwise alignment tool would very likely produce the following
+output:
+```{r project_sequences_2}
+aligned_qseqs <- BStringSet(c(id1="X-Z", id2="ABCdeFG...KL", id3="MNoPQ--TUV"))
+aligned_rseqs <- BStringSet(c(id1="XyZ", id2="ABC--FGhijKL", id3="MN-PQrsTUV"))
+```
+
+If our pairwise alignment has also the capability to produce CIGAR strings,
+they would be:
+```{r project_sequences_3}
+cigars <- c(id1="1M1D1M", id2="3M2I2M3N2M", id3="2M1I2M2D3M")
+```
+
+Having access to the CIGAR strings allows us to infer the aligned sequences
+from the original ones:
+```{r project_sequences_4}
+project_sequences(qseqs, cigars, from="query", to="pairwise")
+project_sequences(rseqs, cigars, from="reference", to="pairwise")
+```
+and vice versa:
+```{r project_sequences_5}
+project_sequences(aligned_qseqs, cigars, from="pairwise", to="query")
+project_sequences(aligned_rseqs, cigars, from="pairwise", to="reference")
+```
+
+We can also project the original query sequences onto the "reference space":
+```{r project_sequences_6}
+project_sequences(qseqs, cigars, from="query", to="reference")
+```
+or project the original reference sequences onto the "query space":
+```{r project_sequences_7}
+project_sequences(rseqs, cigars, from="reference", to="query")
+```
+
+See `?project_ranges` for more information and additional examples.
+
+
+# Session information
+
+
+Here is the output of `sessionInfo()` on the system on which this document
+was compiled:
+```{r sessionInfo}
+sessionInfo()
+```
+

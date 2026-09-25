@@ -1,0 +1,126 @@
+import(methods)
+importFrom(stats, update)
+
+import(BiocGenerics)
+import(S4Vectors)
+import(IRanges)  # for CompressedList
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 classes
+###
+
+exportClasses(
+    Seqinfo,
+    GenomeDescription
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S3 methods
+###
+
+S3method(as.data.frame, Seqinfo)
+
+S3method(merge, Seqinfo)
+
+S3method(summary, Seqinfo)
+
+S3method(update, Seqinfo)
+
+### We also export them thru the export() directive so that (a) they can be
+### called directly, (b) tab-completion on the name of the generic shows them,
+### and (c) methods() doesn't asterisk them.
+export(
+    as.data.frame.Seqinfo,
+
+    merge.Seqinfo,
+
+    summary.Seqinfo,
+
+    update.Seqinfo
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 methods for generics NOT defined in this package
+###
+
+exportMethods(
+    length,
+    names, "names<-",
+    "[",
+    as.data.frame,
+    show,
+    merge,
+
+    ## Generics defined in the stats package:
+    update,
+
+    ## Generics defined in the stats4 package:
+    summary,
+
+    ## Generics defined in the BiocGenerics package:
+    intersect, organism, updateObject
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export non-generic functions
+###
+
+export(
+    ## rankSeqlevels.R:
+    orderSeqlevels,
+    rankSeqlevels,
+
+    ## seqinfo.R:
+    restoreSeqlevels,
+
+    ## Seqinfo-class.R:
+    Seqinfo, checkCompatibleSeqinfo,
+
+    ## GenomeDescription-classR:
+    GenomeDescription
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export S4 generics defined in Seqinfo, and corresponding methods
+###
+
+export(
+    ## seqinfo.R:
+    seqinfo, "seqinfo<-",
+    seqnames, "seqnames<-",
+    seqlevels, "seqlevels<-",
+    seqlevels0,
+    seqlengths, "seqlengths<-",
+    isCircular, "isCircular<-",
+    genome, "genome<-",
+
+    ## sortSeqlevels.R:
+    sortSeqlevels,
+
+    ## seqlevelsInUse.R:
+    seqlevelsInUse,
+
+    ## GenomeDescription-class.R:
+    commonName, provider, providerVersion,
+    releaseDate, bsgenomeName
+)
+
+### Same list as above.
+exportMethods(
+    seqinfo,
+    seqnames, "seqnames<-",
+    seqlevels, "seqlevels<-",
+    seqlengths, "seqlengths<-",
+    isCircular, "isCircular<-",
+    genome, "genome<-",
+    sortSeqlevels,
+    seqlevelsInUse,
+    commonName, provider, providerVersion,
+    releaseDate, bsgenomeName
+)
+

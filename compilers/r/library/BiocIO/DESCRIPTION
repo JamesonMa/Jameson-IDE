@@ -1,0 +1,50 @@
+Package: BiocIO
+Title: Standard Input and Output for Bioconductor Packages
+Version: 1.22.0
+Authors@R: c(
+    person("Martin", "Morgan", role = "aut"),
+    person("Michael", "Lawrence", role = "aut"),
+    person("Daniel", "Van Twisk", role = "aut"),
+    person("Marcel", "Ramos", , "marcel.ramos@sph.cuny.edu",
+        "cre", c(ORCID = "0000-0002-3242-0582")
+    ))
+Description: The `BiocIO` package contains high-level abstract classes
+        and generics used by developers to build IO funcionality within
+        the Bioconductor suite of packages. Implements `import()` and
+        `export()` standard generics for importing and exporting
+        biological data formats. `import()` supports whole-file as well
+        as chunk-wise iterative import. The `import()` interface
+        optionally provides a standard mechanism for 'lazy' access via
+        `filter()` (on row or element-like components of the file
+        resource), `select()` (on column-like components of the file
+        resource) and `collect()`. The `import()` interface optionally
+        provides transparent access to remote (e.g. via https) as well
+        as local access. Developers can register a file extension,
+        e.g., `.loom` for dispatch from character-based URIs to
+        specific `import()` / `export()` methods based on classes
+        representing file types, e.g., `LoomFile()`.
+License: Artistic-2.0
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: R (>= 4.3.0)
+Imports: BiocGenerics, S4Vectors, methods, tools
+Suggests: testthat, knitr, rmarkdown, BiocStyle
+Collate: 'BiocFile.R' 'import_export.R' 'compression.R' 'utils.R'
+VignetteBuilder: knitr
+biocViews: Annotation,DataImport
+BugReports: https://github.com/Bioconductor/BiocIO/issues
+Date: 2024-11-21
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 12:53:28 UTC
+RemoteUrl: https://github.com/bioc/BiocIO
+RemoteRef: RELEASE_3_23
+RemoteSha: eabf6c77e82ef47f2def9d36f3a75aa786d65067
+NeedsCompilation: no
+Packaged: 2026-04-29 10:48:20 UTC; root
+Author: Martin Morgan [aut],
+  Michael Lawrence [aut],
+  Daniel Van Twisk [aut],
+  Marcel Ramos [cre] (ORCID: <https://orcid.org/0000-0002-3242-0582>)
+Maintainer: Marcel Ramos <marcel.ramos@sph.cuny.edu>
+Built: R 4.6.0; ; 2026-04-29 10:49:58 UTC; windows

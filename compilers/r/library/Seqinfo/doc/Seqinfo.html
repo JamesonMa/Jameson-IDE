@@ -1,0 +1,416 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <meta name="generator" content="r-universe/pandoc">
+      <meta name="author" content>
+      
+      <title>The Seqinfo package</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" data-external="1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" data-external="1">
+      <link rel="stylesheet" href="https://r-universe.dev/static/article-styles.css?nocache=1" data-external="1">
+   </head>
+   <body>
+      <div class="container" id="topcontainer">
+         <script>if (window.self != window.top) try {document.getElementById('topcontainer').className = "container-fluid article-in-iframe"; } catch(e) {}</script>
+
+         <div class="frontmatter">
+         <h1 class="title">The <em>Seqinfo</em> package</h1>
+         </div>
+
+                  <div class="row">
+            <div class="col-xl-10"><div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p><em><a href="https://bioconductor.org/packages/3.23/Seqinfo">Seqinfo</a></em>
+is an R/Bioconductor infrastructure package that implements a simple S4
+class, the Seqinfo class, for storing the following information about a
+collection of genomic sequences:</p>
+<ul>
+<li><p>the sequence names a.k.a. the <em>seqnames</em>;</p></li>
+<li><p>the sequence lengths a.k.a. the <em>seqlengths</em>;</p></li>
+<li><p>the sequence circularity flags, that is, whether the sequences
+are circular or not;</p></li>
+<li><p>the sequence genomes, that is, the genome assembly that each
+sequence is coming from, if any.</p></li>
+</ul>
+<p>The sequences described in a Seqinfo object are typically, but not
+necessarily, the chromosomes and/or scaffolds of a specific genome
+assembly of a given organism.</p>
+<p>Note that Seqinfo objects are rarely used as standalone objects.
+Instead, they are used as part of higher-level objects to represent
+their <code>seqinfo()</code> component. Examples of such higher-level
+objects are GRanges, RangedSummarizedExperiment, VCF, GAlignments, TxDb,
+etc… defined in other Bioconductor infrastructure packages.</p>
+</div>
+<div id="install-and-load-the-package" class="section level1">
+<h1>Install and load the package</h1>
+<p>Like any Bioconductor package, <em><a href="https://bioconductor.org/packages/3.23/Seqinfo">Seqinfo</a></em>
+should be installed with <code>BiocManager::install()</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="at">quietly=</span><span class="cn">TRUE</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">&quot;Seqinfo&quot;</span>)</span></code></pre></div>
+<p><code>BiocManager::install()</code> will take care of installing the
+package dependencies that are missing.</p>
+<p>Load the package:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(Seqinfo)</span></code></pre></div>
+</div>
+<div id="the-seqinfo-constructor" class="section level1">
+<h1>The Seqinfo constructor</h1>
+<p>Seqinfo objects can be created with the <code>Seqinfo()</code>
+constructor function:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="do">## Note that all the arguments (except &#39;genome&#39;) must have the</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="do">## same length. &#39;genome&#39; can be of length 1, whatever the lengths</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="do">## of the other arguments are.</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>si1 <span class="ot">&lt;-</span> <span class="fu">Seqinfo</span>(<span class="at">seqnames=</span><span class="fu">c</span>(<span class="st">&quot;chr1&quot;</span>, <span class="st">&quot;chr2&quot;</span>, <span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chrM&quot;</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>               <span class="at">seqlengths=</span><span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">200</span>, <span class="cn">NA</span>, <span class="dv">15</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>               <span class="at">isCircular=</span><span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">FALSE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>               <span class="at">genome=</span><span class="st">&quot;toy&quot;</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>si1</span></code></pre></div>
+<pre><code>## Seqinfo object with 4 sequences (1 circular) from toy genome:
+##   seqnames seqlengths isCircular genome
+##   chr1            100         NA    toy
+##   chr2            200      FALSE    toy
+##   chr3             NA      FALSE    toy
+##   chrM             15       TRUE    toy</code></pre>
+<p>One special form of calling the <code>Seqinfo()</code> constructor
+function is to specify only the <code>genome</code> argument and set it
+to the name of an NCBI assembly
+(e.g. <code>Seqinfo(genome=&quot;GRCh38.p14&quot;)</code>) or UCSC genome (e.g.
+<code>Seqinfo(genome=&quot;hg38&quot;)</code>), in which case the sequence
+information is fetched from NCBI or UCSC. This requires the <em><a href="https://bioconductor.org/packages/3.23/GenomeInfoDb">GenomeInfoDb</a></em>
+package (the package only needs to be installed):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(GenomeInfoDb)  <span class="co"># just making sure that the package is installed</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">Seqinfo</span>(<span class="at">genome=</span><span class="st">&quot;GRCh38.p14&quot;</span>)</span></code></pre></div>
+<pre><code>## Seqinfo object with 709 sequences (1 circular) from GRCh38.p14 genome:
+##   seqnames       seqlengths isCircular     genome
+##   1               248956422      FALSE GRCh38.p14
+##   2               242193529      FALSE GRCh38.p14
+##   3               198295559      FALSE GRCh38.p14
+##   4               190214555      FALSE GRCh38.p14
+##   5               181538259      FALSE GRCh38.p14
+##   ...                   ...        ...        ...
+##   HSCHR22_8_CTG1     145162      FALSE GRCh38.p14
+##   HSCHRX_3_CTG7      188004      FALSE GRCh38.p14
+##   HSCHRX_1_CTG14     619716      FALSE GRCh38.p14
+##   HSCHRX_2_CTG14     294119      FALSE GRCh38.p14
+##   HSCHRX_3_CTG3      330493      FALSE GRCh38.p14</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">Seqinfo</span>(<span class="at">genome=</span><span class="st">&quot;hg38&quot;</span>)</span></code></pre></div>
+<pre><code>## Seqinfo object with 711 sequences (1 circular) from hg38 genome:
+##   seqnames             seqlengths isCircular genome
+##   chr1                  248956422      FALSE   hg38
+##   chr2                  242193529      FALSE   hg38
+##   chr3                  198295559      FALSE   hg38
+##   chr4                  190214555      FALSE   hg38
+##   chr5                  181538259      FALSE   hg38
+##   ...                         ...        ...    ...
+##   chr22_KQ759761v1_alt     145162      FALSE   hg38
+##   chrX_KV766199v1_alt      188004      FALSE   hg38
+##   chrX_MU273395v1_alt      619716      FALSE   hg38
+##   chrX_MU273396v1_alt      294119      FALSE   hg38
+##   chrX_MU273397v1_alt      330493      FALSE   hg38</code></pre>
+<p>See <code>?Seqinfo</code> for more information.</p>
+</div>
+<div id="seqinfo-accessors" class="section level1">
+<h1>Seqinfo accessors</h1>
+<p>Various accessor functions are provided:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">length</span>(si1)</span></code></pre></div>
+<pre><code>## [1] 4</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">seqnames</span>(si1)</span></code></pre></div>
+<pre><code>## [1] &quot;chr1&quot; &quot;chr2&quot; &quot;chr3&quot; &quot;chrM&quot;</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">names</span>(si1)</span></code></pre></div>
+<pre><code>## [1] &quot;chr1&quot; &quot;chr2&quot; &quot;chr3&quot; &quot;chrM&quot;</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">seqlevels</span>(si1)</span></code></pre></div>
+<pre><code>## [1] &quot;chr1&quot; &quot;chr2&quot; &quot;chr3&quot; &quot;chrM&quot;</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">seqlengths</span>(si1)</span></code></pre></div>
+<pre><code>## chr1 chr2 chr3 chrM 
+##  100  200   NA   15</code></pre>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">isCircular</span>(si1)</span></code></pre></div>
+<pre><code>##  chr1  chr2  chr3  chrM 
+##    NA FALSE FALSE  TRUE</code></pre>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">genome</span>(si1)</span></code></pre></div>
+<pre><code>##  chr1  chr2  chr3  chrM 
+## &quot;toy&quot; &quot;toy&quot; &quot;toy&quot; &quot;toy&quot;</code></pre>
+<p>See <code>?Seqinfo</code> for more information.</p>
+</div>
+<div id="operations-on-seqinfo-objects" class="section level1">
+<h1>Operations on Seqinfo objects</h1>
+<div id="subset-by-seqnames" class="section level2">
+<h2>Subset by seqnames</h2>
+<p>A Seqinfo object can be subsetted by <em>seqnames</em>:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>si1[<span class="fu">c</span>(<span class="st">&quot;chrY&quot;</span>, <span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chr1&quot;</span>)]</span></code></pre></div>
+<pre><code>## Seqinfo object with 3 sequences from 2 genomes (NA, toy):
+##   seqnames seqlengths isCircular genome
+##   chrY             NA         NA   &lt;NA&gt;
+##   chr3             NA      FALSE    toy
+##   chr1            100         NA    toy</code></pre>
+</div>
+<div id="rename-drop-add-andor-reorder-the-sequences" class="section level2">
+<h2>Rename, drop, add and/or reorder the sequences</h2>
+<p>Rename:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>si <span class="ot">&lt;-</span> si1</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">seqlevels</span>(si) <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;chr&quot;</span>, <span class="st">&quot;ch&quot;</span>, <span class="fu">seqlevels</span>(si))</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>si</span></code></pre></div>
+<pre><code>## Seqinfo object with 4 sequences (1 circular) from toy genome:
+##   seqnames seqlengths isCircular genome
+##   ch1             100         NA    toy
+##   ch2             200      FALSE    toy
+##   ch3              NA      FALSE    toy
+##   chM              15       TRUE    toy</code></pre>
+<p>Reorder:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="fu">seqlevels</span>(si) <span class="ot">&lt;-</span> <span class="fu">rev</span>(<span class="fu">seqlevels</span>(si))</span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>si</span></code></pre></div>
+<pre><code>## Seqinfo object with 4 sequences (1 circular) from toy genome:
+##   seqnames seqlengths isCircular genome
+##   chM              15       TRUE    toy
+##   ch3              NA      FALSE    toy
+##   ch2             200      FALSE    toy
+##   ch1             100         NA    toy</code></pre>
+<p>Drop/add/reorder:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">seqlevels</span>(si) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;ch1&quot;</span>, <span class="st">&quot;ch2&quot;</span>, <span class="st">&quot;chY&quot;</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>si</span></code></pre></div>
+<pre><code>## Seqinfo object with 3 sequences from 2 genomes (toy, NA):
+##   seqnames seqlengths isCircular genome
+##   ch1             100         NA    toy
+##   ch2             200      FALSE    toy
+##   chY              NA         NA   &lt;NA&gt;</code></pre>
+<p>Rename/reorder/drop/add:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">seqlevels</span>(si) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">chY=</span><span class="st">&quot;Y&quot;</span>, <span class="at">ch1=</span><span class="st">&quot;1&quot;</span>, <span class="st">&quot;22&quot;</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a>si</span></code></pre></div>
+<pre><code>## Seqinfo object with 3 sequences from 2 genomes (NA, toy):
+##   seqnames seqlengths isCircular genome
+##   Y                NA         NA   &lt;NA&gt;
+##   1               100         NA    toy
+##   22               NA         NA   &lt;NA&gt;</code></pre>
+<p>See <code>?Seqinfo</code> for more information.</p>
+</div>
+<div id="merge-seqinfo-objects" class="section level2">
+<h2>Merge Seqinfo objects</h2>
+<p>Two Seqinfo objects can be merged if they are
+<em>compatible</em>:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>si2 <span class="ot">&lt;-</span> <span class="fu">Seqinfo</span>(<span class="at">seqnames=</span><span class="fu">c</span>(<span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chr4&quot;</span>, <span class="st">&quot;chrM&quot;</span>),</span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a>               <span class="at">seqlengths=</span><span class="fu">c</span>(<span class="dv">300</span>, <span class="cn">NA</span>, <span class="dv">15</span>))</span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a>si2</span></code></pre></div>
+<pre><code>## Seqinfo object with 3 sequences from an unspecified genome:
+##   seqnames seqlengths isCircular genome
+##   chr3            300         NA   &lt;NA&gt;
+##   chr4             NA         NA   &lt;NA&gt;
+##   chrM             15         NA   &lt;NA&gt;</code></pre>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="fu">merge</span>(si1, si2)  <span class="co"># rows for chr3 and chrM are merged</span></span></code></pre></div>
+<pre><code>## Warning in .merge_two_Seqinfo_objects(x, y): Each of the 2 combined objects has sequence levels not in the other:
+##   - in &#39;x&#39;: chr1, chr2
+##   - in &#39;y&#39;: chr4
+##   Make sure to always combine/compare objects based on the same reference
+##   genome (use suppressWarnings() to suppress this warning).</code></pre>
+<pre><code>## Seqinfo object with 5 sequences (1 circular) from 2 genomes (toy, NA):
+##   seqnames seqlengths isCircular genome
+##   chr1            100         NA    toy
+##   chr2            200      FALSE    toy
+##   chr3            300      FALSE    toy
+##   chrM             15       TRUE    toy
+##   chr4             NA         NA   &lt;NA&gt;</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="fu">suppressWarnings</span>(<span class="fu">merge</span>(si1, si2))</span></code></pre></div>
+<pre><code>## Seqinfo object with 5 sequences (1 circular) from 2 genomes (toy, NA):
+##   seqnames seqlengths isCircular genome
+##   chr1            100         NA    toy
+##   chr2            200      FALSE    toy
+##   chr3            300      FALSE    toy
+##   chrM             15       TRUE    toy
+##   chr4             NA         NA   &lt;NA&gt;</code></pre>
+<p>Note that, strictly speaking, merging two Seqinfo objects is not a
+<em>commutative</em> operation, i.e., in general
+<code>z1 &lt;- merge(x, y)</code> is not identical to
+<code>z2 &lt;- merge(y, x)</code>. However <code>z1</code> and
+<code>z2</code> are guaranteed to contain the same information (i.e. the
+same rows, but typically not in the same order):</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="fu">suppressWarnings</span>(<span class="fu">merge</span>(si2, si1))</span></code></pre></div>
+<pre><code>## Seqinfo object with 5 sequences (1 circular) from 2 genomes (toy, NA):
+##   seqnames seqlengths isCircular genome
+##   chr3            300      FALSE    toy
+##   chr4             NA         NA   &lt;NA&gt;
+##   chrM             15       TRUE    toy
+##   chr1            100         NA    toy
+##   chr2            200      FALSE    toy</code></pre>
+<p>Trying to merge Seqinfo objects that are not compatible will raise an
+error:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" tabindex="-1"></a><span class="do">## This contradicts what &#39;x&#39; says about circularity of chr3 and chrM:</span></span>
+<span id="cb42-2"><a href="#cb42-2" tabindex="-1"></a><span class="fu">isCircular</span>(si2)[<span class="fu">c</span>(<span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chrM&quot;</span>)] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>)</span>
+<span id="cb42-3"><a href="#cb42-3" tabindex="-1"></a>si2</span></code></pre></div>
+<pre><code>## Seqinfo object with 3 sequences (1 circular) from an unspecified genome:
+##   seqnames seqlengths isCircular genome
+##   chr3            300       TRUE   &lt;NA&gt;
+##   chr4             NA         NA   &lt;NA&gt;
+##   chrM             15      FALSE   &lt;NA&gt;</code></pre>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a><span class="fu">merge</span>(si1, si2)  <span class="co"># ERROR!</span></span>
+<span id="cb44-2"><a href="#cb44-2" tabindex="-1"></a><span class="do">## Error in mergeNamedAtomicVectors(isCircular(x), isCircular(y), what = c(&quot;sequence&quot;,  :</span></span>
+<span id="cb44-3"><a href="#cb44-3" tabindex="-1"></a><span class="do">##   sequences chr3, chrM have incompatible circularity flags:</span></span>
+<span id="cb44-4"><a href="#cb44-4" tabindex="-1"></a><span class="do">##   - in &#39;x&#39;: FALSE, TRUE</span></span>
+<span id="cb44-5"><a href="#cb44-5" tabindex="-1"></a><span class="do">##   - in &#39;y&#39;: TRUE, FALSE</span></span></code></pre></div>
+<p>See <code>?Seqinfo</code> for more information.</p>
+</div>
+</div>
+<div id="seqinfo-objects-as-parts-of-higher-level-objects" class="section level1">
+<h1>Seqinfo objects as parts of higher-level objects</h1>
+<p>Seqinfo objects are typically found as part of higher-level objects
+to represent their <code>seqinfo()</code> component. For example, in
+TxDb objects:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a><span class="fu">library</span>(TxDb.Hsapiens.UCSC.hg38.knownGene)</span>
+<span id="cb45-2"><a href="#cb45-2" tabindex="-1"></a>txdb <span class="ot">&lt;-</span> TxDb.Hsapiens.UCSC.hg38.knownGene</span>
+<span id="cb45-3"><a href="#cb45-3" tabindex="-1"></a><span class="fu">class</span>(txdb)</span></code></pre></div>
+<pre><code>## [1] &quot;TxDb&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;GenomicFeatures&quot;</code></pre>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a><span class="fu">seqinfo</span>(txdb)</span></code></pre></div>
+<pre><code>## Seqinfo object with 711 sequences (1 circular) from hg38 genome:
+##   seqnames             seqlengths isCircular genome
+##   chr1                  248956422      FALSE   hg38
+##   chr2                  242193529      FALSE   hg38
+##   chr3                  198295559      FALSE   hg38
+##   chr4                  190214555      FALSE   hg38
+##   chr5                  181538259      FALSE   hg38
+##   ...                         ...        ...    ...
+##   chr22_KQ759761v1_alt     145162      FALSE   hg38
+##   chrX_KV766199v1_alt      188004      FALSE   hg38
+##   chrX_MU273395v1_alt      619716      FALSE   hg38
+##   chrX_MU273396v1_alt      294119      FALSE   hg38
+##   chrX_MU273397v1_alt      330493      FALSE   hg38</code></pre>
+<p>and in BSgenome objects:</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a><span class="fu">library</span>(BSgenome.Hsapiens.UCSC.hg38)</span>
+<span id="cb49-2"><a href="#cb49-2" tabindex="-1"></a>bsg <span class="ot">&lt;-</span> BSgenome.Hsapiens.UCSC.hg38</span>
+<span id="cb49-3"><a href="#cb49-3" tabindex="-1"></a><span class="fu">class</span>(bsg)</span></code></pre></div>
+<pre><code>## [1] &quot;BSgenome&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;BSgenome&quot;</code></pre>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a><span class="fu">seqinfo</span>(bsg)</span></code></pre></div>
+<pre><code>## Seqinfo object with 711 sequences (1 circular) from hg38 genome:
+##   seqnames             seqlengths isCircular genome
+##   chr1                  248956422      FALSE   hg38
+##   chr2                  242193529      FALSE   hg38
+##   chr3                  198295559      FALSE   hg38
+##   chr4                  190214555      FALSE   hg38
+##   chr5                  181538259      FALSE   hg38
+##   ...                         ...        ...    ...
+##   chr22_KQ759761v1_alt     145162      FALSE   hg38
+##   chrX_KV766199v1_alt      188004      FALSE   hg38
+##   chrX_MU273395v1_alt      619716      FALSE   hg38
+##   chrX_MU273396v1_alt      294119      FALSE   hg38
+##   chrX_MU273397v1_alt      330493      FALSE   hg38</code></pre>
+<p>Sanity checks:</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">seqinfo</span>(txdb), <span class="fu">Seqinfo</span>(<span class="at">genome=</span><span class="st">&quot;hg38&quot;</span>)))</span>
+<span id="cb53-2"><a href="#cb53-2" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">seqinfo</span>(bsg), <span class="fu">Seqinfo</span>(<span class="at">genome=</span><span class="st">&quot;hg38&quot;</span>)))</span></code></pre></div>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session information</h1>
+<p>Here is the output of <code>sessionInfo()</code> on the system on
+which this document was compiled:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.0 (2026-04-24)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Ubuntu 24.04.4 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## 
+## time zone: Etc/UTC
+## tzcode source: system (glibc)
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] BSgenome.Hsapiens.UCSC.hg38_1.4.5       
+##  [2] TxDb.Hsapiens.UCSC.hg38.knownGene_3.22.0
+##  [3] BSgenome_1.80.0                         
+##  [4] rtracklayer_1.72.0                      
+##  [5] BiocIO_1.22.0                           
+##  [6] Biostrings_2.80.0                       
+##  [7] XVector_0.52.0                          
+##  [8] GenomicFeatures_1.64.0                  
+##  [9] AnnotationDbi_1.74.0                    
+## [10] Biobase_2.72.0                          
+## [11] GenomicRanges_1.64.0                    
+## [12] GenomeInfoDb_1.48.0                     
+## [13] IRanges_2.46.0                          
+## [14] S4Vectors_0.50.0                        
+## [15] Seqinfo_1.2.0                           
+## [16] BiocGenerics_0.58.0                     
+## [17] generics_0.1.4                          
+## [18] BiocStyle_2.40.0                        
+## 
+## loaded via a namespace (and not attached):
+##  [1] KEGGREST_1.52.0             SummarizedExperiment_1.42.0
+##  [3] rjson_0.2.23                xfun_0.57                  
+##  [5] bslib_0.10.0                lattice_0.22-9             
+##  [7] vctrs_0.7.3                 tools_4.6.0                
+##  [9] bitops_1.0-9                curl_7.1.0                 
+## [11] parallel_4.6.0              RSQLite_2.4.6              
+## [13] blob_1.3.0                  pkgconfig_2.0.3            
+## [15] Matrix_1.7-5                cigarillo_1.2.0            
+## [17] lifecycle_1.0.5             compiler_4.6.0             
+## [19] Rsamtools_2.28.0            codetools_0.2-20           
+## [21] htmltools_0.5.9             sys_3.4.3                  
+## [23] buildtools_1.0.0            sass_0.4.10                
+## [25] RCurl_1.98-1.18             yaml_2.3.12                
+## [27] crayon_1.5.3                jquerylib_0.1.4            
+## [29] BiocParallel_1.46.0         DelayedArray_0.38.1        
+## [31] cachem_1.1.0                abind_1.4-8                
+## [33] digest_0.6.39               restfulr_0.0.16            
+## [35] maketools_1.3.2             fastmap_1.2.0              
+## [37] grid_4.6.0                  SparseArray_1.12.2         
+## [39] cli_3.6.6                   S4Arrays_1.12.0            
+## [41] XML_3.99-0.23               UCSC.utils_1.8.0           
+## [43] bit64_4.8.0                 rmarkdown_2.31             
+## [45] httr_1.4.8                  matrixStats_1.5.0          
+## [47] bit_4.6.0                   png_0.1-9                  
+## [49] memoise_2.0.1               evaluate_1.0.5             
+## [51] knitr_1.51                  rlang_1.2.0                
+## [53] DBI_1.3.0                   BiocManager_1.30.27        
+## [55] jsonlite_2.0.0              R6_2.6.1                   
+## [57] MatrixGenerics_1.24.0       GenomicAlignments_1.48.0</code></pre>
+</div></div>
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+               <ul class="section-nav">
+                  <li class="toc-entry"><ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#install-and-load-the-package" id="toc-install-and-load-the-package">Install and load the
+package</a></li>
+<li><a href="#the-seqinfo-constructor" id="toc-the-seqinfo-constructor">The Seqinfo constructor</a></li>
+<li><a href="#seqinfo-accessors" id="toc-seqinfo-accessors">Seqinfo
+accessors</a></li>
+<li><a href="#operations-on-seqinfo-objects" id="toc-operations-on-seqinfo-objects">Operations on Seqinfo objects</a>
+<ul>
+<li><a href="#subset-by-seqnames" id="toc-subset-by-seqnames">Subset by
+seqnames</a></li>
+<li><a href="#rename-drop-add-andor-reorder-the-sequences" id="toc-rename-drop-add-andor-reorder-the-sequences">Rename, drop, add
+and/or reorder the sequences</a></li>
+<li><a href="#merge-seqinfo-objects" id="toc-merge-seqinfo-objects">Merge Seqinfo objects</a></li>
+</ul></li>
+<li><a href="#seqinfo-objects-as-parts-of-higher-level-objects" id="toc-seqinfo-objects-as-parts-of-higher-level-objects">Seqinfo
+objects as parts of higher-level objects</a></li>
+<li><a href="#session-information" id="toc-session-information">Session
+information</a></li>
+</ul></li>
+               </ul>
+            </div>
+         </div>
+               </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.js" data-external="1"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" data-external="1"></script>
+      <script src="https://r-universe.dev/static/article.js" data-external="1"></script>
+
+      <!-- Mathjax -->
+      <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" data-external="1"></script> -->
+      <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-chtml.min.js" data-external="1"></script>
+   </body>
+</html>

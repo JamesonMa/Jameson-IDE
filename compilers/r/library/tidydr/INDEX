@@ -1,0 +1,8 @@
+available_methods       List dimensionality reduction methods currently
+                        available
+dr                      dr
+dr_extract              dr_extract
+element_line2           element_line2
+nk                      nk
+theme_dr                theme_dr
+theme_noaxis            theme_noaxis

@@ -1,0 +1,56 @@
+Package: Rsamtools
+Type: Package
+Title: Binary alignment (BAM), FASTA, variant call (BCF), and tabix
+        file import
+Description: This package provides an interface to the 'samtools',
+        'bcftools', and 'tabix' utilities for manipulating SAM
+        (Sequence Alignment / Map), FASTA, binary variant call (BCF)
+        and compressed indexed tab-delimited (tabix) files.
+biocViews: DataImport, Sequencing, Coverage, Alignment, QualityControl
+URL: https://bioconductor.org/packages/Rsamtools
+Video:
+        https://www.youtube.com/watch?v=Rfon-DQYbWA&list=UUqaMSQd_h-2EDGsU6WDiX0Q
+BugReports: https://github.com/Bioconductor/Rsamtools/issues
+Version: 2.28.0
+License: Artistic-2.0 | file LICENSE
+Encoding: UTF-8
+Authors@R: c(
+    person("Martin", "Morgan", role = "aut"),
+    person("Hervé", "Pagès", role = "aut"),
+    person("Valerie", "Obenchain", role = "aut"),
+    person("Nathaniel", "Hayden", role = "aut"),
+    person("Busayo", "Samuel", role = "ctb",
+        comment = "Converted Rsamtools vignette from Sweave to RMarkdown / HTML."),
+    person("Bioconductor Package Maintainer",
+        email = "maintainer@bioconductor.org", role = "cre"))
+Depends: R (>= 3.5.0), methods, Seqinfo, GenomicRanges (>= 1.61.1),
+        Biostrings (>= 2.77.2)
+Imports: utils, BiocGenerics (>= 0.25.1), S4Vectors (>= 0.17.25),
+        IRanges (>= 2.13.12), XVector (>= 0.19.7), bitops,
+        BiocParallel, stats
+Suggests: GenomicAlignments, ShortRead (>= 1.19.10), GenomicFeatures,
+        VariantAnnotation, TxDb.Dmelanogaster.UCSC.dm3.ensGene,
+        TxDb.Hsapiens.UCSC.hg18.knownGene, RNAseqData.HNRNPC.bam.chr14,
+        BSgenome.Hsapiens.UCSC.hg19, RUnit, BiocStyle, knitr
+LinkingTo: Rhtslib (>= 3.3.1), S4Vectors, IRanges, XVector, Biostrings
+LazyLoad: yes
+SystemRequirements: GNU make
+VignetteBuilder: knitr
+Config/pak/sysreqs: make libbz2-dev liblzma-dev xz-utils zlib1g-dev
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 12:34:32 UTC
+RemoteUrl: https://github.com/bioc/Rsamtools
+RemoteRef: RELEASE_3_23
+RemoteSha: 31add2895a57afb8e120f057f0f068ca69544f87
+NeedsCompilation: yes
+Packaged: 2026-04-29 11:28:55 UTC; root
+Author: Martin Morgan [aut],
+  Hervé Pagès [aut],
+  Valerie Obenchain [aut],
+  Nathaniel Hayden [aut],
+  Busayo Samuel [ctb] (Converted Rsamtools vignette from Sweave to
+    RMarkdown / HTML.),
+  Bioconductor Package Maintainer [cre]
+Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-04-29 11:32:53 UTC; windows
+Archs: x64

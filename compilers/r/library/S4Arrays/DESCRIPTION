@@ -1,0 +1,46 @@
+Package: S4Arrays
+Title: Foundation of array-like containers in Bioconductor
+Description: The S4Arrays package defines the Array virtual class to be
+        extended by other S4 classes that wish to implement a container
+        with an array-like semantic. It also provides: (1) low-level
+        functionality meant to help the developer of such container to
+        implement basic operations like display, subsetting, or
+        coercion of their array-like objects to an ordinary matrix or
+        array, and (2) a framework that facilitates block processing of
+        array-like objects (typically on-disk objects).
+biocViews: Infrastructure, DataRepresentation
+URL: https://bioconductor.org/packages/S4Arrays
+BugReports: https://github.com/Bioconductor/S4Arrays/issues
+Version: 1.12.0
+License: Artistic-2.0
+Encoding: UTF-8
+Authors@R: c(
+	person("Hervé", "Pagès", role=c("aut", "cre"),
+		email="hpages.on.github@gmail.com",
+		comment=c(ORCID="0009-0002-8272-4522")),
+	person("Jacques", "Serizay", role="ctb"))
+Depends: R (>= 4.3.0), methods, Matrix, abind, BiocGenerics (>=
+        0.45.2), S4Vectors (>= 0.47.6), IRanges
+Imports: stats
+LinkingTo: S4Vectors
+Suggests: BiocParallel, SparseArray (>= 0.0.4), DelayedArray,
+        HDF5Array, testthat, knitr, rmarkdown, BiocStyle
+VignetteBuilder: knitr
+Collate: utils.R rowsum.R abind.R aperm2.R array_selection.R
+        Nindex-utils.R arep.R array_recycling.R Array-class.R
+        dim-tuning-utils.R Array-subsetting.R Array-subassignment.R
+        ArrayGrid-class.R mapToGrid.R extract_array.R type.R
+        is_sparse.R read_block.R write_block.R show-utils.R
+        Array-kronecker-methods.R zzz.R
+Repository: https://bioc-release.r-universe.dev
+Date/Publication: 2026-04-28 13:00:53 UTC
+RemoteUrl: https://github.com/bioc/S4Arrays
+RemoteRef: RELEASE_3_23
+RemoteSha: b1246fd0b81ac137623ee1c0d6587a59e8ad1073
+NeedsCompilation: yes
+Packaged: 2026-04-29 11:26:48 UTC; root
+Author: Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>),
+  Jacques Serizay [ctb]
+Maintainer: Hervé Pagès <hpages.on.github@gmail.com>
+Built: R 4.6.0; x86_64-w64-mingw32; 2026-04-29 11:28:31 UTC; windows
+Archs: x64

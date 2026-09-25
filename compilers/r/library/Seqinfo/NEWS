@@ -1,0 +1,24 @@
+VERSION 1.2.0
+-------------
+
+- No changes in this version.
+
+
+VERSION 1.0.0
+-------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The Seqinfo class was moved from the GenomeInfoDb package to the
+      new Seqinfo package.
+
+      IMPORTANT WARNING: This means that:
+
+      - Seqinfo-holding S4 objects that were serialized before this change
+        (i.e. prior to Bioconductor 3.22) are no longer valid objects in
+        Bioconductor >= 3.22. However they can be fixed with updateObject().
+
+      - This also means that Seqinfo-holding S4 objects serialized with
+        Bioconductor >= 3.22 are no longer valid objects in Bioconductor
+        < 3.22. These objects can **not** be fixed with updateObject().
+
