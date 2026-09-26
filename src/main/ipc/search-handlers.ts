@@ -42,7 +42,10 @@ async function searchText(filePath: string, query: string, opts: SearchOptions =
 async function walk(root: string, out: string[] = []) {
   let entries: fs.Dirent[]; try { entries = await fs.promises.readdir(root, { withFileTypes: true }); } catch { return out; }
   for (const entry of entries) {
-    if (entry.isSymbolicLink() || entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist') continue;
+    if (entry.isSymbolicLink() || entry.name.startsWith('.')
+      || entry.name === 'node_modules' || entry.name === 'dist'
+      || entry.name === 'compilers' || entry.name === 'release'
+      || entry.name === 'build' || entry.name === 'out') continue;
     const full = path.join(root, entry.name);
     if (entry.isDirectory()) await walk(full, out); else out.push(full);
   }

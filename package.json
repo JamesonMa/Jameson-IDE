@@ -25,15 +25,24 @@
       "dist/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "compilers",
-        "to": "compilers",
-        "filter": ["**/*"]
-      }
-    ],
+    "mac": {
+      "extraResources": [
+        {
+          "from": "compilers/Mac OS",
+          "to": "compilers/Mac OS",
+          "filter": ["**/*"]
+        }
+      ]
+    },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "extraResources": [
+        {
+          "from": "compilers/Windows",
+          "to": "compilers/Windows",
+          "filter": ["**/*"]
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,

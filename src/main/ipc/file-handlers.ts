@@ -169,7 +169,10 @@ export function registerFileHandlers(win: BrowserWindowType) {
     const owner = BrowserWindow.fromWebContents(event.sender) || win;
     const old = watchers.get(owner); if (old) await old.close();
     const current = chokidar.watch(await safePath(owner, watchPath), {
-      ignored: /(^|[\/\\])(\.|node_modules|dist)/,
+      // Avoid crawling generated/vendor trees. In particular, the bundled
+      // Windows compilers can contain tens of thousands of files and do not
+      // belong in a macOS workspace watcher.
+      ignored: /(^|[\/\\])(\.|node_modules|dist|compilers|release|build|out)([\/\\]|$)/,
       persistent: true,
       ignoreInitial: true,
     });
@@ -192,6 +195,9 @@ export function registerFileHandlers(win: BrowserWindowType) {
   });
 }
 
+// Return only the immediate children. Descendants are loaded on demand by the
+// renderer; recursively walking a workspace makes large repositories appear to
+// hang while the initial folder-open request is still in progress.
 async function listDirectory(dirPath: string): Promise<FileNode[]> {
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
   const nodes: FileNode[] = [];
@@ -208,14 +214,6 @@ async function listDirectory(dirPath: string): Promise<FileNode[]> {
       path: fullPath,
       type: entry.isDirectory() ? 'directory' : 'file',
     };
-
-    if (entry.isDirectory()) {
-      try {
-        node.children = await listDirectory(fullPath);
-      } catch {
-        node.children = [];
-      }
-    }
 
     nodes.push(node);
   }

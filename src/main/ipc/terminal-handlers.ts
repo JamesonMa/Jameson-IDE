@@ -131,6 +131,10 @@ export function registerTerminalHandlers(win: BrowserWindowType) {
     const roots = [
       // Packaged app: compilers are unpacked next to app.asar so the OS can execute them
       path.join(process.resourcesPath, 'app.asar.unpacked', 'compilers'),
+      path.join(process.resourcesPath, 'app.asar.unpacked', 'compilers', 'Windows'),
+      path.join(process.resourcesPath, 'compilers', 'Windows'),
+      path.resolve(__dirname, '../../compilers/Windows'),
+      path.resolve(process.cwd(), 'compilers/Windows'),
       path.join(process.resourcesPath, 'compilers'),
       path.resolve(__dirname, '../../compilers'),
       path.resolve(process.cwd(), 'compilers')
@@ -144,13 +148,37 @@ export function registerTerminalHandlers(win: BrowserWindowType) {
       return null;
     };
 
-    const python = bundled(path.join('python', 'python.exe')) || 'python';
-    const node = bundled(path.join('node', 'node.exe')) || 'node';
-    const gxx = bundled(path.join('mingw', 'bin', 'g++.exe')) || 'g++';
-    const gcc = bundled(path.join('mingw', 'bin', 'gcc.exe')) || 'gcc';
-    const rscript = bundled(path.join('r', 'bin', 'x64', 'Rscript.exe'))
-      || bundled(path.join('r', 'bin', 'Rscript.exe'))
-      || 'Rscript';
+    // The checked-in compilers are Windows binaries. On macOS and Linux use
+    // the native toolchains installed on the host instead.
+    const hostExecutable = (candidates: string[], fallback: string) =>
+      candidates.find((candidate) => path.isAbsolute(candidate) && fs.existsSync(candidate)) || fallback;
+    const isWindows = process.platform === 'win32';
+    const python = isWindows
+      ? (bundled(path.join('python', 'python.exe')) || 'python')
+      : hostExecutable([
+        ...roots.map((root) => path.join(root, 'Mac OS', 'python', 'python3')),
+        '/opt/homebrew/bin/python3', '/usr/local/bin/python3', '/usr/bin/python3',
+      ], 'python3');
+    const node = isWindows
+      ? (bundled(path.join('node', 'node.exe')) || 'node')
+      : hostExecutable([
+        ...roots.map((root) => path.join(root, 'Mac OS', 'node', 'node')),
+        '/opt/homebrew/bin/node', '/usr/local/bin/node', '/usr/bin/node',
+      ], 'node');
+    const gxx = isWindows
+      ? (bundled(path.join('mingw', 'bin', 'g++.exe')) || 'g++')
+      : hostExecutable(['/usr/bin/clang++', '/usr/bin/g++', '/opt/homebrew/bin/g++'], 'c++');
+    const gcc = isWindows
+      ? (bundled(path.join('mingw', 'bin', 'gcc.exe')) || 'gcc')
+      : hostExecutable(['/usr/bin/clang', '/usr/bin/gcc', '/opt/homebrew/bin/gcc'], 'cc');
+    const rscript = isWindows
+      ? (bundled(path.join('r', 'bin', 'x64', 'Rscript.exe'))
+        || bundled(path.join('r', 'bin', 'Rscript.exe'))
+        || 'Rscript')
+      : hostExecutable([
+        ...roots.map((root) => path.join(root, 'Mac OS', 'r', 'Rscript')),
+        '/opt/homebrew/bin/Rscript', '/usr/local/bin/Rscript', '/usr/bin/Rscript',
+      ], 'Rscript');
 
     // Bundled runtimes may depend on DLLs beside their executables. Keep those
     // directories available to both the compiler and the program it produces.
@@ -264,11 +292,11 @@ export function registerTerminalHandlers(win: BrowserWindowType) {
     };
     let code: number;
     if (['cpp', 'cc', 'cxx', 'c++'].includes(ext)) {
-      code = await compile(gxx, ['-std=gnu++17', '-mconsole', '-o', output, filePath]);
+      code = await compile(gxx, ['-std=gnu++17', ...(isWindows ? ['-mconsole'] : []), '-o', output, filePath]);
       if (code !== 0) sendProcessOutput('\r\n[Compilation failed; see the linker/compiler messages above.]\r\n');
       if (code === 0) await runProcess(output, []);
     } else if (ext === 'c') {
-      code = await compile(gcc, ['-std=gnu11', '-mconsole', '-o', output, filePath]);
+      code = await compile(gcc, ['-std=gnu11', ...(isWindows ? ['-mconsole'] : []), '-o', output, filePath]);
       if (code !== 0) sendProcessOutput('\r\n[Compilation failed; see the linker/compiler messages above.]\r\n');
       if (code === 0) await runProcess(output, []);
     } else if (ext === 'python' || ext === 'py') await runProcess(python, [filePath]);

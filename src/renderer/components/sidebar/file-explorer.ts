@@ -156,6 +156,18 @@ export class FileExplorer {
         if (expanded) this.expandedPaths.add(node.path); else this.expandedPaths.delete(node.path);
         children.classList.toggle('expanded', expanded);
         icon.innerHTML = expanded ? ICONS.folderOpen : ICONS.folder;
+        if (expanded && !children.dataset.loaded) {
+          children.dataset.loaded = 'loading';
+          void window.api.file.listDir(node.path).then((loaded) => {
+            if (this.expandedPaths.has(node.path)) {
+              children.replaceChildren(...loaded.map((child) => this.createTreeNode(child, depth + 1)));
+            }
+            children.dataset.loaded = 'true';
+          }).catch((error) => {
+            console.error('Failed to load folder:', error);
+            children.dataset.loaded = 'error';
+          });
+        }
       });
       row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); } });
 

@@ -1,29 +1,29 @@
 {
   "cpp": {
     "name": "C++",
-    "command": "compilers/mingw/bin/g++.exe",
-    "args": ["-o", "${outputDir}/${fileBasenameNoExt}.exe", "${file}"],
-    "run": "${outputDir}/${fileBasenameNoExt}.exe"
+    "command": "c++",
+    "args": ["-std=gnu++17", "-o", "${outputDir}/${fileBasenameNoExt}", "${file}"],
+    "run": "${outputDir}/${fileBasenameNoExt}"
   },
   "c": {
     "name": "C",
-    "command": "compilers/mingw/bin/gcc.exe",
-    "args": ["-o", "${outputDir}/${fileBasenameNoExt}.exe", "${file}"],
-    "run": "${outputDir}/${fileBasenameNoExt}.exe"
+    "command": "cc",
+    "args": ["-std=gnu11", "-o", "${outputDir}/${fileBasenameNoExt}", "${file}"],
+    "run": "${outputDir}/${fileBasenameNoExt}"
   },
   "python": {
     "name": "Python",
-    "command": "compilers/python/python.exe",
+    "command": "python3",
     "args": ["${file}"]
   },
   "javascript": {
     "name": "JavaScript (Node.js)",
-    "command": "compilers/node/node.exe",
+    "command": "node",
     "args": ["${file}"]
   },
   "r": {
     "name": "R",
-    "command": "compilers/r/bin/x64/Rscript.exe",
+    "command": "Rscript",
     "args": ["${file}"]
   }
 }
